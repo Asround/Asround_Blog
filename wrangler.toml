@@ -1,3 +1,0 @@
-name = "asround-blog" # 给你的站点起个唯一的名字
-compatibility_date = "2026-02-08" # 使用当前或更新的日期
-pages_build_output_dir = "./dist" # 指定 Astro 构建输出的目录

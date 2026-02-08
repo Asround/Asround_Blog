@@ -79,21 +79,13 @@ export const friendsData: FriendItem[] = [
 	{
 		id: 9,
 		title: "Integral Calculator",
-		imgurl: "https://www.integral-calculator.com/layout/integral-calculator.png",
+		imgurl: "https://www.integral-calculator.com/layout/integra...lator.png.q1715417526.pagesoeed.ce.6KT3bkhnbq.png",
 		desc: "在线积分计算器, 支持详细步骤解析.",
 		siteurl: "https://www.integral-calculator.com/",
 		tags: ["Tool", "Math"],
 	},
 	{
 		id: 10,
-		title: "Dazidazi",
-		imgurl: "https://dazidazi.com/favicon.ico",
-		desc: "在线打字练习网站.",
-		siteurl: "https://dazidazi.com/",
-		tags: ["Tool"],
-	},
-	{
-		id: 11,
 		title: "LiMingXiang's Record",
 		imgurl: "https://love-learning-li.github.io/img/butterfly-icon.png",
 		desc: "一位优秀学长的个人博客, 记录了很多学习资源和技术分享",

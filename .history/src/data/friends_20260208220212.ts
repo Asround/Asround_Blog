@@ -86,9 +86,9 @@ export const friendsData: FriendItem[] = [
 	},
 	{
 		id: 10,
-		title: "Dazidazi",
+		title: "Integral Calculator",
 		imgurl: "https://dazidazi.com/favicon.ico",
-		desc: "在线打字练习网站.",
+		desc: "在线积分计算器, 支持详细步骤解析.",
 		siteurl: "https://dazidazi.com/",
 		tags: ["Tool"],
 	},
