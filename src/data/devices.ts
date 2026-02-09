@@ -50,7 +50,7 @@ export const devicesData: DeviceCategory = {
 	],
 	键鼠: [
 		{
-			name: "腹灵OG98机械键盘",
+			name: "腹灵 OG98 机械键盘",
 			image: "/images/device/OG98.png",
 			specs: "3模 / 98键 / 冰薄荷轴 / 复古简约",
 			description: "办公游戏主力.",
@@ -64,7 +64,7 @@ export const devicesData: DeviceCategory = {
 			link: "https://www.cherry.cn/kbgame-6412.html",
 		},
 		{
-			name: "漫步者G5MPro鼠标",
+			name: "漫步者 G5M Pro 鼠标",
 			image: "/images/device/Mouse.png",
 			specs: "快拆微动 / 磁吸充电 / 4k回报率",
 			description: "到手直接换静音微动, 室友都说好.",
@@ -96,7 +96,7 @@ export const devicesData: DeviceCategory = {
 	],
 	手柄: [
 		{
-			name: "飞智黑武士4 Pro",
+			name: "飞智黑武士 4 Pro",
 			image: "/images/device/Controller.png",
 			specs: "xbox / 1k回报率",
 			description: "除了FPS, 打游戏真得用手柄真舒服吧.",

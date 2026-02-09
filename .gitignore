@@ -1,3 +1,5 @@
+# AI添加, 以防止重复文件Warning, 如有问题请注释掉
+
 # build output
 dist/
 
@@ -47,3 +49,6 @@ src/data/bangumi-data.json
 
 # Bilibili generated data
 src/data/bilibili-data.json
+
+# local editor history / backup
+.history/

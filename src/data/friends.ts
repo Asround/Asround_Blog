@@ -71,7 +71,7 @@ export const friendsData: FriendItem[] = [
 	{
 		id: 8,
 		title: "Sci-Hub",
-		imgurl: "https://sci-hub.ru/pictures/ravenround.gif",
+		imgurl: "https://www.scihub.net.cn/skin/black/images/logo.png",
 		desc: "提供学术论文免费下载服务的在线平台.",
 		siteurl: "https://www.scihub.net.cn/",
 		tags: ["Tool"],
