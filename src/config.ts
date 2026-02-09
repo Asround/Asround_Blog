@@ -279,12 +279,12 @@ export const navBarConfig: NavBarConfig = {
 					external: true,
 					icon: "fa7-brands:bilibili",
 				},
-				// {
-				// 	name: "Gitee",
-				// 	url: "https://gitee.com/matsuzakayuki/Mizuki",
-				// 	external: true,
-				// 	icon: "mdi:git",
-				// },
+				{
+					name: "知乎",
+					url: "https://www.zhihu.com/people/74-33-14-69-84",
+					external: true,
+					icon: "simple-icons:zhihu",
+				},
 			],
 		},
 		{

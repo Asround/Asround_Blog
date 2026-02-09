@@ -148,3 +148,9 @@ Left(wB.Name, InStr(wB.Name, ".csv") - 1)
 ```
 
 - 实测成功.
+
+---
+
+## 教程文件分享
+
+可以链接到 github 仓库下载本文的 pdf 版, 方便本地查询: https://github.com/Asround/Asround_Blog/blob/master/src/content/posts/25-05-17_cs-_to-xlsx/pdf/%E4%BD%BF%E7%94%A8Excel%E5%8E%9F%E7%94%9F%E6%8C%87%E4%BB%A4%E5%AE%9E%E7%8E%B0csv%E8%BD%ACxlsx%E7%9A%84%E4%BF%9D%E5%A7%86%E7%BA%A7%E6%8C%87%E5%8D%97.pdf

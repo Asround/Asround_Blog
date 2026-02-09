@@ -122,6 +122,51 @@ export const devicesData: DeviceCategory = {
 			link: "https://support.apple.com/zh-cn/111866",
 		},
 	],
+	摄影: [
+		{
+			name: "Nikon Z30",
+			image: "/images/device/z30.png",
+			specs: "APS-C / 小巧轻便 / 可翻转屏",
+			description: "性价比微单, 配16-50可以揣裤兜.",
+			link: "https://www.nikon.com.cn/sc_CN/product/mirrorless/z-30#overview",
+		},
+		{
+			name: "Nikkor Z DX 16-50mm f/3.5-6.3 VR",
+			image: "/images/device/16-50.png",
+			specs: "广角 / 小巧轻便",
+			description: "晴天画质优秀, 轻便愿意外带.",
+			link: "https://www.nikon.com.cn/sc_CN/product/nikkor-lenses/z-mount/zoom/wide-angle-zoom/z-dx-16-50mm-f-3-5-6-3-vr#overview",
+		},
+		{
+			name: "Nikkor Z DX 50-250mm f/4.5-6.3 VR",
+			image: "/images/device/50-250.png",
+			specs: "长焦 / 打鸟 / 摄月",
+			description: "带上三脚架, 晚上等月亮一等就是俩小时.",
+			link: "https://www.nikon.com.cn/sc_CN/product/nikkor-lenses/z-mount/zoom/telephoto-zoom/z-dx-50-250mm-f-4-5-6-3-vr",
+		},
+		{
+			name: "Viltrox AF 35mm F1.7 Air",
+			image: "/images/device/Viltrox_35mm.png",
+			specs: "定焦 / 大光圈 / 人像",
+			description: "超性价比大光定, 人像表现不错, 漫展次次都带它.",
+			link: "https://www.viltrox.com.cn/productinfo/3229917.html",
+		},
+		{
+			name: "Marsecce ET-2541S 三脚架",
+			image: "/images/device/Tripod.png",
+			specs: "碳纤维 / 轻便",
+			description: "轻便稳定, 我的第一款碳纤维产品.",
+			link: "https://detail.tmall.com/item.htm?ak=26017758&ali_trackid=2%3Amm_26632943_457000242_108858100157%2C123%3A1702705027_080_318059982&bxsign=tbkxmvRJ2O2ZTBQihqrQ71IwF5aPGXR31jm9KATb2movL7y4TzcuFr3tM8YNh2sRVPkyO_fHa8pt-eXMly33VxcvMGcbU4_ixWhrjJaGMD15UJgY_B8wCzGMV2edUpI8A1mJSo0BpzPhPmKynBBP4J6LA&id=658437144303&relationId=2909377191&unid=123&union_lens=lensId%3ATAPI%401702705026%40213e994c_0d5a_18c7120d479_093e%4001%3Brecoveryid%3A080_301268779%401702705027808",
+		},
+		{
+			name: "Cwatcun D88 二代灰色大号相机包",
+			image: "/images/device/CameraBag.png",
+			specs: "大容量 / 多隔层 / 防水",
+			description:
+				"相机带三镜头 + 充电套装 + 一个三脚架 + 清洁套装 + 两个笔记本 + 一套全身衣物. 没满.",
+			link: "https://detail.tmall.com/item.htm?id=724387459564&mi_id=00006qRrCoG-VTmRZBv_ECMH1hz6Ls_1oSnmlpJSejdO6Vs&skuId=6013723162792&spm=tbpc.boughtlist.suborder_itemtitle.1.71922e8dnPJPEJ",
+		},
+	],
 	// 自行车: [
 	// 	{
 	// 		name: "美涵达幻影700瓜车",
