@@ -93,7 +93,7 @@ $$
   -e^{\sin x}\sin{\cos{x}}&=\frac{\sin[0(x-\frac{\pi}{2})]}{0!}+\frac{\sin[1(x-\frac{\pi}2)]}{1!}
   + \sum_{k=2}^{\infty} \frac{\sin[k(x-\frac{\pi}{2})]}{k!}\notag
   \\
-  -e^{\sin x}\cos{\cos{x}}&=\frac{\cos[0(x-\frac{\pi}{2})]}{0!}+\frac{\cos[1(x-\frac{\pi}2)]}{1!}
+  e^{\sin x}\cos{\cos{x}}&=\frac{\cos[0(x-\frac{\pi}{2})]}{0!}+\frac{\cos[1(x-\frac{\pi}2)]}{1!}
   + \sum_{k=2}^{\infty} \frac{\cos[k(x-\frac{\pi}{2})]}{k!}\notag
   \end{align}
   $$
@@ -111,7 +111,7 @@ $$
   -e^{\sin (-x)}\sin{\cos{(-x)}}&=\frac{\sin[0(-x-\frac{\pi}{2})]}{0!}+\frac{\sin[1(-x-\frac{\pi}2)]}{1!}
   + \sum_{k=2}^{\infty} \frac{\sin[k(-x-\frac{\pi}{2})]}{k!}\notag
   \\
-  -e^{\sin (-x)}\cos{\cos{(-x)}}&=\frac{\cos[0(-x-\frac{\pi}{2})]}{0!}+\frac{\cos[1(-x-\frac{\pi}2)]}{1!}
+  e^{\sin (-x)}\cos{\cos{(-x)}}&=\frac{\cos[0(-x-\frac{\pi}{2})]}{0!}+\frac{\cos[1(-x-\frac{\pi}2)]}{1!}
   + \sum_{k=2}^{\infty} \frac{\cos[k(-x-\frac{\pi}{2})]}{k!}\notag
   \end{align}
   $$
