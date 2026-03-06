@@ -15,10 +15,21 @@ export interface DiaryItem {
 const diaryData: DiaryItem[] = [
 	{
 		id: 1,
-		content: `完成初步的个人博客搭建, 使用了 Mizuki 模版, 还在不断完善中.  
-					期待未来能在这里记录更多的生活点滴和技术分享.`,
+		content:
+			"完成初步的个人博客搭建, 使用了 Mizuki 模版, 还在不断完善中.<br/>期待未来能在这里记录更多的生活点滴和技术分享.",
 		date: "2026-02-08T12:30:00Z",
 		images: ["/images/diary/2026-02-08/README.webp"],
+	},
+	{
+		id: 2,
+		content:
+			'自己DIY装了个机, 快乐.<br/>更多内容可以查看我的 <a href="/posts/26-03-06_personal-computer/" class="text-[var(--primary)] underline">装机分享博客</a>。',
+		date: "2026-03-06T12:00:00Z",
+		images: [
+			"/images/diary/2026-03-06/PC1.webp",
+			"/images/diary/2026-03-06/PC2.webp",
+			"/images/diary/2026-03-06/PC3.webp",
+		],
 	},
 ];
 

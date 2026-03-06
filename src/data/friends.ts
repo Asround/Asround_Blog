@@ -18,7 +18,7 @@ export const friendsData: FriendItem[] = [
 		imgurl: "http://q.qlogo.cn/headimg_dl?dst_uin=3231515355&spec=640&img_type=jpg",
 		desc: "Mizuki 用户手册",
 		siteurl: "https://docs.mizuki.mysqil.com",
-		tags: ["Docs"],
+		tags: ["Docs", "Tool"],
 	},
 	{
 		id: 2,
