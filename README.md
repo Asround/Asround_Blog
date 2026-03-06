@@ -1,7 +1,7 @@
 # Asround's Blog
 <img align='right' src='logo.png' width='200px' alt="Mizuki logo">
 
-A personal blog project based on [Mizuki](https://github.com/matsuzaka-yuki/mizuki)  template, using Tencent Cloud EdgeOne Pages service to build a website Can be accessed [here](https://asround-blog.pages.dev/).
+A personal blog project based on [Mizuki](https://github.com/matsuzaka-yuki/mizuki)  template, using Tencent Cloudflare Pages service to build a website. Access the website [here](https://asround-blog.pages.dev/).
 
 ![Mizuki Preview](./README.webp)
 
