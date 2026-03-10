@@ -26,7 +26,7 @@ const diaryData: DiaryItem[] = [
 			'自己DIY装了个机, 快乐.<br/>更多内容可以查看我的 <a href="/posts/26-03-06_personal-computer/" class="text-[var(--primary)] underline">装机分享博客</a>。',
 		date: "2026-03-06T12:00:00Z",
 		images: [
-			"/images/diary/2026-03-06/PC1.webp",
+			"/images/diary/2026-03-06/PC1.jpg",
 			"/images/diary/2026-03-06/PC2.webp",
 			"/images/diary/2026-03-06/PC3.webp",
 		],

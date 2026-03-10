@@ -16,6 +16,71 @@ export type DeviceCategory = {
 };
 
 export const devicesData: DeviceCategory = {
+	PC: [
+		{
+			name: "整机",
+			image: "/images/device/PC.jpg", // 路径: public/images/device/laptop.png
+			specs: "Ultra 265K / Intel B580",
+			description: "自己DIY的第一个机器. 好看, 好强.",
+			link: "",
+		},
+		{
+			name: "CPU: Ultra 265K",
+			image: "/images/device/cpu.png",
+			specs: "Arrow Lake / TSMC N3B",
+			description: "强劲单核 + 多核, 生产力不二之选.",
+			link: "https://www.intel.cn/content/www/cn/zh/products/sku/241063/intel-core-ultra-7-processor-265k-30m-cache-up-to-5-50-ghz/specifications.html",
+		},
+		{
+			name: "GPU: Intel Arc B580",
+			image: "/images/device/gpu.png",
+			specs: "GUNNIR / 12G VRAM",
+			description: "显卡涨价时代的超性价比产品, 4K 也能胜任.",
+			link: "https://www.gunnir.cn/home/product?id=dbbfe037-7bda-4c08-ade7-54a75f1a4d1e&modelid=d5512409-d36e-475e-8343-37a5301eb47f",
+		},
+		{
+			name: "主板: 七彩虹 CVN Z890M",
+			image: "/images/device/motherboard.png",
+			specs: "MATX / 5 个 M.2 插槽",
+			description: "豪华供电, 豪华插槽, 但不到 999 价格.",
+			link: "https://www.colorful.cn/home/product?mid=84&id=89e7216a-0c8e-4988-bea3-175f9a915ea0",
+		},
+		{
+			name: "内存: 十铨引领者 DDR5 32GB (2x16GB)",
+			image: "/images/device/DRAM.png",
+			specs: "DDR5 / 6000MHz / CL30 / 2024红点奖",
+			description: "用笔记本条子换的, 约等于不要钱.",
+			link: "https://www.teamgroupinc.com/cn/product-detail/memory/T-CREATE/expert-u-dimm-ddr5-black/expert-u-dimm-ddr5-black-CTCED548G7200HC34ADC01/",
+		},
+		{
+			name: "散热: 酷冷至尊 Hyper 612 Apex",
+			image: "/images/device/cooling.png",
+			specs: "最强单塔 / 省心风冷",
+			description: "压个 265K 不是轻轻松松?",
+			link: "https://www.coolermaster.com.cn/product_detail/350.html",
+		},
+		{
+			name: "电源: 九州风神 PQ750P 白金",
+			image: "/images/device/power.png",
+			specs: "750W / 白金统治者",
+			description: "无他, 机箱兼容好, 性价比(相对海韵 Focus).",
+			link: "https://cn.deepcool.com/products/PowerSupplyUnits/powersupplyunits/PQ750P-ATX3.1-Modular-Power-Supply/2024/19147.shtml",
+		},
+		{
+			name: "机箱: 九州风神 CH270",
+			image: "/images/device/chassis.png",
+			specs: "MATX / 竖式",
+			description: "第一眼就喜欢上.",
+			link: "https://cn.deepcool.com/products/Cases/CH270-High-Airflow-Vertical-M-ATX-Compact-Case/2025/22177.shtml",
+		},
+		{
+			name: "风扇: 乔思伯 ZA 系列",
+			image: "/images/device/fan.png",
+			specs: "一体式 / 静音",
+			description: "好看, 好装. ZA360 + ZA240 + ZA120R.",
+			link: "https://www.jonsbo.com/products/ZA-360---zhengyefanye-.html",
+		},
+	],
 	笔记本电脑: [
 		{
 			name: "Thinkbook 16p gen4 (2023)",
