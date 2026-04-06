@@ -82,13 +82,13 @@ export const devicesData: DeviceCategory = {
 		},
 	],
 	笔记本电脑: [
-		{
-			name: "Thinkbook 16p gen4 (2023)",
-			image: "/images/device/laptop.png", // 路径: public/images/device/laptop.png
-			specs: "i9-13900H / 4060",
-			description: "足够使用, 足够商务. 生产力工具必不可少.",
-			link: "https://www.thinkpad.com/device/thinkbook16-2023-i9?preview=true",
-		},
+		// {
+		// 	name: "Thinkbook 16p gen4 (2023)",
+		// 	image: "/images/device/laptop.png", // 路径: public/images/device/laptop.png
+		// 	specs: "i9-13900H / 4060",
+		// 	description: "足够使用, 足够商务. 生产力工具必不可少.",
+		// 	link: "https://www.thinkpad.com/device/thinkbook16-2023-i9?preview=true",
+		// },
 		{
 			name: "MacBook Air M4 13inch (2024)",
 			image: "/images/device/mba.png",
@@ -230,6 +230,15 @@ export const devicesData: DeviceCategory = {
 			description:
 				"相机带三镜头 + 充电套装 + 一个三脚架 + 清洁套装 + 两个笔记本 + 一套全身衣物. 没满.",
 			link: "https://detail.tmall.com/item.htm?id=724387459564&mi_id=00006qRrCoG-VTmRZBv_ECMH1hz6Ls_1oSnmlpJSejdO6Vs&skuId=6013723162792&spm=tbpc.boughtlist.suborder_itemtitle.1.71922e8dnPJPEJ",
+		},
+	],
+	已退休: [
+		{
+			name: "Thinkbook 16p gen4 (2023)",
+			image: "/images/device/laptop.png", // 路径: public/images/device/laptop.png
+			specs: "i9-13900H / 4060",
+			description: "足够使用, 足够商务. 生产力工具必不可少.",
+			link: "https://www.thinkpad.com/device/thinkbook16-2023-i9?preview=true",
 		},
 	],
 	// 自行车: [
