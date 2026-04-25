@@ -40,7 +40,7 @@ export const devicesData: DeviceCategory = {
 		},
 		{
 			name: "主板: 七彩虹 CVN Z890M",
-			image: "/images/device/motherboard.png",
+			image: "/images/device/motherboard.webp",
 			specs: "MATX / 5 个 M.2 插槽",
 			description: "豪华供电, 豪华插槽, 但不到 999 价格.",
 			link: "https://www.colorful.cn/home/product?mid=84&id=89e7216a-0c8e-4988-bea3-175f9a915ea0",
@@ -115,10 +115,24 @@ export const devicesData: DeviceCategory = {
 	],
 	键鼠: [
 		{
+			name: "塔塔次方 DP 104",
+			image: "/images/device/DP104.png",
+			specs: "主力 / 全铝CNC / 闷轴 / 量产客制化",
+			description: "应该是量产全配列毕业键盘了, 非常喜欢.",
+			link: "https://www.ticktype.com/products/dp-104-white",
+		},
+		{
+			name: "ROG龙鳞2 Ace",
+			image: "/images/device/ace2.webp",
+			specs: "主力 / 48.5g 超轻 / 旗舰3模 /  8k回报率",
+			description: "轻就是好, 好就是轻. 完美诠释什么叫一见钟情.",
+			link: "https://rog.asus.com.cn/mice-mouse-pads/mice/ambidextrous/rog-harpe-ii-ace/",
+		},
+		{
 			name: "腹灵 OG98 机械键盘",
 			image: "/images/device/OG98.png",
 			specs: "3模 / 98键 / 冰薄荷轴 / 复古简约",
-			description: "办公游戏主力.",
+			description: "前办公游戏主力, 目前退居二线.",
 			link: "https://www.flesports.com/index.php/product/og98r/",
 		},
 		{
