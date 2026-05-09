@@ -117,9 +117,17 @@ export const devicesData: DeviceCategory = {
 		{
 			name: "塔塔次方 DP 104",
 			image: "/images/device/DP104.png",
-			specs: "主力 / 全铝CNC / 闷轴 / 量产客制化",
+			specs: "主力 / 104 配列 / 全铝CNC / 闷轴 / 量产客制化",
 			description: "应该是量产全配列毕业键盘了, 非常喜欢.",
 			link: "https://www.ticktype.com/products/dp-104-white",
+		},
+		{
+			name: "塔塔次方 EVO 75",
+			image: "/images/device/EVO75.png",
+			specs: " 75配列 / 游戏专用 / 全铝CNC / 闷轴 / 量产客制化",
+			description:
+				"选购理由: 节省桌面空间, 给鼠标拉枪可能, 闷轴保证手感和DP 104相似.",
+			link: "https://www.ticktype.com/products/evo75-j-l",
 		},
 		{
 			name: "ROG龙鳞2 Ace",
