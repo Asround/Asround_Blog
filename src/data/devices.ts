@@ -20,7 +20,7 @@ export const devicesData: DeviceCategory = {
 		{
 			name: "整机",
 			image: "/images/device/PC.jpg", // 路径: public/images/device/laptop.png
-			specs: "Ultra 265K / Intel B580",
+			specs: "Ultra 265K / RTX 5070 Ti / 32GB DDR5",
 			description: "自己DIY的第一个机器. 好看, 好强.",
 			link: "",
 		},
@@ -32,11 +32,11 @@ export const devicesData: DeviceCategory = {
 			link: "https://www.intel.cn/content/www/cn/zh/products/sku/241063/intel-core-ultra-7-processor-265k-30m-cache-up-to-5-50-ghz/specifications.html",
 		},
 		{
-			name: "GPU: Intel Arc B580",
-			image: "/images/device/gpu.png",
-			specs: "GUNNIR / 12G VRAM",
-			description: "显卡涨价时代的超性价比产品, 4K 也能胜任.",
-			link: "https://www.gunnir.cn/home/product?id=dbbfe037-7bda-4c08-ade7-54a75f1a4d1e&modelid=d5512409-d36e-475e-8343-37a5301eb47f",
+			name: "GPU: 七彩虹 RTX 5070 Ti 战斧豪华版",
+			image: "/images/device/5070ti.png",
+			specs: "COLORFUL / 16G VRAM",
+			description: "4k 入门? 4k 爽玩!",
+			link: "https://www.colorful.cn/home/product?mid=102&id=5df5ef98-d6ab-4087-b127-58ec52e6f653",
 		},
 		{
 			name: "主板: 七彩虹 CVN Z890M",
@@ -261,6 +261,13 @@ export const devicesData: DeviceCategory = {
 			specs: "i9-13900H / 4060",
 			description: "足够使用, 足够商务. 生产力工具必不可少.",
 			link: "https://www.thinkpad.com/device/thinkbook16-2023-i9?preview=true",
+		},
+		{
+			name: "GPU: Intel Arc B580",
+			image: "/images/device/b580.png",
+			specs: "GUNNIR / 12G VRAM",
+			description: "显卡涨价时代的超性价比产品, 4K 也能胜任.",
+			link: "https://www.gunnir.cn/home/product?id=dbbfe037-7bda-4c08-ade7-54a75f1a4d1e&modelid=d5512409-d36e-475e-8343-37a5301eb47f",
 		},
 	],
 	// 自行车: [
