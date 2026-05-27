@@ -130,6 +130,14 @@ export const devicesData: DeviceCategory = {
 			link: "https://www.ticktype.com/products/evo75-j-l",
 		},
 		{
+			name: "NuPhy Air 75 V3",
+			image: "/images/device/NuPhy_Air_75_V3.png",
+			specs: "静音 / 矮轴 / 便携 / Mac适配",
+			description:
+				"静音, 室友都说好; 适配, mac使用无敌; 矮轴, 前高很舒服.",
+			link: "https://nuphy.com/products/nuphy-air75-v3",
+		},
+		{
 			name: "ROG龙鳞2 Ace",
 			image: "/images/device/ace2.webp",
 			specs: "主力 / 48.5g 超轻 / 旗舰3模 /  8k回报率",

@@ -94,6 +94,14 @@ export const friendsData: FriendItem[] = [
 	},
 	{
 		id: 11,
+		title: "iconfont",
+		imgurl: "https://www.iconfont.cn/favicon.ico",
+		desc: "方便易用且全面的矢量图标库.",
+		siteurl: "https://www.iconfont.cn/",
+		tags: ["Tool"],
+	},
+	{
+		id: 12,
 		title: "LiMingXiang's Record",
 		imgurl: "https://love-learning-li.github.io/img/butterfly-icon.png",
 		desc: "一位优秀学长的个人博客, 记录了很多学习资源和技术分享",
