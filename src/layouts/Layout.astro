@@ -864,11 +864,14 @@ function disableAnimation() {
 		const albumImagesSelector =
 			".custom-md img, #post-cover img, .moment-images img";
 		const albumLinksSelector = ".moment-images a[data-fancybox]";
-		const singleFancyboxSelector = "[data-fancybox]:not(.moment-images a)";
+		const photoGalleryLinksSelector = ".photo-gallery a[data-fancybox]";
+		const singleFancyboxSelector =
+			"[data-fancybox]:not(.moment-images a):not(.photo-gallery a)";
 
 		const hasImages =
 			document.querySelector(albumImagesSelector) ||
 			document.querySelector(albumLinksSelector) ||
+			document.querySelector(photoGalleryLinksSelector) ||
 			document.querySelector(singleFancyboxSelector);
 
 		if (!hasImages) return;
@@ -940,6 +943,20 @@ function disableAnimation() {
 		fancyboxSelectors.push(albumLinksSelector);
 
 		// 绑定单独的 fancybox 图片
+		Fancybox.bind(photoGalleryLinksSelector, {
+			...commonConfig,
+			source: (el: any) => {
+				return el.getAttribute("data-src") || el.getAttribute("href");
+			},
+			infinite: false,
+			Carousel: {
+				transition: "slide",
+				preload: 2,
+				infinite: false,
+			},
+		});
+		fancyboxSelectors.push(photoGalleryLinksSelector);
+
 		Fancybox.bind(singleFancyboxSelector, commonConfig);
 		fancyboxSelectors.push(singleFancyboxSelector);
 	}

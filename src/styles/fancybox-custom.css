@@ -82,6 +82,42 @@
   padding: 0 8px;
 }
 
+.fancybox__container .f-carousel__toolbar,
+.fancybox__container .f-button.is-arrow {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition:
+    opacity 0.18s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease !important;
+}
+
+.fancybox__container:has(.fancybox__slide.is-selected .f-panzoom__wrapper:hover) .f-carousel__toolbar,
+.fancybox__container:has(.fancybox__slide.is-selected .f-panzoom__content:hover) .f-carousel__toolbar,
+.fancybox__container:has(.fancybox__slide.is-selected img:hover) .f-carousel__toolbar,
+.fancybox__container:has(.f-carousel__toolbar:hover) .f-carousel__toolbar,
+.fancybox__container:has(.fancybox__slide.is-selected .f-panzoom__wrapper:hover) .f-button.is-arrow,
+.fancybox__container:has(.fancybox__slide.is-selected .f-panzoom__content:hover) .f-button.is-arrow,
+.fancybox__container:has(.fancybox__slide.is-selected img:hover) .f-button.is-arrow,
+.fancybox__container .f-button.is-arrow:hover {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.fancybox__container .f-button.is-arrow[aria-disabled] {
+  color: rgba(255, 255, 255, 0.35) !important;
+  background: rgba(54, 54, 54, 0.35) !important;
+  cursor: default !important;
+  pointer-events: none !important;
+}
+
+.fancybox__container:has(.fancybox__slide.is-selected .f-panzoom__wrapper:hover) .f-button.is-arrow[aria-disabled],
+.fancybox__container:has(.fancybox__slide.is-selected .f-panzoom__content:hover) .f-button.is-arrow[aria-disabled],
+.fancybox__container:has(.fancybox__slide.is-selected img:hover) .f-button.is-arrow[aria-disabled] {
+  opacity: 1 !important;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .fancybox__toolbar {
