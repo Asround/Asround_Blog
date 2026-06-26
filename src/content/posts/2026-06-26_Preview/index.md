@@ -1,14 +1,14 @@
 ---
 title: 更新预告
 published: 2026-06-26
-pinned: false
+pinned: true
 description: 想法记录, 可能写可能不写
 tags: []
 category: Random Notes
 licenseName: "CC BY-SA 4.0"
 author: Asround
 # sourceLink: "https://github.com/emn178/markdown"
-draft: true
+draft: false
 date: 2026-06-26
 # image: "./cover.jpg"
 pubDate: 2026-06-26
