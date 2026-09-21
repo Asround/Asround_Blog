@@ -91,9 +91,16 @@ export function getDir(path: string): string {
 }
 
 export function getFileDirFromPath(filePath: string): string {
-	return filePath.replace(/^src\//, "").replace(/\/[^/]+$/, "");
+	const normalizedPath = filePath.replace(/\\/g, "/");
+	const srcIndex = normalizedPath.indexOf("/src/");
+	const relativePath =
+		srcIndex >= 0
+			? normalizedPath.slice(srcIndex + "/src/".length)
+			: normalizedPath.replace(/^src\//, "");
+	return relativePath.replace(/\/[^/]+$/, "");
 }
 
 export function url(path: string) {
 	return joinUrl("", import.meta.env.BASE_URL, path);
 }
+

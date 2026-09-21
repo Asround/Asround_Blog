@@ -10,7 +10,7 @@ author: Asround
 # sourceLink: "https://github.com/emn178/markdown"
 draft: false
 date: 2025-07-12
-image: "cover.png"
+image: "./cover.png"
 pubDate: 2025-07-12
 permalink: "calibre_index"
 ---
@@ -23,7 +23,7 @@ permalink: "calibre_index"
 
 ## 背景
 
-​	在网络上找到小说的纯 txt 文本, 但用 calibre 转为 epub 格式后发现没有索引目录. 本文档将介绍一种最简单的方式自动添加可索引目录(也即多级标题). 
+​	在网络上找到小说的纯 txt 文本, 但用 calibre 转为 epub 格式后发现没有索引目录. 本文档将介绍一种最简单的方式自动添加可索引目录(也即多级标题).
 
 ## 要求
 

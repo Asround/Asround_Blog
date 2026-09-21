@@ -86,9 +86,10 @@ permalink: "paper-of-methods-of-mathmatical-physics"
 
 ![alt text](index.assets/21-22.webp)
 
+补充: 第 10 题答图, 最开始制作解析时没有放进去, 这里单独补充一下.
 ![alt text](index.assets/10题答图.webp)
 
-拓展延伸部分链接: n倍角公式的推导「全网最详细版」 (在pdf中ctrl+左键也可以跳转)
+拓展延伸部分链接: [n倍角公式的推导「全网最详细版」](https://zhuanlan.zhihu.com/p/9209749788) (在pdf中ctrl+左键也可以跳转)
 
 ## 文件提供
 
