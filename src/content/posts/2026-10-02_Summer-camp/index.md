@@ -9,7 +9,7 @@ licenseName: "CC BY-SA 4.0"
 author: Asround
 draft: true
 date: 2026-10-02
-# image: "./cover.webp"
+image: "./cover.png"
 pubDate: 2026-10-02
 permalink: "Summer-camp"
 ---
