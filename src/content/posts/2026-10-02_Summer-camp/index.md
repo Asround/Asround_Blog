@@ -7,7 +7,7 @@ tags: [夏令营, 预推免]
 category: Random Notes
 licenseName: "CC BY-SA 4.0"
 author: Asround
-draft: true
+draft: false
 date: 2026-10-02
 image: "./cover.png"
 pubDate: 2026-10-02
