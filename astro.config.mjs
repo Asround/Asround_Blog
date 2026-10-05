@@ -166,6 +166,17 @@ export default defineConfig({
 		],
 	},
 	vite: {
+		server: {
+			watch: {
+				// 轮询捕获新增文件，并等待粘贴、复制完成后再处理。
+				usePolling: true,
+				interval: 500,
+				awaitWriteFinish: {
+					stabilityThreshold: 800,
+					pollInterval: 100,
+				},
+			},
+		},
 		build: {
 			// 静态资源处理优化，防止小图片转 base64 导致 HTML 体积过大（可选，根据需要调整）
 			assetsInlineLimit: 4096,

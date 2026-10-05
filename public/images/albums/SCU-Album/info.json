@@ -1,0 +1,11 @@
+{
+	"title": "SCU Album",
+	"cover": "cover.webp",
+	"hidden": false,
+	"description": "本科校园随拍.",
+	"date": "2026-10-05",
+	"location": "SCU",
+	"tags": ["Campus", "SCU"],
+	"layout": "masonry",
+	"columns": 3
+}

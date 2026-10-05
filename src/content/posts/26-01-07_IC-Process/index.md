@@ -17,7 +17,9 @@ permalink: "IC-Process"
 
 # 半导体材料与IC工艺课程资料分享
 
-所有资料在本人 github 仓库中: [Asround/Learning_resources_sharing: Sharing some learning resources in IC.](https://github.com/Asround/Learning_resources_sharing)
+所有资料在本人的 GitHub 仓库中：
+
+::github{repo="Asround/Learning_resources_sharing"}
 
 本文对应资料在: [Learning_resources_sharing/个人编辑/IC_Process at master · Asround/Learning_resources_sharing](https://github.com/Asround/Learning_resources_sharing/tree/master/个人编辑/IC_Process)
 

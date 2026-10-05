@@ -15,7 +15,11 @@ pubDate: 2025-08-08
 permalink: "VLOOK-feeling"
 ---
 
-# VLOOK使用感受与问题收集
+# VLOOK 使用感受与问题收集
+
+本文介绍的 VLOOK 项目：
+
+::github{repo="MadMaxChow/VLOOK"}
 
 ## 前言
 

@@ -19,7 +19,9 @@ permalink: "Solid-state-physics"
 
 > 笔者在编写个人网页的时候顺带翻了一下之前学期的文件夹, 发现这些可以放到网站上作为分享, 故写之. 但由于时间跨度较长, 部分内容已经遗忘, 所以对资料的描述可能不太准确.
 
-所有资料在本人 github 仓库中: [Asround/Learning_resources_sharing: Sharing some learning resources in IC.](https://github.com/Asround/Learning_resources_sharing)
+所有资料在本人的 GitHub 仓库中：
+
+::github{repo="Asround/Learning_resources_sharing"}
 
 本文对应资料在: [Learning_resources_sharing/个人编辑/Solid_State_Physics at master · Asround/Learning_resources_sharing](https://github.com/Asround/Learning_resources_sharing/tree/master/个人编辑/Solid_State_Physics)
 

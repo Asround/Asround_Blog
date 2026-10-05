@@ -25,7 +25,7 @@ permalink: "CheatSheet"
 
 ## 说明
 
-仓库地址: [Asround/Semiconductor-physics-CheatSheet: A latex CheatSheet for Semiconductor Physics. Book reference: 半导体物理学(第8版) - 刘恩科](https://github.com/Asround/Semiconductor-physics-CheatSheet)
+::github{repo="Asround/Semiconductor-physics-CheatSheet"}
 
 ![仓库](https://raw.githubusercontent.com/Asround/Asround.github.io/master/_posts/assets/2026-01-08_SPCS.assets/image-20260108132442236.png)
 

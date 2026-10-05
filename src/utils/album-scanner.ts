@@ -68,14 +68,15 @@ async function processAlbumFolder(
 		photos = processExternalPhotos(info.photos || [], folderName);
 	} else {
 		// 本地模式：检查本地文件
-		const coverPath = path.join(folderPath, "cover.jpg");
-		if (!fs.existsSync(coverPath)) {
-			console.warn(`相册 ${folderName} 缺少 cover.jpg 文件`);
+		const coverFile = info.cover || "cover.jpg";
+		const coverPath = path.join(folderPath, coverFile);
+		if (!fs.existsSync(coverPath) || !fs.statSync(coverPath).isFile()) {
+			console.warn(`相册 ${folderName} 缺少封面文件 ${coverFile}`);
 			return null;
 		}
 
-		cover = `/images/albums/${folderName}/cover.jpg`;
-		photos = scanPhotos(folderPath, folderName);
+		cover = `/images/albums/${folderName}/${coverFile}`;
+		photos = scanPhotos(folderPath, folderName, coverFile);
 	}
 
 	// 检查是否隐藏相册
@@ -99,7 +100,11 @@ async function processAlbumFolder(
 	};
 }
 
-function scanPhotos(folderPath: string, albumId: string): Photo[] {
+function scanPhotos(
+	folderPath: string,
+	albumId: string,
+	coverFile: string,
+): Photo[] {
 	const photos: Photo[] = [];
 	const files = fs.readdirSync(folderPath);
 
@@ -118,7 +123,9 @@ function scanPhotos(folderPath: string, albumId: string): Photo[] {
 				".bmp",
 				".tiff",
 				".tif",
-			].includes(ext) && file !== "cover.jpg"
+			].includes(ext) &&
+			file !== coverFile &&
+			path.parse(file).name.toLowerCase() !== "cover"
 		);
 	});
 
