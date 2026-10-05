@@ -181,7 +181,8 @@ export type SiteConfig = {
 	toc: {
 		enable: boolean;
 		mode: "float" | "sidebar"; // 目录显示模式："float" 悬浮按钮模式，"sidebar" 侧边栏模式
-		depth: 1 | 2 | 3;
+		depth: 1 | 2 | 3 | 4 | 5 | 6;
+		defaultExpandedDepth?: 1 | 2 | 3 | 4 | 5 | 6;
 		useJapaneseBadge?: boolean; // 使用日语假名标记（あいうえお...）代替数字
 	};
 	showCoverInContent: boolean; // 控制文章封面在文章内容页显示的开关

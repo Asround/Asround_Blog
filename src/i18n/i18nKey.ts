@@ -17,6 +17,10 @@ enum I18nKey {
 	postList = "postList",
 	tableOfContents = "tableOfContents",
 	tocEmpty = "tocEmpty",
+	tocExpandAll = "tocExpandAll",
+	tocCollapseAll = "tocCollapseAll",
+	tocExpand = "tocExpand",
+	tocCollapse = "tocCollapse",
 
 	// 公告栏
 	announcement = "announcement",
