@@ -1,7 +1,7 @@
 import { visit } from "unist-util-visit";
 
 export function rehypeImageWidth() {
-	const regex = / w-([0-9]+)%/;
+	const regex = / w-([0-9]+)(%|px)/;
 
 	return (tree) => {
 		visit(tree, "element", (node, index, parent) => {
@@ -15,9 +15,14 @@ export function rehypeImageWidth() {
 
 				if (match) {
 					const width = match[1];
+					const unit = match[2];
 					node.properties.alt = alt.replace(regex, "").trim();
-					node.properties.width = `${width}%`;
-					node.properties.style = "display: block; margin: 0 auto;";
+					if (unit === "px") {
+						node.properties.style = `width: ${width}px; max-width: 100%; height: auto;`;
+					} else {
+						node.properties.width = `${width}%`;
+						node.properties.style = "display: block; margin: 0 auto;";
+					}
 
 					const figureChildren = [node];
 

@@ -27,7 +27,7 @@ permalink: "STA"
 
 最早, 笔者在学习数电之时就已经了解到了这个概念, 那还是大二刚接触时序电路的时候, 老师也没细讲具体的内容, 只说后面我们深入学习时, 会再次遇到这个重要的概念. 转眼便是大三下,  在数集的课程中终于又再次遇到了这个概念, 不过此时摆在课本上的, 已经是一个十分复杂的波形图了:
 
-<img src="index.assets/image-20260917132346277.png" alt="image-20260917132346277" style="width: 500px; max-width: 100%; height: auto;" />
+![image-20260917132346277 w-500px](index.assets/image-20260917132346277.png)
 
 > 图源: 半导体集成电路第二版, P182.
 
@@ -35,15 +35,12 @@ permalink: "STA"
 
 复刻图如下: 
 
-<img src="index.assets/STA_时序图-1790925510095-4.png" alt="STA_时序图" style="width: 620px; max-width: 100%; height: auto;" />
+![STA_时序图 w-620px](index.assets/STA_时序图-1790925510095-4.png)
 
 ---
 
 ## 正文
-
-### setup 和 hold 的基本定义
-
->  注: 
+>  注:
 >
 >  1. 本文讨论中, 时钟有效沿取上升沿.
 >  2. 为方便, 本文不考虑时钟沿的上升和下降时间, 即认为沿的变化是瞬时的. 并且相对笔者上课时的教材(半导体集成电路第二版), 多考虑了时钟源到达 capture 和 launch 两个 DFF 的时间差($T_launch$). 此考虑参考了 https://zhuanlan.zhihu.com/p/278523793 .
@@ -52,12 +49,14 @@ permalink: "STA"
 >  5. 本文只到时序分析部分就结束, 而没有讨论如果违例会引起什么问题, 以及具体采用何种设计/硬件措施来解决违例. 这部分在网络上有很多资源, 若读者有兴趣请自行检索.
 >  6. 再次提醒, 本文内容为笔者自己撰写, 自行审稿, 能力有限, 若有错漏还请谅解.
 
+### setup 和 hold 的基本定义
+
 首先来简单认识一下 setup 和 hold 的定义:
 
 - setup time: 在时钟沿到来之前一段时间中, 需要数据始终保持不变, 在更早的时候, 可以随意变化
 - hold time: 在时钟沿到来后的一段时间中, 需要数据时钟保持不变, 在更晚的时候, 可以随意变化
 
-<img src="index.assets/def_setup-hold.png" alt="def_setup-hold" style="width: 500px; max-width: 100%; height: auto;" />
+![def_setup-hold w-500px](index.assets/def_setup-hold.png)
 
 
 
@@ -73,7 +72,7 @@ permalink: "STA"
 
 先来认识一下分析 setup 和 hold 时序的基本电路结构:
 
-<img src="index.assets/数集中的时序问题-电路.png" alt="数集中的时序问题-电路" style="width: 640px; max-width: 100%; height: auto;" />
+![数集中的时序问题-电路 w-640px](index.assets/数集中的时序问题-电路.png)
 
 解读一下:
 
@@ -89,7 +88,7 @@ permalink: "STA"
 
    1. $T_\text{cq}$:  c (clk) 端时钟沿到达后, q (Q)端数据更新的时间, 也有将 cq 写作 <font color=red>c2q</font> 的, 2 即 to(英语发音).
 
-      <img src="index.assets/def_Tcq.png" alt="def_Tcq" style="width: 440px; max-width: 100%; height: auto;" />
+      ![def_Tcq w-440px](index.assets/def_Tcq.png)
 
    2. $T_\text{logic}$: 组合逻辑延时, 指从 FF0 的 Q 端, 经过组合逻辑, 到达 FF2 的 D 端所需的时间.
 
@@ -100,7 +99,7 @@ permalink: "STA"
 
 这还不够, 我们还需要定义一个参数, 以方便后续进行分析:
 
-<img src="index.assets/STA_skew.png" alt="STA_skew" style="width: 760px; max-width: 100%; height: auto;" />
+![STA_skew w-760px](index.assets/STA_skew.png)
 
 $$
 T_\text{skew} \triangleq T_\text{capture} - T_\text{launch}
@@ -116,7 +115,7 @@ $$
 
 这个参数定义为 $T_\text{a}$, a 即 arrive.
 
-<img src="index.assets/Ta定义图.png" alt="Ta定义图" style="width: 720px; max-width: 100%; height: auto;" />
+![Ta定义图 w-720px](index.assets/Ta定义图.png)
 
 CLK 来临, 经过 $T_\text{launch}$ 到达Launch FF(FF0)的 CK 端, 再经过 $T_\text{cq}$ , D 端数据更新到 Q 端(这是 $T_\text{cq}$的定义, 时钟到来之后, 还需一定时间Q 端才能响应), 然后经过可长可短的 $T_\text{logic}$, 终于到达 Capture FF(FF1)的 D 端, 等待被捕获.
 
@@ -133,7 +132,7 @@ $$
 T_\text{r}=T_\text{capture} + T_\text{clk} - T_\text{setup}
 $$
 
-<img src="index.assets/setup_Tr.png" alt="setup_Tr" style="width: 540px; max-width: 100%; height: auto;" />
+![setup_Tr w-540px](index.assets/setup_Tr.png)
 
 > 如上图, 如果数据由于各种各样的原因, 没有按照设计指标, 在 $T_\text{a}$ 刚结束就到达, 而是晚了一点点, 在绿色区域到达, 这仍然在设计余量内, 不会造成违例.
 >
@@ -182,7 +181,7 @@ $$
 
 ##### 从设计裕量(Slack)角度
 
-<img src="index.assets/setup_margin.png" alt="setup_margin" style="width: 520px; max-width: 100%; height: auto;" />
+![setup_margin w-520px](index.assets/setup_margin.png)
 
 回顾一下 $T_\text{a}$ 和 $T_\text{r}$ , 前者是数据真实从 Launch FF 发出, 最终到达 Capture FF 的时间, 而 $T_\text{r}$ 的定义是, 允许数据最晚到达的时间. 所以, $T_\text r$ 和 $T_\text{a}$ 的差值, 就是设计裕量, Slack, 也即 $T_\text{margin}$:
 $$
@@ -215,7 +214,7 @@ $$
 
 我们依旧看图:
 
-<img src="index.assets/hold_Tr.png" alt="hold_Tr" style="width: 600px; max-width: 100%; height: auto;" />
+![hold_Tr w-600px](index.assets/hold_Tr.png)
 
 首先, $T_\text a$ 是雷打不动的, 和 setup 和 hold 都无关. 但显然, $T_r$ 的要求不一样. 在 hold 约束中, $T_r$ 也是数据到达的最极端情况, 但是描述的是允许到达的"最早时间"(注意, setup 中, 是允许到达的"最晚时间"). 可以设想(看图), 如果数据比 $T_r$ 要求的还早一点到, 那就落在 $T_\text{hold}$ 的禁区, 造成违例.
 $$
@@ -301,7 +300,7 @@ $$
 
 请读者注意前文已经出现的这张时序图:
 
-<img src="index.assets/STA_时序图.png" alt="STA_时序图" style="width: 620px; max-width: 100%; height: auto;" />
+![STA_时序图 w-620px](index.assets/STA_时序图.png)
 
 可以看到, 图中专门标出了 setup/hold 分析起点和终点. 在前文的介绍里面, 似乎这没什么特别的, 作用不过是用来建立等式, 导出不等式而已. 甚至不选图中标的起点终点, 随意选取其他的起点/终点, 也可以建立等式, 同样也可以导出一样的不等式.
 
@@ -335,7 +334,7 @@ $$
 
 然后再看看下图:
 
-<img src="index.assets/question_Tclk.png" alt="question_Tclk" style="width: 800px; max-width: 100%; height: auto;" />
+![question_Tclk w-800px](index.assets/question_Tclk.png)
 
 笔者在本图中明确地标出了$T_\text{clk}$ 的存在, 并给出了简单(并不十分严谨)的说明. 结合:
 
