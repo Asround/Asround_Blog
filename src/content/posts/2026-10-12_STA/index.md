@@ -1,6 +1,6 @@
 ---
 title: 数字电路中时序分析的 setup 和 hold 分析
-published: 2026-10-12
+published: 2026-10-02
 pinned: false
 description: 时序分析中 setup 和 hold 的约束推导与理解.
 tags: [STA, Digital IC, Timing Analysis]
@@ -10,7 +10,7 @@ author: Asround
 draft: false
 date: 2026-10-12
 image: "./cover.png"
-pubDate: 2026-10-12
+pubDate: 2026-10-02
 permalink: "STA"
 ---
 # 数字电路中时序分析的 setup 和 hold 分析
