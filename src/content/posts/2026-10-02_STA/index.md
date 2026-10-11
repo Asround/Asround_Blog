@@ -8,7 +8,7 @@ category: Tutorial
 licenseName: "CC BY-SA 4.0"
 author: Asround
 draft: false
-date: 2026-10-12
+date: 2026-10-02
 image: "./cover.png"
 pubDate: 2026-10-02
 permalink: "STA"
@@ -27,7 +27,7 @@ permalink: "STA"
 
 最早, 笔者在学习数电之时就已经了解到了这个概念, 那还是大二刚接触时序电路的时候, 老师也没细讲具体的内容, 只说后面我们深入学习时, 会再次遇到这个重要的概念. 转眼便是大三下,  在数集的课程中终于又再次遇到了这个概念, 不过此时摆在课本上的, 已经是一个十分复杂的波形图了:
 
-![image-20260917132346277 w-500px](index.assets/image-20260917132346277.png)
+![image-20260917132346277 w-500px](index.assets/book.png)
 
 > 图源: 半导体集成电路第二版, P182.
 

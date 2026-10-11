@@ -132,4 +132,23 @@ document.addEventListener("click", function (e: MouseEvent) {
         });
     }
 });
+// Delegation keeps cards interactive after Swup navigation.
+document.addEventListener("click", async (event) => {
+    const button = event.target instanceof Element
+        ? event.target.closest<HTMLButtonElement>("button[data-baidu-code]")
+        : null;
+    if (!button || button.disabled) return;
+    button.disabled = true;
+    try {
+        await navigator.clipboard.writeText(button.dataset.baiduCode || "");
+        button.textContent = "已复制";
+    } catch {
+        button.textContent = "请手动复制";
+    } finally {
+        window.setTimeout(() => {
+            button.textContent = "复制";
+            button.disabled = false;
+        }, 2000);
+    }
+});
 </script>

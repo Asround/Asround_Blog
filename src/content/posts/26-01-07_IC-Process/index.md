@@ -3,7 +3,7 @@ title: 半导体材料与IC工艺课程资料分享
 published: 2026-01-08
 pinned: false
 description: 电子书, 笔记, 课程作业分享合集.
-tags: [Cheat Sheet, Semiconductor Physics]
+tags: [IC Process, Notes]
 category: Learning Resource Sharing
 licenseName: "CC BY-SA 4.0"
 author: Asround
@@ -23,7 +23,9 @@ permalink: "IC-Process"
 
 本文对应资料在: [Learning_resources_sharing/个人编辑/IC_Process at master · Asround/Learning_resources_sharing](https://github.com/Asround/Learning_resources_sharing/tree/master/个人编辑/IC_Process)
 
-注意, 由于原电子书文件太大, 拆分为5个pdf文件上传, 读者需要自行考虑合并. 若想直接下载全书, 笔者还提供百度网盘下载:  [下载链接](https://pan.baidu.com/s/1_CpSG9GEFBVhUAU6JBJaHQ?pwd=1228)
+注意, 由于原电子书文件太大, GitHub 仓库中的版本拆分为 5 个 PDF 文件, 读者需要自行合并. 若想直接下载全书, 可使用下面的百度网盘链接.
+
+::baidu{url="https://pan.baidu.com/s/1_CpSG9GEFBVhUAU6JBJaHQ?pwd=1228" title="半导体材料与 IC 工艺 · 完整电子书" code="1228" description="下载完整 PDF, 无需自行合并分卷文件."}
 
 以下简单介绍一下资料内容
 
