@@ -96,9 +96,9 @@ permalink: "paper-of-methods-of-mathmatical-physics"
 - 截图或者保存图片的清晰度肯定不如直接阅读pdf.
 - 所以建议有需要的读者在下方取得pdf文件使用. (文件均较小, 没有会员也可很快下载)
 
-[试卷PDF](https://pan.baidu.com/link/zhihu/7hhWzauNh4iETHpVkXTD9S1UbwYw4WWwduJX==)
+::baidu{url="https://pan.baidu.com/link/zhihu/7hhWzauNh4iETHpVkXTD9S1UbwYw4WWwduJX==" title="数学物理方法 · 试卷 PDF"}
 
-[解析PDF](https://pan.baidu.com/link/zhihu/7RhlzNuZh2iUNxBFd0csFVlDZmRlxWOQUWlG==)
+::baidu{url="https://pan.baidu.com/link/zhihu/7RhlzNuZh2iUNxBFd0csFVlDZmRlxWOQUWlG==" title="数学物理方法 · 解析 PDF"}
 
 Latex编辑渲染pdf, 所以并没有除pdf以外的形式. 不提供latex项目以及.tex源文件.
 
