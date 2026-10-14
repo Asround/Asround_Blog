@@ -1,10 +1,10 @@
 ---
 
-import { expressiveCodeConfig, siteConfig } from "../config";
+import { siteConfig } from "../config";
 ---
 
 <!-- 全局配置载体 -->
-<div id="config-carrier" data-hue={siteConfig.themeColor.hue} data-hide-code-blocks-during-transition={expressiveCodeConfig.hideDuringThemeTransition ? "true" : "false"}>
+<div id="config-carrier" data-hue={siteConfig.themeColor.hue}>
 </div>
 
 <script is:inline define:vars={{ tocEnable: siteConfig.toc.enable, tocDepth: siteConfig.toc.depth, tocUseJapaneseBadge: siteConfig.toc.useJapaneseBadge }}>

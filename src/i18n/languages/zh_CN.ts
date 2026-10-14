@@ -21,6 +21,8 @@ export const zh_CN: Translation = {
 	[Key.tableOfContents]: "目录",
 	[Key.tocEmpty]: "当前页面没有目录",
 	[Key.tocExpandAll]: "全部展开",
+	[Key.tocAutoFollow]: "再次点击，恢复自动跟随阅读位置",
+	[Key.tocReadingProgress]: "文章阅读进度",
 	[Key.tocCollapseAll]: "全部收起",
 	[Key.tocExpand]: "展开子目录",
 	[Key.tocCollapse]: "收起子目录",

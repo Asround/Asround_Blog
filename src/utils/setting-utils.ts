@@ -1,11 +1,41 @@
 import {
 	DARK_MODE,
 	DEFAULT_THEME,
-	LIGHT_MODE,
 	// WALLPAPER_BANNER,
 } from "@constants/constants";
-import { siteConfig } from "@/config";
+import { frontendConfig, siteConfig } from "@/config";
 import type { LIGHT_DARK_MODE, WALLPAPER_MODE } from "@/types/config";
+import { tick } from "svelte";
+
+export function normalizeReadingFontSize(value: number): number {
+	const { minFontSize, maxFontSize, defaultFontSize, step } = frontendConfig.reading;
+	if (!Number.isFinite(value)) return defaultFontSize;
+	return Math.min(
+		maxFontSize,
+		Math.max(minFontSize, minFontSize + Math.round((value - minFontSize) / step) * step),
+	);
+}
+
+export function getReadingFontSize(): number {
+	try {
+		const stored = localStorage.getItem("reading-font-size");
+		return normalizeReadingFontSize(
+			stored === null ? frontendConfig.reading.defaultFontSize : Number(stored),
+		);
+	} catch {
+		return frontendConfig.reading.defaultFontSize;
+	}
+}
+
+export function setReadingFontSize(value: number): void {
+	const size = normalizeReadingFontSize(value);
+	document.documentElement.style.setProperty("--reading-font-size", `${size}px`);
+	try {
+		localStorage.setItem("reading-font-size", String(size));
+	} catch {
+		// 禁用本地存储时仍允许调整当前页面。
+	}
+}
 
 export function getDefaultHue(): number {
 	const fallback = "250";
@@ -31,120 +61,126 @@ export function setHue(hue: number): void {
 	r.style.setProperty("--hue", String(hue));
 }
 
-export function applyThemeToDocument(theme: LIGHT_DARK_MODE) {
-	// 获取当前主题状态的完整信息
-	const currentIsDark = document.documentElement.classList.contains("dark");
-	const currentTheme = document.documentElement.getAttribute("data-theme");
+let themeTransitionTimer: ReturnType<typeof setTimeout> | undefined;
 
-	// 计算目标主题状态
-	let targetIsDark = false; // 初始化默认值
-	switch (theme) {
-		case LIGHT_MODE:
-			targetIsDark = false;
-			break;
-		case DARK_MODE:
-			targetIsDark = true;
-			break;
-		default:
-			// 处理默认情况，使用当前主题状态
-			targetIsDark = currentIsDark;
-			break;
-	}
+export function applyThemeToDocument(theme: LIGHT_DARK_MODE, animate = true) {
+	const root = document.documentElement;
+	const dark = theme === DARK_MODE;
+	const codeTheme = dark ? "github-dark" : "github-light";
+	if (root.classList.contains("dark") === dark && root.dataset.theme === codeTheme) return;
 
-	// 检测是否真的需要主题切换：
-	// 1. dark类状态是否改变
-	// 2. expressiveCode主题是否需要更新
-	const needsThemeChange = currentIsDark !== targetIsDark;
-	const expectedTheme = targetIsDark ? "github-dark" : "github-light";
-	const needsCodeThemeUpdate = currentTheme !== expectedTheme;
+	const duration = !animate || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+		? 0
+		: Math.max(0, frontendConfig.themeTransitionMs);
+	clearTimeout(themeTransitionTimer);
+	root.style.setProperty("--theme-color-duration", duration + "ms");
+	root.classList.toggle("theme-color-transition", duration > 0);
+	root.classList.toggle("dark", dark);
+	root.dataset.theme = codeTheme;
+	themeTransitionTimer = setTimeout(
+		() => root.classList.remove("theme-color-transition"),
+		duration + 80,
+	);
+}
 
-	// 如果既不需要主题切换也不需要代码主题更新，直接返回
-	if (!needsThemeChange && !needsCodeThemeUpdate) {
-		return;
-	}
+let themeRequest = 0;
+let requestedTheme: LIGHT_DARK_MODE | undefined;
+let activeThemeTransition: ViewTransition | undefined;
+let activeThemeAnimation: Animation | undefined;
 
-	// 定义实际执行主题切换的函数
-	const performThemeChange = () => {
-		// 应用主题变化
-		if (needsThemeChange) {
-			if (targetIsDark) {
-				document.documentElement.classList.add("dark");
-			} else {
-				document.documentElement.classList.remove("dark");
-			}
-		}
+export function getCurrentTheme(): LIGHT_DARK_MODE {
+	return requestedTheme ?? (document.documentElement.classList.contains("dark") ? DARK_MODE : "light");
+}
 
-		// Set the theme for Expressive Code based on current mode
-		// 只在必要时更新 data-theme 属性以减少重绘
-		if (needsCodeThemeUpdate) {
-			const expressiveTheme = targetIsDark
-				? "github-dark"
-				: "github-light";
-			document.documentElement.setAttribute(
-				"data-theme",
-				expressiveTheme,
-			);
-		}
-	};
-
-	// 检查浏览器是否支持 View Transitions API
-	if (
-		needsThemeChange &&
-		document.startViewTransition &&
-		!window.matchMedia("(prefers-reduced-motion: reduce)").matches
-	) {
-		// 添加标记类，表示正在使用 View Transitions
-		document.documentElement.classList.add(
-			"is-theme-transitioning",
-			"use-view-transition",
-		);
-
-		// 使用 View Transitions API 实现平滑过渡
-		const transition = document.startViewTransition(() => {
-			performThemeChange();
-		});
-
-		// 在过渡完成后移除标记类（使用 finished promise 确保完全同步）
-		transition.finished
-			.then(() => {
-				// 使用 microtask 确保在下一个事件循环前完成清理
-				queueMicrotask(() => {
-					document.documentElement.classList.remove(
-						"is-theme-transitioning",
-						"use-view-transition",
-					);
-				});
-			})
-			.catch(() => {
-				// 如果过渡被中断，也要清理状态
-				document.documentElement.classList.remove(
-					"is-theme-transitioning",
-					"use-view-transition",
-				);
-			});
-	} else {
-		// 不支持 View Transitions API 或用户偏好减少动画，使用传统方式
-		// 只在需要主题切换时添加过渡保护
-		if (needsThemeChange) {
-			document.documentElement.classList.add("is-theme-transitioning");
-		}
-
-		performThemeChange();
-
-		// 使用 requestAnimationFrame 确保在下一帧移除过渡保护类
-		if (needsThemeChange) {
-			requestAnimationFrame(() => {
-				document.documentElement.classList.remove(
-					"is-theme-transitioning",
-				);
-			});
+function finishPageEntranceAnimations(): void {
+	// Theme snapshots must not capture an unfinished page-sized animation surface.
+	// Backwards fill releases these effects when finished; the entrance never restarts.
+	for (const animation of document.getAnimations()) {
+		if (!(animation instanceof CSSAnimation) ||
+			!["fade-in-up", "fade-in"].includes(animation.animationName)) continue;
+		const target = animation.effect instanceof KeyframeEffect ? animation.effect.target : null;
+		if (target instanceof Element &&
+			target.matches(".onload-animation, .onload-animation-fade-in")) {
+			animation.finish();
 		}
 	}
 }
 
-export function setTheme(theme: LIGHT_DARK_MODE): void {
-	localStorage.setItem("theme", theme);
-	applyThemeToDocument(theme);
+export function setTheme(theme: LIGHT_DARK_MODE, event?: MouseEvent): void {
+	const request = ++themeRequest;
+	const interrupted = !!activeThemeTransition;
+	activeThemeTransition?.skipTransition();
+	activeThemeAnimation?.cancel();
+	activeThemeAnimation = undefined;
+	const root = document.documentElement;
+	root.classList.remove("theme-circle-transition");
+	requestedTheme = theme;
+	try {
+		localStorage.setItem("theme", theme);
+	} catch {}
+	const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+	const canAnimate = frontendConfig.themeTransitionEffect === "circle" &&
+		frontendConfig.themeTransitionMs > 0 && !reducedMotion && !!document.startViewTransition;
+	const dark = theme === DARK_MODE;
+	if (interrupted || !canAnimate || root.classList.contains("dark") === dark) {
+		applyThemeToDocument(theme, !interrupted);
+		requestedTheme = undefined;
+		return;
+	}
+
+	// Keyboard activation uses the button center; pointer activation starts at the click.
+	const button = event?.currentTarget instanceof HTMLElement ? event.currentTarget.getBoundingClientRect() : undefined;
+	const x = event && event.detail > 0 ? event.clientX : button ? button.left + button.width / 2 : window.innerWidth / 2;
+	const y = event && event.detail > 0 ? event.clientY : button ? button.top + button.height / 2 : window.innerHeight / 2;
+	const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+	const clips = [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`];
+	clearTimeout(themeTransitionTimer);
+	root.classList.remove("theme-color-transition");
+	root.classList.add("theme-circle-transition");
+	try {
+		finishPageEntranceAnimations();
+		const transition = document.startViewTransition(async () => {
+			if (request !== themeRequest) return;
+			applyThemeToDocument(theme, false);
+			await tick();
+		});
+		activeThemeTransition = transition;
+		const deadline = setTimeout(() => {
+			if (request !== themeRequest) return;
+			transition.skipTransition();
+			applyThemeToDocument(theme, false);
+		}, frontendConfig.themeCaptureTimeoutMs);
+		void transition.ready.then(() => {
+			clearTimeout(deadline);
+			if (request !== themeRequest) return;
+			activeThemeAnimation = root.animate({ clipPath: dark ? clips : [...clips].reverse() }, {
+				duration: frontendConfig.themeTransitionMs,
+				easing: "ease-in-out",
+				// Keep the final clip until the view-transition snapshots are removed.
+				fill: "forwards",
+				pseudoElement: dark ? "::view-transition-new(root)" : "::view-transition-old(root)",
+			});
+			void activeThemeAnimation.finished.catch(() => {});
+		}).catch(() => {
+			clearTimeout(deadline);
+			if (request === themeRequest) applyThemeToDocument(theme, false);
+		});
+		void transition.finished.catch(() => {}).finally(() => {
+			clearTimeout(deadline);
+			if (activeThemeTransition === transition) {
+				activeThemeTransition = undefined;
+				activeThemeAnimation?.cancel();
+				activeThemeAnimation = undefined;
+			}
+			if (request !== themeRequest) return;
+			root.classList.remove("theme-circle-transition");
+			requestedTheme = undefined;
+		});
+	} catch {
+		root.classList.remove("theme-circle-transition");
+		requestedTheme = undefined;
+		applyThemeToDocument(theme);
+	}
 }
 
 export function getStoredTheme(): LIGHT_DARK_MODE {
@@ -161,7 +197,5 @@ export function getStoredWallpaperMode(): WALLPAPER_MODE {
 export function setWallpaperMode(mode: WALLPAPER_MODE): void {
 	localStorage.setItem("wallpaperMode", mode);
 	// 触发自定义事件通知其他组件壁纸模式已改变
-	window.dispatchEvent(
-		new CustomEvent("wallpaper-mode-change", { detail: { mode } }),
-	);
+	window.dispatchEvent(new CustomEvent("wallpaper-mode-change", { detail: { mode } }));
 }

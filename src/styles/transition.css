@@ -56,7 +56,7 @@ html.is-animating .transition-swup-fade {
   }
   to {
     opacity: 1;
-    transform: translateY(0) translateX(0);
+    transform: none;
   }
 }
 
@@ -73,13 +73,15 @@ html.is-animating .transition-swup-fade {
 
 /* 页面加载动画 - yukina风格 */
 .onload-animation {
-  opacity: 0;
-  animation: fade-in-up 300ms ease-out forwards;
+  /* Keep the initial frame during the delay, then release the animation layer.
+     A forwards-filled transform/opacity can retain a surface as tall as an article. */
+  opacity: 1;
+  animation: fade-in-up 300ms ease-out backwards;
 }
 
 .onload-animation-fade-in {
-  opacity: 0;
-  animation: fade-in 300ms ease-in forwards;
+  opacity: 1;
+  animation: fade-in 300ms ease-in backwards;
 }
 
 @keyframes fade-in {
@@ -144,14 +146,18 @@ html.is-animating .transition-swup-fade {
   transform: translateX(0);
 }
 
-/* 性能优化 */
+/* Text rendering; page-sized containers should not retain GPU layer hints. */
 .transition-main,
 .transition-leaving,
 .onload-animation,
 .transition-slide-in,
 .card-animation {
-  backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+.transition-slide-in,
+.card-animation {
+  backface-visibility: hidden;
 }
 
 /* 响应式调整 */

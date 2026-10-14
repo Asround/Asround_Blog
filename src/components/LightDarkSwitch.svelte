@@ -1,42 +1,25 @@
 <script lang="ts">
 import { DARK_MODE, LIGHT_MODE, DEFAULT_THEME } from "@constants/constants";
 import Icon from "@iconify/svelte";
-import { getStoredTheme, setTheme } from "@utils/setting-utils";
+import { getCurrentTheme, getStoredTheme, setTheme } from "@utils/setting-utils";
 import type { LIGHT_DARK_MODE } from "@/types/config.ts";
 import { onMount } from "svelte";
 
-const seq: LIGHT_DARK_MODE[] = [LIGHT_MODE, DARK_MODE];
 let mode: LIGHT_DARK_MODE = $state(DEFAULT_THEME);
-let isChanging = false;
 
 onMount(() => {
     mode = getStoredTheme();
+    // 与常驻阅读侧栏同步，避免另一入口切换后按钮状态滞后。
+    const syncTheme = () => {
+        mode = document.documentElement.classList.contains('dark') ? DARK_MODE : LIGHT_MODE;
+    };
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
 });
 
-function switchScheme(newMode: LIGHT_DARK_MODE) {
-	// 防止连续快速点击
-	if (isChanging) return;
-
-	isChanging = true;
-	mode = newMode;
-	setTheme(newMode);
-
-	// 50ms 后重置状态，防止过快切换
-	setTimeout(() => {
-		isChanging = false;
-	}, 50);
-}
-
-function toggleScheme() {
-	if (isChanging) return;
-
-	let i = 0;
-	for (; i < seq.length; i++) {
-		if (seq[i] === mode) {
-			break;
-		}
-	}
-	switchScheme(seq[(i + 1) % seq.length]);
+function toggleScheme(event: MouseEvent) {
+	setTheme(getCurrentTheme() === DARK_MODE ? LIGHT_MODE : DARK_MODE, event);
 }
 
 // 添加Swup钩子监听，确保在页面切换后同步主题状态

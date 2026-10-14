@@ -1,9 +1,11 @@
 ---
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import MusicPlayer from "@components/widget/MusicPlayer.svelte";
+import ReadingControls from "@components/control/ReadingControls.svelte";
 import Pio from "@components/widget/Pio.svelte"; // 使用 Svelte 版本的 Pio 组件
 import {
 	musicPlayerConfig,
+	frontendConfig,
 	pioConfig,
 	profileConfig,
 	siteConfig,
@@ -36,9 +38,11 @@ interface Props {
 	lang?: string;
 	setOGTypeArticle?: boolean;
 	postSlug?: string;
+	canonicalPath?: string;
+	excludeFromSearch?: boolean;
 }
 
-let { title, banner, description, lang, setOGTypeArticle, postSlug } =
+let { title, banner, description, lang, setOGTypeArticle, postSlug, canonicalPath, excludeFromSearch } =
 	Astro.props;
 
 // apply a class to the body element to decide the height of the banner, only used for initial page load
@@ -169,10 +173,42 @@ if (siteConfig.font) {
 <!doctype html>
 <html
 	lang={siteLang}
-	class="bg-[var(--page-bg)] text-[14px] md:text-[16px]"
+	class:list={["bg-[var(--page-bg)] text-[14px] md:text-[16px]", { dark: DEFAULT_THEME === DARK_MODE }]}
 	data-overlayscrollbars-initialize
+	data-pagefind-ignore={excludeFromSearch ? "all" : undefined}
+	data-reading-enabled={frontendConfig.reading.enable ? "true" : undefined}
+	data-reading-sidebar={frontendConfig.reading.enable && frontendConfig.reading.sidebar ? "true" : undefined}
+	data-reader-article={postSlug ? "true" : undefined}
+	data-reader-left={postSlug && frontendConfig.reading.enable && frontendConfig.reading.sidebar && frontendConfig.reading.collapseLeftSidebar ? "collapsed" : undefined}
 >
 	<head>
+		<script is:inline define:vars={{ reading: frontendConfig.reading }}>
+			// 在首帧恢复阅读设置，避免刷新后字号跳动；不改变全站 rem 或手机样式。
+			if (reading.enable) {
+				let size = reading.defaultFontSize;
+				try {
+					const stored = localStorage.getItem("reading-font-size");
+					const value = stored === null ? size : Number(stored);
+					if (Number.isFinite(value)) size = Math.min(reading.maxFontSize, Math.max(reading.minFontSize,
+						reading.minFontSize + Math.round((value - reading.minFontSize) / reading.step) * reading.step));
+				} catch {}
+				const root = document.documentElement;
+				root.style.setProperty("--reading-font-size", `${size}px`);
+				root.dataset.readerLeftManaged = String(window.matchMedia(
+					"(min-width: 1024px), (hover: hover) and (pointer: fine)"
+				).matches);
+				root.style.setProperty("--reading-sidebar-width", `${reading.sidebarWidth}px`);
+				root.style.setProperty("--reading-toc-width", `${reading.tocWidth}px`);
+				root.style.setProperty("--reading-toc-gap", `${reading.tocGap}px`);
+				let tocMode = reading.defaultTocMode;
+				try {
+					const stored = localStorage.getItem("reader-toc-mode");
+					if (stored === "panel" || stored === "float") tocMode = stored;
+				} catch {}
+				root.dataset.readerTocMode = tocMode;
+			}
+		</script>
+		{canonicalPath && <link rel="canonical" href={new URL(canonicalPath, Astro.site || siteConfig.siteURL).href} />}
 		<!-- 第三方分析脚本 - 延迟加载优化 -->
 		<script is:inline>
 			// 使用 requestIdleCallback 延迟加载第三方脚本
@@ -401,6 +437,7 @@ if (siteConfig.font) {
 
 		<ConfigCarrier />
 		<slot />
+		{frontendConfig.reading.enable && frontendConfig.reading.sidebar && <ReadingControls initialArticle={!!postSlug} client:load />}
 
 		<!-- Music Player - 仅在启用时加载 -->
 		{musicPlayerConfig.enable && <MusicPlayer client:idle />}
@@ -1373,9 +1410,4 @@ function disableAnimation() {
 <!-- 代码块折叠功能 -->
 <script>
 	import "../scripts/code-collapse.js";
-</script>
-
-<!-- 主题切换综合性能优化器（包含代码块优化、重型元素优化、性能诊断） -->
-<script>
-	import "../scripts/theme-optimizer.js";
 </script>

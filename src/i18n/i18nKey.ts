@@ -18,6 +18,8 @@ enum I18nKey {
 	tableOfContents = "tableOfContents",
 	tocEmpty = "tocEmpty",
 	tocExpandAll = "tocExpandAll",
+	tocAutoFollow = "tocAutoFollow",
+	tocReadingProgress = "tocReadingProgress",
 	tocCollapseAll = "tocCollapseAll",
 	tocExpand = "tocExpand",
 	tocCollapse = "tocCollapse",

@@ -21,6 +21,50 @@ import { LinkPreset } from "./types/config";
 // 定义站点语言
 const SITE_LANG = "zh_CN"; // 语言代码，例如：'en', 'zh_CN', 'ja' 等。
 const SITE_TIMEZONE = 8; //设置你的网站时区 from -12 to 12 default in UTC+8
+
+// 本次前端优化的集中配置：可独立关闭功能，无需修改文章或目录结构。
+export const frontendConfig = {
+	search: {
+		deduplicate: true, // 旧索引的前端去重保护
+		excludeLegacyFromIndex: true, // 正式索引仅收录文章的主要入口
+		matchCaseOption: true, // 顶栏和归档均提供“匹配大小写”选项，默认不勾选
+		highlightMatches: true, // 高亮标题、摘要及命中的标签
+	},
+	reading: {
+		enable: true,
+		defaultFontSize: 16,
+		minFontSize: 14,
+		maxFontSize: 22,
+		step: 1,
+		sidebar: true, // 桌面常驻阅读控制栏
+		sidebarWidth: 40, // 窄图标工具条（px）
+		tocWidth: 260, // 常驻目录宽度（px）
+		tocGap: 12, // 正文、目录和右侧工具条之间的间隔（px）
+		defaultTocOpen: true, // 文章目录默认展开，可通过右侧按钮收起
+		tocProgressRing: true, // 目录开关显示阅读进度圆环
+		autoOutsideToc: true, // 外侧空间足够时，目录自动常驻在正文之外
+		defaultTocMode: "panel" as "panel" | "float",
+		collapseLeftSidebar: true, // 仅文章页默认收起左侧栏
+		balanceArticleWithSidebar: true, // 左栏优先利用框架外空白，正文仅在左侧预留实际占位
+		leftSidebarEdge: 38, // 左栏距屏幕左边缘的最小距离（px），给收起箭头留出空间
+	},
+	themeTransitionEffect: "circle" as "circle" | "fade", // 圆形展开/收起；fade 恢复颜色渐变
+	themeTransitionMs: 300, // 动效时长；0 为即时切换
+	themeCaptureTimeoutMs: 250, // 快照准备超时则立即切换，避免加载阶段长时间等待
+	archiveFilters: true,
+	categoryLabels: {
+		"Learning Resource Sharing": "学习资料",
+		"Random Notes": "随笔",
+		Tutorial: "教程",
+	} as Record<string, string>,
+	resourceEntry: {
+		enable: true,
+		category: "Learning Resource Sharing",
+		label: "课程资料",
+	},
+	chronologicalFeeds: true,
+};
+
 export const siteConfig: SiteConfig = {
 	title: "Asround",
 	subtitle: "桂香尘处减，练影月前空。",
@@ -436,8 +480,6 @@ export const expressiveCodeConfig: ExpressiveCodeConfig = {
 	// 注意：某些样式（如背景颜色）已被覆盖，请参阅 astro.config.mjs 文件。
 	// 请选择深色主题，因为此博客主题目前仅支持深色背景
 	theme: "github-dark",
-	// 是否在主题切换时隐藏代码块以避免卡顿问题
-	hideDuringThemeTransition: true,
 };
 
 export const commentConfig: CommentConfig = {

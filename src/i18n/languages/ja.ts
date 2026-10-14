@@ -21,6 +21,8 @@ export const ja: Translation = {
 	[Key.tableOfContents]: "目次",
 	[Key.tocEmpty]: "目次はありません",
 	[Key.tocExpandAll]: "すべて展開",
+	[Key.tocAutoFollow]: "もう一度クリックして読書位置に自動追従",
+	[Key.tocReadingProgress]: "記事の読書進捗",
 	[Key.tocCollapseAll]: "すべて折りたたむ",
 	[Key.tocExpand]: "小見出しを展開",
 	[Key.tocCollapse]: "小見出しを折りたたむ",

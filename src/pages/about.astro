@@ -5,6 +5,9 @@ import Markdown from "@components/misc/Markdown.astro";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { frontendConfig, siteConfig } from "../config";
+import { getCategoryUrl, url } from "../utils/url-utils";
+import { Icon } from "astro-icon/components";
 
 const aboutPost = await getEntry("spec", "about");
 
@@ -23,15 +26,23 @@ const title = i18n(I18nKey.about);
     <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
         <div class="card-base z-10 px-9 py-6 relative w-full">
             <!-- 页面标题 -->
-            <div class="flex flex-col items-start justify-center mb-8">
+            <div class="flex flex-col items-start justify-center mb-8 lg:flex-row lg:justify-between lg:gap-6 lg:pb-5 lg:border-b lg:border-[var(--line-divider)]">
+              <div>
                 <h1 class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
                           before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
                           before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4">
                     {title}
                 </h1>
+                {frontendConfig.resourceEntry.enable && <p class="hidden lg:block text-sm text-50 mt-3">微电子学习笔记、课程资料、工具教程和生活记录。</p>}
+              </div>
+              {frontendConfig.resourceEntry.enable && (
+                <nav aria-label="关于页快捷入口" class="hidden lg:flex flex-wrap items-center gap-2 mt-1 shrink-0">
+                    <a class="about-quick-link" href={url('/archive/')}><Icon name="material-symbols:article-outline" />文章归档<span aria-hidden="true">↗</span></a>
+                    <a class="about-quick-link" href={getCategoryUrl(frontendConfig.resourceEntry.category)}><Icon name="material-symbols:school-outline" />{frontendConfig.resourceEntry.label}<span aria-hidden="true">↗</span></a>
+                    {siteConfig.featurePages.diary && <a class="about-quick-link" href={url('/diary/')}><Icon name="material-symbols:book-outline" />生活日记<span aria-hidden="true">↗</span></a>}
+                </nav>
+              )}
             </div>
-            
-            
             <!-- 从MD文件读取的内容 -->
             <Markdown class="mt-2">
                 <Content />
@@ -39,3 +50,18 @@ const title = i18n(I18nKey.about);
         </div>
     </div>
 </MainGridLayout>
+
+<style>
+.about-quick-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 12px; border-radius: 9px;
+    border: 1px solid var(--line-divider);
+    background: var(--btn-regular-bg); color: var(--btn-content);
+    font-size: 13px; font-weight: 600;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+.about-quick-link:hover { background: var(--btn-regular-bg-hover); border-color: var(--primary); }
+.about-quick-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.about-quick-link :global(svg) { width: 16px; height: 16px; }
+.about-quick-link span { opacity: 0.65; }
+</style>

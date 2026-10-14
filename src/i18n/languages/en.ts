@@ -21,6 +21,8 @@ export const en: Translation = {
 	[Key.tableOfContents]: "Table of Contents",
 	[Key.tocEmpty]: "No table of contents",
 	[Key.tocExpandAll]: "Expand all",
+	[Key.tocAutoFollow]: "Click again to follow the reading position",
+	[Key.tocReadingProgress]: "Article reading progress",
 	[Key.tocCollapseAll]: "Collapse all",
 	[Key.tocExpand]: "Expand subsections",
 	[Key.tocCollapse]: "Collapse subsections",

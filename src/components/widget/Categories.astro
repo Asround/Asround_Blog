@@ -2,6 +2,7 @@
 import I18nKey from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
 import { getCategoryList } from "../../utils/content-utils";
+import { getCategoryLabel } from "../../utils/category-utils";
 import { widgetManager } from "../../utils/widget-manager";
 import ButtonLink from "../control/ButtonLink.astro";
 import WidgetLayout from "./WidgetLayout.astro";
@@ -33,9 +34,9 @@ const style = Astro.props.style;
         <ButtonLink
             url={c.url}
             badge={String(c.count)}
-            label={`View all posts in the ${c.name.trim()} category`}
+            label={`查看${getCategoryLabel(c.name)}分类的文章`}
         >
-            {c.name.trim()}
+            {getCategoryLabel(c.name)}
         </ButtonLink>
     )}
 </WidgetLayout>

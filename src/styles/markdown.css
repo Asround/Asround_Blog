@@ -196,3 +196,33 @@
 :root:not(.dark) .custom-md spoiler {
   --_spoiler-mask: color-mix(in oklch, var(--primary) 55%, white 45%);
 }
+
+/* 桌面阅读设置独立于页面缩放；删除此块或关闭 reading.enable 即可恢复原排版。 */
+@media (min-width: 1024px) {
+  :root[data-reading-enabled="true"] #post-container {
+    font-size: var(--reading-font-size, 16px);
+  }
+  :root[data-reading-enabled="true"] #post-container .custom-md {
+    font-size: var(--reading-font-size, 16px);
+    line-height: 1.8;
+  }
+  :root[data-reading-enabled="true"] #post-container .custom-md h1 { font-size: 2em; }
+  :root[data-reading-enabled="true"] #post-container .custom-md h2 { font-size: 1.75em; }
+  :root[data-reading-enabled="true"] #post-container .custom-md h3 { font-size: 1.5em; }
+  :root[data-reading-enabled="true"] #post-container .custom-md h4 { font-size: 1.25em; }
+  :root[data-reading-enabled="true"] #post-container .custom-md h5 { font-size: 1.125em; }
+  :root[data-reading-enabled="true"] #post-container .custom-md h6 { font-size: 1em; }
+  :root[data-reading-enabled="true"] #post-container .custom-md :is(h1,h2,h3,h4,h5,h6) {
+    line-height: 1.4;
+    font-weight: 700;
+    margin-block: 1.5em 0.75em;
+  }
+  :root[data-reading-enabled="true"] #post-container .reading-title {
+    font-size: 2.25em;
+    line-height: 1.3;
+  }
+  :root[data-reading-enabled="true"] #post-container .custom-md :is(code, pre, table) { font-size: 0.9em; }
+  :root[data-reading-enabled="true"] #post-container .custom-md pre { font-size: calc(var(--reading-font-size, 16px) * 0.9); }
+  :root[data-reading-enabled="true"] #post-container .custom-md pre code { font-size: inherit; }
+  :root[data-reading-enabled="true"] #post-container .custom-md .expressive-code { --ec-codeFontSize: calc(var(--reading-font-size, 16px) * 0.9); }
+}

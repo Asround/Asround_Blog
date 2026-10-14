@@ -1,11 +1,14 @@
 <script lang="ts">
-import { onMount } from "svelte";
+import { onMount, tick } from "svelte";
 import { siteConfig } from "../config";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { onPageView } from "../utils/page-view";
 
 export let onNavigate: () => void = () => {};
+export let followActive = false;
+export let showProgress = false;
+export let readingProgress = 0;
 
 type Heading = {
 	id: string;
@@ -21,6 +24,8 @@ type Heading = {
 let root: HTMLElement;
 let items: Heading[] = [];
 let expanded = new Set<string>();
+let expandAll = false;
+let manualOverrides = new Map<string, boolean>();
 let activeId = "";
 let visibleItems: Heading[] = [];
 let visibleActiveId = "";
@@ -40,17 +45,65 @@ function activeAncestor(headings: Heading[], expandedIds: Set<string>, currentId
 	return item?.id ?? "";
 }
 
+function expandedForReading(headings: Heading[], currentId: string, all: boolean, overrides: Map<string, boolean>): Set<string> {
+	const next = new Set(
+		headings.filter((item) => item.children.some((index) =>
+			all || headings[index].level <= (siteConfig.toc.defaultExpandedDepth ?? 3),
+		)).map((item) => item.id),
+	);
+	let current = headings.find((item) => item.id === currentId);
+	while (current && current.parent >= 0) {
+		current = headings[current.parent];
+		next.add(current.id);
+	}
+	if (!all) for (const [id, open] of overrides) {
+		if (open) next.add(id);
+		else next.delete(id);
+	}
+	return next;
+}
+
+$: expanded = expandedForReading(items, activeId, expandAll, manualOverrides);
 $: visibleItems = items.filter((item) => isVisible(item, items, expanded));
 $: visibleActiveId = activeAncestor(items, expanded, activeId);
 $: expandable = items.filter((item) => item.children.length > 0);
+$: if (followActive && visibleActiveId) followCurrentHeading(visibleActiveId);
+
+async function followCurrentHeading(id: string) {
+	await tick();
+	const scroller = root?.closest<HTMLElement>("[data-toc-scroll]");
+	const active = root?.querySelector<HTMLElement>('[aria-current="location"]');
+	if (!scroller || !active || !scroller.clientHeight || id !== visibleActiveId) return;
+	const viewport = scroller.getBoundingClientRect();
+	const item = active.getBoundingClientRect();
+	const controlsHeight = root?.querySelector<HTMLElement>(".toc-controls.with-progress")?.offsetHeight ?? 0;
+	if (item.top < viewport.top + controlsHeight + 12)
+		scroller.scrollTop -= viewport.top + controlsHeight + 12 - item.top + 8;
+	else if (item.bottom > viewport.bottom) scroller.scrollTop += item.bottom - viewport.bottom + 8;
+}
 
 function updateActive() {
+	const previousProgress = readingProgress;
+	const content = document.querySelector<HTMLElement>("#post-container .custom-md");
+	if (content) {
+		const rect = content.getBoundingClientRect();
+		const range = Math.max(0, rect.height - Math.max(0, window.innerHeight - 150));
+		readingProgress = range > 0
+			? Math.min(1, Math.max(0, (150 - rect.top) / range))
+			: rect.top <= 150 ? 1 : 0;
+	} else readingProgress = 0;
+	if (readingProgress !== previousProgress) root?.dispatchEvent(
+		new CustomEvent("toc:progress", { bubbles: true, detail: { progress: readingProgress } }),
+	);
 	let current = "";
 	for (const item of items) {
 		if (item.element.getBoundingClientRect().top > 150) break;
 		current = item.id;
 	}
-	activeId = current;
+	if (activeId !== current) {
+		manualOverrides = new Map();
+		activeId = current;
+	}
 }
 
 function navigate(event: MouseEvent, item: Heading) {
@@ -74,15 +127,19 @@ function navigate(event: MouseEvent, item: Heading) {
 }
 
 function toggle(id: string) {
-	const next = new Set(expanded);
-	if (next.has(id)) next.delete(id);
-	else next.add(id);
-	expanded = next;
+	expandAll = false;
+	manualOverrides = new Map(manualOverrides).set(id, !expanded.has(id));
+}
+
+function toggleAll() {
+	expandAll = !expandAll;
+	manualOverrides = new Map();
 }
 
 onMount(() => {
 	let signature = "";
 	let observer: MutationObserver | undefined;
+	let resizeObserver: ResizeObserver | undefined;
 	let frame = 0;
 	const cleanText = (element: Element) =>
 		(element.textContent ?? "").replace(/#+\s*$/, "").trim();
@@ -144,16 +201,8 @@ onMount(() => {
 			stack.push(index);
 		}
 		items = next;
-		expanded = new Set(
-			next
-				.filter((item) =>
-					item.children.some(
-						(index) =>
-							next[index].level <= (siteConfig.toc.defaultExpandedDepth ?? 3),
-					),
-				)
-				.map((item) => item.id),
-		);
+		expandAll = false;
+		manualOverrides = new Map();
 		updateActive();
 		root.dispatchEvent(
 			new CustomEvent("toc:updated", {
@@ -168,11 +217,17 @@ onMount(() => {
 	};
 	const init = () => {
 		observer?.disconnect();
+		resizeObserver?.disconnect();
 		generate();
 		const container = document.getElementById("post-container");
 		if (container) {
 			observer = new MutationObserver(schedule);
 			observer.observe(container, { childList: true, subtree: true });
+			const content = container.querySelector(".custom-md");
+			if (content) {
+				resizeObserver = new ResizeObserver(updateActive);
+				resizeObserver.observe(content);
+			}
 		}
 	};
 	init();
@@ -182,6 +237,7 @@ onMount(() => {
 	return () => {
 		unsubscribe();
 		observer?.disconnect();
+		resizeObserver?.disconnect();
 		cancelAnimationFrame(frame);
 		window.removeEventListener("scroll", updateActive);
 		window.removeEventListener("resize", updateActive);
@@ -190,23 +246,20 @@ onMount(() => {
 </script>
 
 <div bind:this={root} class="collapsible-toc">
+	{#if showProgress || expandable.length > 0}
+		<div class="toc-controls" class:with-progress={showProgress}>
+			{#if showProgress}
+				<progress class="toc-reading-progress" aria-label={i18n(I18nKey.tocReadingProgress)} max="1" value={readingProgress}></progress>
+			{/if}
+			{#if expandable.length > 0}
+				<button type="button" on:click={toggleAll} aria-pressed={expandAll}
+					title={expandAll ? i18n(I18nKey.tocAutoFollow) : i18n(I18nKey.tocExpandAll)}>{i18n(I18nKey.tocExpandAll)}</button>
+			{/if}
+		</div>
+	{/if}
 	{#if items.length === 0}
 		<p class="toc-empty">{i18n(I18nKey.tocEmpty)}</p>
 	{:else}
-		{#if expandable.length > 0}
-			<div class="toc-controls">
-				<button
-					type="button"
-					on:click={() => expanded = new Set(expandable.map((item) => item.id))}
-					disabled={expandable.every((item) => expanded.has(item.id))}
-				>{i18n(I18nKey.tocExpandAll)}</button>
-				<button
-					type="button"
-					on:click={() => expanded = new Set()}
-					disabled={expanded.size === 0}
-				>{i18n(I18nKey.tocCollapseAll)}</button>
-			</div>
-		{/if}
 		<nav class="toc-list" aria-label={i18n(I18nKey.tableOfContents)}>
 			{#each visibleItems as item (item.id)}
 				<div
@@ -255,25 +308,50 @@ onMount(() => {
 	:global(.dark) .collapsible-toc {
 		color: rgba(255, 255, 255, 0.75);
 	}
+	.toc-reading-progress {
+		display: block;
+		flex: 1;
+		min-width: 0;
+		width: auto;
+		height: 4px;
+		margin: 0;
+		border: 0;
+		border-radius: 999px;
+		overflow: hidden;
+		appearance: none;
+		background: var(--btn-regular-bg);
+		color: var(--primary);
+	}
+	.toc-reading-progress::-webkit-progress-bar { background: var(--btn-regular-bg); border-radius: 999px; }
+	.toc-reading-progress::-webkit-progress-value { background: var(--primary); border-radius: 999px; }
+	.toc-reading-progress::-moz-progress-bar { background: var(--primary); border-radius: 999px; }
 	.toc-controls {
 		display: flex;
+		align-items: center;
 		justify-content: flex-end;
 		gap: 0.5rem;
 		padding: 0 0 0.5rem;
 		margin-bottom: 0.25rem;
 		border-bottom: 1px solid var(--line-color);
 	}
+	.toc-controls.with-progress {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		background: var(--card-bg);
+	}
 	.toc-controls button {
+		flex-shrink: 0;
+		white-space: nowrap;
 		font-size: 0.75rem;
 		padding: 0.25rem 0.4rem;
 		border-radius: 0.375rem;
 		color: var(--primary);
 	}
-	.toc-controls button:disabled {
-		opacity: 0.4;
-		cursor: default;
+	.toc-controls button[aria-pressed="true"] {
+		background: var(--btn-plain-bg-active);
 	}
-	.toc-controls button:hover:not(:disabled),
+	.toc-controls button:hover,
 	.toc-toggle:hover {
 		background: var(--btn-plain-bg-hover);
 	}

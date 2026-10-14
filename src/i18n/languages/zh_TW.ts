@@ -21,6 +21,8 @@ export const zh_TW: Translation = {
 	[Key.tableOfContents]: "目錄",
 	[Key.tocEmpty]: "當前頁面沒有目錄",
 	[Key.tocExpandAll]: "全部展開",
+	[Key.tocAutoFollow]: "再次點擊，恢復自動跟隨閱讀位置",
+	[Key.tocReadingProgress]: "文章閱讀進度",
 	[Key.tocCollapseAll]: "全部收起",
 	[Key.tocExpand]: "展開子目錄",
 	[Key.tocCollapse]: "收起子目錄",

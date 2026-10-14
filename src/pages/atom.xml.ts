@@ -5,7 +5,7 @@ import MarkdownIt from "markdown-it";
 import { parse as htmlParser } from "node-html-parser";
 import sanitizeHtml from "sanitize-html";
 import { profileConfig, siteConfig } from "@/config";
-import { getSortedPosts } from "@/utils/content-utils";
+import { getFeedPosts } from "@/utils/content-utils";
 import { getPostUrl } from "@/utils/url-utils";
 import { initPostIdMap } from "@/utils/permalink-utils";
 
@@ -21,11 +21,7 @@ export async function GET(context: APIContext) {
 		throw Error("site not set");
 	}
 
-	// Use the same ordering as site listing (pinned first, then by published desc)
-	// 过滤掉加密文章和草稿文章
-	const posts = (await getSortedPosts()).filter(
-		(post) => !post.data.encrypted && post.data.draft !== true,
-	);
+	const posts = await getFeedPosts();
 
 	// 初始化文章 ID 映射（用于 permalink 功能）
 	initPostIdMap(posts);

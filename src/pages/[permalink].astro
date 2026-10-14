@@ -16,7 +16,7 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
-import { getFileDirFromPath, getPostUrlBySlug } from "@utils/url-utils";
+import { getFileDirFromPath, getPostUrl, getPostUrlBySlug } from "@utils/url-utils";
 import { initPostIdMap, hasCustomPermalink, generatePermalinkSlug } from "@utils/permalink-utils";
 import { permalinkConfig } from "@/config";
 import { Icon } from "astro-icon/components";
@@ -113,6 +113,7 @@ const jsonLd = {
     lang={entry.data.lang}
     setOGTypeArticle={true}
     postSlug={entry.id}
+    canonicalPath={getPostUrl(entry)}
     headings={headings}
 >
     <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
@@ -172,7 +173,7 @@ const jsonLd = {
                     data-pagefind-body
                     data-pagefind-weight="10"
                     data-pagefind-meta="title"
-                    class="transition w-full block font-bold mb-3
+                    class="transition w-full block font-bold mb-3 reading-title
                     text-3xl md:text-[2.25rem]/[2.75rem]
                     text-black/90 dark:text-white/90
                     md:before:w-1 before:h-5 before:rounded-md before:bg-[var(--primary)]

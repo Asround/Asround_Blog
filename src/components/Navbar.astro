@@ -1,9 +1,10 @@
 ---
 import { Icon } from "astro-icon/components";
-import { navBarConfig, siteConfig } from "../config";
+import { frontendConfig, navBarConfig, siteConfig } from "../config";
+import { getSortedPostsList } from "../utils/content-utils";
 import { LinkPresets } from "../constants/link-presets";
 import { LinkPreset, type NavBarLink } from "../types/config";
-import { url } from "../utils/url-utils";
+import { getCategoryUrl, getPostUrlByAlias, getPostUrlBySlug, url } from "../utils/url-utils";
 import LayoutSwitchButton from "./LayoutSwitchButton.svelte";
 import LightDarkSwitch from "./LightDarkSwitch.svelte";
 import MobileTOC from "./MobileTOC.svelte";
@@ -34,11 +35,31 @@ let links: NavBarLink[] = navBarConfig.links.map(
 		return item;
 	},
 );
+const searchArticles = (await getSortedPostsList()).map((post) => ({
+	id: post.id,
+	url: post.url!,
+	paths: [post.url!, getPostUrlBySlug(post.id),
+		...(post.data.alias ? [getPostUrlByAlias(post.data.alias)] : [])],
+	title: post.data.title,
+	description: post.data.description,
+	tags: post.data.tags,
+}));
+// 桌面新增资料入口，手机菜单沿用原有导航。
+if (frontendConfig.resourceEntry.enable) {
+	links.splice(2, 0, {
+		name: frontendConfig.resourceEntry.label,
+		url: getCategoryUrl(frontendConfig.resourceEntry.category),
+		icon: "material-symbols:school-outline",
+	});
+}
+const mobileLinks = links.filter((link) =>
+	!frontendConfig.resourceEntry.enable || link.name !== frontendConfig.resourceEntry.label,
+);
 ---
 <div id="navbar" class="z-50 onload-animation group" data-transparent-mode={navbarTransparentMode} data-is-home={isHomePage}>
     <div class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"></div> <!-- used for onload animation -->
     <div class:list={[className, "!overflow-visible max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-4"]}>
-        <a href={url('/')} class="btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-5 font-bold active:scale-95 shrink-0 transition-all duration-300">
+        <a href={url('/')} aria-label={siteConfig.navbarTitle?.text || siteConfig.title} class="navbar-home btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-5 font-bold active:scale-95 shrink-0 transition-all duration-300">
             <div class="flex flex-row items-center text-md">
 				{/* 使用navbarTitle配置或默认配置 */}
                 {siteConfig.navbarTitle ? (
@@ -65,7 +86,7 @@ let links: NavBarLink[] = navBarConfig.links.map(
         </div>
         <div class="flex items-center gap-1">
             <div id="search-container">
-                <Search client:only="svelte"></Search>
+                <Search articles={searchArticles} client:only="svelte"></Search>
             </div>
             {siteConfig.toc.enable && <MobileTOC client:only="svelte"></MobileTOC>}
             {!siteConfig.themeColor.fixed && (
@@ -88,7 +109,7 @@ let links: NavBarLink[] = navBarConfig.links.map(
                 <Icon name="material-symbols:unfold-more" class="text-[1.25rem]"></Icon>
             </button>
         </div>
-        <NavMenuPanel links={links}></NavMenuPanel>
+        <NavMenuPanel links={mobileLinks}></NavMenuPanel>
         <DisplaySettings client:only="svelte"></DisplaySettings>
     </div>
 </div>

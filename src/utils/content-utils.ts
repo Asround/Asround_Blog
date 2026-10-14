@@ -3,6 +3,7 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl, getPostUrl } from "@utils/url-utils";
 import { initPostIdMap } from "@utils/permalink-utils";
+import { frontendConfig } from "../config";
 
 // // Retrieve posts and sort them by publication date
 async function getRawSortedPosts() {
@@ -49,6 +50,16 @@ export async function getSortedPosts() {
 	}
 
 	return sorted;
+}
+
+// 订阅独立于首页置顶规则；开发模式也不向公开订阅泄漏草稿。
+export async function getFeedPosts() {
+	const allPosts = await getSortedPosts();
+	initPostIdMap(allPosts);
+	const posts = allPosts.filter((post) => !post.data.draft && !post.data.encrypted);
+	return frontendConfig.chronologicalFeeds
+		? posts.sort((a, b) => b.data.published.getTime() - a.data.published.getTime() || a.id.localeCompare(b.id))
+		: posts;
 }
 export type PostForList = {
 	id: string;

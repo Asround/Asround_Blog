@@ -36,8 +36,9 @@ import { i18n } from "../../i18n/translation";
 		</div>
 	</button>
 	<div id="floating-toc-panel" class="floating-toc-panel" inert>
-		<div class="floating-toc-panel-content" id="floating-toc-content">
-			<CollapsibleTOC client:load />
+		<div class="floating-toc-panel-content" id="floating-toc-content" data-toc-scroll>
+			<div class="floating-toc-heading">{i18n(I18nKey.tableOfContents)}</div>
+			<CollapsibleTOC followActive={true} showProgress={true} client:load />
 		</div>
 	</div>
 </div>
@@ -130,6 +131,7 @@ import { i18n } from "../../i18n/translation";
 		overflow-y: auto;
 		overflow-x: hidden;
 	}
+	.floating-toc-heading { font-size: 14px; font-weight: 600; color: var(--content-meta); margin-bottom: 8px; }
 
 	.floating-toc-panel-content::-webkit-scrollbar {
 		width: 4px;
@@ -236,6 +238,7 @@ import { i18n } from "../../i18n/translation";
 	});
 	window.addEventListener("scroll", updateProgress, { passive: true });
 	window.addEventListener("resize", updateProgress);
+	document.addEventListener("reader:toc-mode", () => setOpen(false));
 	onPageView(refresh);
 	refresh();
 </script>
