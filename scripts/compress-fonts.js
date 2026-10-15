@@ -210,7 +210,7 @@ async function fetchMetingPlaylistText() {
 		);
 		let mode = "meting"; // 默认模式
 		let meting_api =
-			"https://www.bilibili.uno/api?server=:server&type=:type&id=:id&auth=:auth&r=:r";
+			"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&auth=:auth&r=:r";
 		let meting_id = "14164869977";
 		let meting_server = "netease";
 		let meting_type = "playlist";
@@ -325,7 +325,7 @@ async function fetchMetingPlaylistText() {
 				);
 			} else {
 				console.log(
-					`⚠ Failed to fetch Meting API data: ${fetchError.message}, skipping music text collection`,
+					`⚠ Failed to fetch Meting API data: ${fetchError.message}${fetchError.cause?.code ? ` (${fetchError.cause.code})` : ""}, skipping music text collection`,
 				);
 			}
 		}
