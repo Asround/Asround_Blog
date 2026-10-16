@@ -165,9 +165,9 @@ export function setTheme(theme: LIGHT_DARK_MODE, event?: MouseEvent): void {
 			void activeThemeAnimation.finished.catch(() => {});
 			// Once ready, rendering resumes. Let the old-state overlay reach the
 			// compositor before updating cross-origin frames to avoid a palette flash.
-			requestAnimationFrame(() => requestAnimationFrame(() => {
+			requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {
 				if (request === themeRequest) document.dispatchEvent(new Event("theme:transition-update"));
-			}));
+			})));
 		}).catch(() => {
 			clearTimeout(deadline);
 			if (request === themeRequest) applyThemeToDocument(theme, false);

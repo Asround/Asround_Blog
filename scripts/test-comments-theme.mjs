@@ -13,12 +13,17 @@ const context = await browser.newContext({ colorScheme: null, viewport: { width,
 const enhancementCSS = await readFile(new URL("../public/giscus.css", import.meta.url), "utf8");
 await context.route("https://asround-blog.pages.dev/giscus.css", (route) => route.fulfill({ contentType: "text/css", headers: { "access-control-allow-origin": "*" }, body: enhancementCSS }));
 await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com)\//, (route) => route.abort());
-await context.route("https://giscus.app/**", (route) => route.fulfill({
+await context.route("https://giscus.app/**", (route) => new URL(route.request().url()).pathname.endsWith(".css")
+	? route.fulfill({ contentType: "text/css", headers: { "access-control-allow-origin": "*" }, body: "" })
+	: route.fulfill({
 	contentType: "text/html; charset=utf-8",
 	body: `<!doctype html><html><head><style>
-body{margin:0;background:white;color:black}textarea{display:block;box-sizing:border-box;width:100%;height:200px;background:rgb(246,248,250);color:black}
-@media(prefers-color-scheme:dark){body{background:rgb(13,17,23);color:white}textarea{background:rgb(1,4,9);color:white}}
-</style></head><body><textarea aria-label="test draft"></textarea><script>
+body{margin:0;background:white;color:black}textarea{display:block;box-sizing:border-box;width:100%;height:200px;background:var(--color-canvas-inset,rgb(246,248,250));color:var(--color-fg-default,black)}
+@media(prefers-color-scheme:dark){body{background:rgb(13,17,23);color:white}textarea{background:var(--color-canvas-inset,rgb(1,4,9));color:var(--color-fg-default,white)}}
+</style></head><body><main><textarea aria-label="test draft"></textarea></main><script>
+const theme=new URL(location.href).searchParams.get('theme');
+if(theme && /^https?:/.test(theme)){const link=document.createElement('link');link.rel='stylesheet';link.crossOrigin='anonymous';link.href=theme;document.head.append(link);}
+window.addEventListener('message',e=>{const theme=e.data?.giscus?.setConfig?.theme;if(theme?.startsWith('data:text/css;')){const link=document.createElement('link');link.rel='stylesheet';link.href=theme;document.head.append(link);}});
 parent.postMessage({giscus:{resizeHeight:220}},'*');
 </script></body></html>`,
 }));
@@ -56,6 +61,9 @@ try {
 	await frame.locator("textarea").fill("Never publish this local test draft.");
 	await frame.locator("textarea").scrollIntoViewIfNeeded();
 	await frame.waitForFunction(() => matchMedia("(prefers-color-scheme:dark)").matches);
+	// Dev themes arrive via a config message after the iframe's initial render.
+	// Wait for that stylesheet before recording, rather than sampling a theme load.
+	await frame.waitForFunction(() => getComputedStyle(document.querySelector("main")).getPropertyValue("--asround-accent").trim());
 	await page.waitForFunction(() => window.swup && !document.documentElement.classList.contains("is-changing"));
 	const box = await frame.locator("textarea").boundingBox();
 	const point = { left: Math.round(box.x + 12), top: Math.round(box.y + box.height - 12), width: 1, height: 1 };

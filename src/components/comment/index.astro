@@ -23,7 +23,7 @@ const term = getCommentTerm(path, post.data.commentId);
       config={commentConfig.giscus}
       term={term}
       discussionsUrl={getDiscussionListUrl(commentConfig.giscus)}
-      stylesheetUrl={getGiscusStylesheetUrl(commentConfig.giscus, siteConfig.siteURL)}
+      stylesheetUrl={getGiscusStylesheetUrl(commentConfig.giscus, import.meta.env.DEV ? Astro.url.origin : siteConfig.siteURL)}
     />
   ) : (
     <div id="article-comments" tabindex="-1" aria-label="评论" class="card-base p-6 mb-4" data-pagefind-ignore data-comment-provider="twikoo">

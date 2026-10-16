@@ -30,7 +30,8 @@ body{margin:0;background:white;color:black}textarea{width:95%;resize:vertical;ba
 @media(prefers-color-scheme:dark){body{background:rgb(13,17,23);color:white}textarea{background:rgb(1,4,9);color:white}}
 </style></head><body><form class="gsc-comment-box"><textarea class="gsc-comment-box-textarea" placeholder="Write a comment" aria-label="test draft"></textarea></form><script>
 const theme=new URL(location.href).searchParams.get('theme');
-if(theme?.startsWith('https://')){const link=document.createElement('link');link.rel='stylesheet';link.crossOrigin='anonymous';link.href=theme;document.head.append(link);}
+if(theme && /^https?:/.test(theme)){const link=document.createElement('link');link.rel='stylesheet';link.crossOrigin='anonymous';link.href=theme;document.head.append(link);}
+window.addEventListener('message',e=>{const theme=e.data?.giscus?.setConfig?.theme;if(theme?.startsWith('data:text/css;')){const link=document.createElement('link');link.rel='stylesheet';link.href=theme;document.head.append(link);}});
 parent.postMessage({giscus:{resizeHeight:280}},'*');
 </script></body></html>` });
 });

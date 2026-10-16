@@ -66,6 +66,11 @@ export function mountGiscus(
 			// readable official widget for a missing/HTML stylesheet or a network error.
 			const response = await fetch(stylesheetUrl, { mode: "cors", signal: request.signal });
 			const valid = response.ok && response.headers.get("content-type")?.includes("text/css");
+			if (valid && import.meta.env.DEV && new URL(stylesheetUrl).origin === location.origin) {
+				// The parent reads its own dev CSS. Send it as a theme message rather
+				// than asking a remote iframe to access localhost (local-network permissions).
+				return `data:text/css;charset=utf-8,${encodeURIComponent(await response.text())}`;
+			}
 			await response.body?.cancel();
 			return valid ? stylesheetUrl : "preferred_color_scheme";
 		} catch { return "preferred_color_scheme"; }
@@ -87,6 +92,7 @@ export function mountGiscus(
 			moduleLoaded = true;
 			if (disposed || attempt !== generation) return;
 			const widgetTheme = await resolveTheme();
+			const inlineTheme = widgetTheme.startsWith("data:text/css;");
 			if (disposed || attempt !== generation) return;
 			const returningFromLogin = new URL(location.href).searchParams.has("giscus");
 			const savedState = history.state;
@@ -103,12 +109,15 @@ export function mountGiscus(
 				category: config.category, categoryId: config.categoryId,
 				mapping: "specific", term, strict: "1", reactionsEnabled: "0",
 				emitMetadata: "1", inputPosition: "top", lang: "zh-CN",
-				theme: widgetTheme, loading: "eager",
+				// Keep the iframe URL short; dev CSS is sent via the official config
+				// message after its initial render, including when it finishes loading.
+				theme: inlineTheme ? "preferred_color_scheme" : widgetTheme, loading: "eager",
 			});
 			host.append(element);
 			await element.updateComplete;
 			if (disposed || attempt !== generation) return;
 			syncColorScheme();
+			if (inlineTheme) element.theme = widgetTheme;
 			if (returningFromLogin) host.closest("section")?.scrollIntoView({ block: "start" });
 		} catch {
 			if (!disposed && attempt === generation) fail(moduleLoaded ? "error" : "reload");

@@ -39,8 +39,9 @@ test("旧配置仍可回退 Twikoo，选择 giscus 后不会借 Twikoo 配置绕
 	assert.equal(shouldShowComments({ enable: true, provider: "giscus", twikoo: { envId: "https://example.com" } }, {}), false);
 });
 
-test("评论增强 CSS 使用正式站点地址，拒绝非 HTTPS 和含凭据的地址", () => {
+test("评论 CSS 按传入的正式或本地开发地址解析，配置拒绝非 HTTPS 和含凭据的地址", () => {
 	assert.equal(getGiscusStylesheetUrl({ ...giscus, themeStylesheet: "/giscus.css" }, "https://example.com/"), "https://example.com/giscus.css");
+	assert.equal(getGiscusStylesheetUrl({ ...giscus, themeStylesheet: "/giscus.css" }, "http://localhost:4321/"), "http://localhost:4321/giscus.css");
 	assert.equal(getGiscusStylesheetUrl(giscus, "https://example.com/"), undefined);
 	for (const themeStylesheet of ["http://example.com/a.css", "javascript:alert(1)", "https://name:secret@example.com/a.css"]) {
 		assert.ok(giscusConfigurationErrors({ ...giscus, themeStylesheet }).length);
