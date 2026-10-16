@@ -26,6 +26,27 @@ parent.postMessage({giscus:{resizeHeight:220}},'*');
 try {
 	const page = await context.newPage();
 	page.setDefaultTimeout(60000);
+	await page.addInitScript(() => {
+		window.themeAnimationChecks = { ready: 0, skipped: [], circles: [], finished: 0 };
+		const start = document.startViewTransition.bind(document);
+		document.startViewTransition = (...args) => {
+			const transition = start(...args);
+			const started = performance.now();
+			transition.ready.then(() => window.themeAnimationChecks.ready++, (error) => {
+				window.themeAnimationChecks.skipped.push({ reason: String(error), elapsed: performance.now() - started });
+			});
+			return transition;
+		};
+		const animate = Element.prototype.animate;
+		Element.prototype.animate = function (keyframes, options) {
+			const animation = animate.call(this, keyframes, options);
+			if (options?.pseudoElement?.startsWith("::view-transition-")) {
+				window.themeAnimationChecks.circles.push({ keyframes, options });
+				animation.finished.then(() => window.themeAnimationChecks.finished++, () => {});
+			}
+			return animation;
+		};
+	});
 	const session = await context.newCDPSession(page);
 	await session.send("Emulation.setCPUThrottlingRate", { rate: cpuRate });
 	await page.goto(new URL("/STA/", base).href, { waitUntil: "domcontentloaded" });
@@ -52,6 +73,16 @@ try {
 		phases.push(phase);
 		await page.getByRole("button", { name: dark ? "切换到深色模式" : "切换到浅色模式", exact: true }).click();
 		await page.waitForFunction(() => !document.documentElement.classList.contains("theme-circle-transition"));
+		const checks = await page.evaluate(() => window.themeAnimationChecks);
+		assert.deepEqual(checks.skipped, [], "不能以跳过动画的方式通过配色测试");
+		assert.equal(checks.ready, cycle + 1, "浏览器必须成功创建主题快照");
+		assert.equal(checks.circles.length, cycle + 1, "每次切换必须启动圆形动画");
+		assert.equal(checks.finished, cycle + 1, "圆形动画必须完整播放");
+		const circle = checks.circles[cycle];
+		assert.equal(circle.options.pseudoElement, dark ? "::view-transition-new(root)" : "::view-transition-old(root)");
+		assert.ok(circle.options.duration > 0);
+		assert.ok(circle.keyframes.clipPath.every((clip) => clip.startsWith("circle(")));
+		assert.notEqual(circle.keyframes.clipPath[0], circle.keyframes.clipPath[1]);
 		await frame.waitForFunction((dark) => matchMedia("(prefers-color-scheme:dark)").matches === dark, dark);
 		// Include a stable final frame even when the compositor stops sending updates.
 		const image = await page.screenshot();
