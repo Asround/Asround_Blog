@@ -130,6 +130,8 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
 </style>
 
 <script>
+import { runOnce } from "../../utils/page-view";
+runOnce("mobile-dropdown-menu", () => {
     document.addEventListener('DOMContentLoaded', function() {
         const mobileDropdowns = document.querySelectorAll('[data-mobile-dropdown]');
         
@@ -161,4 +163,5 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
             });
         });
     });
+});
 </script>

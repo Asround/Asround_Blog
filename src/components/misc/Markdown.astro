@@ -14,6 +14,8 @@ const className = Astro.props.class;
 </div>
 
 <script>
+import { runOnce } from "../../utils/page-view";
+runOnce("markdown-delegation", () => {
 document.addEventListener("click", function (e: MouseEvent) {
     const target = e.target as Element | null;
     if (target && target.classList.contains("copy-btn")) {
@@ -150,5 +152,6 @@ document.addEventListener("click", async (event) => {
             button.disabled = false;
         }, 2000);
     }
+});
 });
 </script>

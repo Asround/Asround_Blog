@@ -156,6 +156,8 @@ const hasChildren = children.length > 0;
 </style>
 
 <script>
+import { runOnce } from "../../utils/page-view";
+runOnce("dropdown-menu", () => {
 	// 键盘导航支持
 	document.addEventListener("DOMContentLoaded", () => {
 		const dropdowns = document.querySelectorAll("[data-dropdown]");
@@ -223,4 +225,5 @@ const hasChildren = children.length > 0;
 			});
 		});
 	});
+});
 </script>

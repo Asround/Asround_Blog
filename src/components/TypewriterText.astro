@@ -20,6 +20,8 @@ const textData = Array.isArray(text) ? JSON.stringify(text) : text;
 <span class={`typewriter ${className}`} data-text={textData} data-speed={speed} data-delete-speed={deleteSpeed} data-pause-time={pauseTime}></span>
 
 <script>
+import { runOnce } from "../utils/page-view";
+runOnce("typewriter", () => {
 class TypewriterEffect {
     private element: HTMLElement;
     private texts: string[];
@@ -133,6 +135,7 @@ document.addEventListener('swup:contentReplaced', () => {
     typewriterElements.forEach((element) => {
         new TypewriterEffect(element as HTMLElement);
     });
+});
 });
 </script>
 

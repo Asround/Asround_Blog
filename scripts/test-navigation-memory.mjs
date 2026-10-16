@@ -26,6 +26,8 @@ await context.addInitScript(() => {
 	window.setInterval = (...args) => { const id = set(...args); intervals.add(id); return id; };
 	window.clearInterval = (id) => { intervals.delete(id); clear(id); };
 	window.testIntervalCount = () => intervals.size;
+	window.testCopyCalls = 0;
+	Object.defineProperty(navigator, "clipboard", { value: { writeText: async () => { window.testCopyCalls++; } } });
 });
 
 try {
@@ -82,6 +84,21 @@ try {
 		}
 		if (cycle % 4 === 3) console.log(JSON.stringify({ cycle, documents: sample.documents, nodes: sample.nodes, listeners: sample.jsEventListeners, intervals: sample.intervals }));
 	}
+	const copies = await page.evaluate(async () => {
+		const fixture = document.createElement("pre");
+		fixture.innerHTML = '<code>navigation-copy-test</code><button class="copy-btn">Copy</button>';
+		document.body.append(fixture);
+		fixture.querySelector("button").click();
+		await Promise.resolve();
+		fixture.remove();
+		return window.testCopyCalls;
+	});
+	assert.equal(copies, 1, "多次切页后复制仍可工作，且一次点击只写入一次测试剪贴板");
+	const dropdown = page.locator("[data-dropdown-trigger]").first();
+	await dropdown.press("ArrowDown");
+	assert.equal(await dropdown.getAttribute("aria-expanded"), "true");
+	await dropdown.press("Escape");
+	assert.equal(await dropdown.getAttribute("aria-expanded"), "false");
 	assert.deepEqual(errors, []);
 	console.log("PASS 32 次切页后旧文档、DOM、事件和时钟数量稳定；音乐持续播放且实例不重建");
 } finally {

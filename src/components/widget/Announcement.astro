@@ -58,6 +58,8 @@ const style = Astro.props.style;
 </WidgetLayout>
 
 <script>
+import { runOnce } from "../../utils/page-view";
+runOnce("announcement", () => {
     function closeAnnouncement() {
         // 通过data-id属性找到整个widget-layout元素
         const widgetLayouts = document.querySelectorAll('widget-layout[data-id="announcement"]');
@@ -84,4 +86,5 @@ const style = Astro.props.style;
 
     // 使公告栏函数全局可用
     window.closeAnnouncement = closeAnnouncement;
+});
 </script>
