@@ -327,6 +327,10 @@ const transparentClass = shouldEnableTransparency
 			}
 		});
 	})();
+	// This inline module is re-executed by Swup; the handlers always query the
+	// current document and only need one registration for the browser session.
+	if (!window.__asroundLayoutSyncInstalled) {
+	window.__asroundLayoutSyncInstalled = true;
 	
 	// 根据壁纸模式动态设置 banner 和全屏壁纸的显示
 	// const wallpaperMode = localStorage.getItem('wallpaperMode') || defaultWallpaperMode;
@@ -584,6 +588,7 @@ const transparentClass = shouldEnableTransparency
 				}
 			}
 		});
+	}
 	}
 </script>
 

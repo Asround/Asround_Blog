@@ -65,6 +65,8 @@ pnpm test:comments:theme
 pnpm test:comments:soak
 # 也可指定站点与时长（0–60 分钟）
 pnpm test:comments:site https://asround-blog.pages.dev --soak=25
+# 整站切页资源回收与音乐连续播放
+pnpm test:navigation:memory
 ```
 
 浏览器脚本通过 `playwright-core` 启动本机 Edge，无需 computer-use 或浏览器下载。其他已安装浏览器可用 `PLAYWRIGHT_CHANNEL=chrome`（按终端语法设置环境变量）。`test:comments:browser` 直接加载开发组件，需要 Astro 开发服务；站内回归与逐帧测试也可通过命令末尾的 URL 参数指定正式站点。不会写入真实留言。
@@ -75,7 +77,7 @@ pnpm test:comments:site https://asround-blog.pages.dev --soak=25
 
 持续巡检反复进入归档及两篇长文章，输入未发布的模拟草稿并切换主题，检查评论实例和评论消息监听器没有累积；总 DOM 与事件计数仅作为整站诊断数据输出，不等同于整站无内存泄漏的保证。测试在结束时释放路由与浏览器资源，导航超过 30 秒会明确报错。
 
-整站性能待办：反复切页时，原有 `SideBar.astro` 的响应式管理器和 `Layout.astro` 的页面缩放内联脚本会重复注册全局事件。此行为在接入 giscus 前已经存在；持续巡检还观察到总 DOM 计数增长，仍需独立排查保留链，不能把评论监听器数量稳定等同于整站资源清理完整。
+整站切页回归另外检查文档、DOM、全局监听器和定时器数量，以及音乐播放是否连续。播放器只在挂载后创建音频元素，避免浏览器的原生媒体活动保留 Swup 解析的旧文档；布局监听器清理旧注册或只初始化一次，文章更新时间时钟只在当前页面需要时运行。内存测试使用本地生成的静音音频，不发布评论，并屏蔽仅开发环境存在的 Astro 调试工具栏，避免其审计按钮影响计数。
 
 GitHub CI 执行离线内容检查、评论配置与静态样式检查、单元测试和 Astro 检查；远端检查和浏览器检查单独运行，以免外部服务或本机浏览器影响离线 CI。
 

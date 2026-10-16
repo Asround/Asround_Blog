@@ -73,6 +73,9 @@ type Song = {
 let playlist: Song[] = [];
 let currentIndex = 0;
 let audio: HTMLAudioElement;
+// DOMParser-created Swup pages must stay inert: even a detached media element
+// can retain its entire document through Chromium's RemotePlayback activity.
+let mounted = false;
 let progressBar: HTMLElement;
 let volumeBar: HTMLElement;
 
@@ -409,6 +412,7 @@ function formatTime(seconds: number): string {
 
 const interactionEvents = ['click', 'keydown', 'touchstart'];
 onMount(() => {
+    mounted = true;
     loadVolumeSettings(); 
     interactionEvents.forEach(event => {
         document.addEventListener(event, handleUserInteraction, { capture: true });
@@ -431,6 +435,12 @@ onMount(() => {
 });
 
 onDestroy(() => {
+    mounted = false;
+    if (audio) {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+    }
     if (typeof document !== 'undefined') {
         interactionEvents.forEach(event => {
             document.removeEventListener(event, handleUserInteraction, { capture: true });
@@ -439,9 +449,10 @@ onDestroy(() => {
 });
 </script>
 
+{#if mounted}
 <audio
 	bind:this={audio}
-	src={getAssetPath(currentSong.url)}
+	src={currentSong.url ? getAssetPath(currentSong.url) : undefined}
 	bind:volume
 	bind:muted={isMuted}
 	on:play={() => isPlaying = true}
@@ -453,6 +464,7 @@ onDestroy(() => {
 	on:loadstart={handleLoadStart}
 	preload="auto"
 ></audio>
+{/if}
 
 <svelte:window 
     on:pointermove={handleVolumeMove} 

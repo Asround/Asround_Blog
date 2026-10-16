@@ -366,6 +366,7 @@ if (siteConfig.font) {
 
 			// 自动缩放逻辑 (Moved from MainGridLayout to here for earlier execution)
 			(function() {
+				window.__asroundPageScaleCleanup?.();
 				if (pageScaling && pageScaling.enable) {
 					function adjustPageScale() {
 						const isTouch =
@@ -398,6 +399,11 @@ if (siteConfig.font) {
 					// Swup 页面切换后也需要检查
 					document.addEventListener('swup:page:view', adjustPageScale);
 					window.addEventListener('orientationchange', adjustPageScale);
+					window.__asroundPageScaleCleanup = () => {
+						window.removeEventListener('resize', adjustPageScale);
+						document.removeEventListener('swup:page:view', adjustPageScale);
+						window.removeEventListener('orientationchange', adjustPageScale);
+					};
 				}
 			})();
 		</script>
@@ -1421,4 +1427,5 @@ function disableAnimation() {
 <!-- 代码块折叠功能 -->
 <script>
 	import "../scripts/code-collapse.js";
+	import "../scripts/modified-time";
 </script>
