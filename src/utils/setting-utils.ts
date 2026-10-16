@@ -143,6 +143,11 @@ export function setTheme(theme: LIGHT_DARK_MODE, event?: MouseEvent): void {
 			if (request !== themeRequest) return;
 			applyThemeToDocument(theme, false);
 			await tick();
+			// The old snapshot is frozen here. Let embedded cross-origin surfaces
+			// repaint before Chrome captures the new snapshot; changing them after
+			// transition.ready can briefly expose an old iframe surface again.
+			document.dispatchEvent(new Event("theme:transition-update"));
+			await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 		});
 		activeThemeTransition = transition;
 		const deadline = setTimeout(() => {
@@ -153,9 +158,6 @@ export function setTheme(theme: LIGHT_DARK_MODE, event?: MouseEvent): void {
 		void transition.ready.then(() => {
 			clearTimeout(deadline);
 			if (request !== themeRequest) return;
-			// Cross-origin frames can repaint while the top-level snapshot is being
-			// captured. Update their palette only once the old-state overlay is ready.
-			document.dispatchEvent(new Event("theme:transition-ready"));
 			activeThemeAnimation = root.animate({ clipPath: dark ? clips : [...clips].reverse() }, {
 				duration: frontendConfig.themeTransitionMs,
 				easing: "ease-in-out",

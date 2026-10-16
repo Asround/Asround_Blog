@@ -16,7 +16,6 @@ export function mountGiscus(
 	let widget: GiscusWidget | undefined;
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	let intersection: IntersectionObserver | undefined;
-	let schemeFrame = 0;
 	let assetRequest: AbortController | undefined;
 	const theme = () => document.documentElement.classList.contains("dark") ? "dark" : "light";
 	const syncColorScheme = () => {
@@ -55,13 +54,7 @@ export function mountGiscus(
 		if (!document.documentElement.classList.contains("theme-circle-transition")) syncColorScheme();
 	});
 	themes.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-	const syncAfterOverlayPaint = () => {
-		cancelAnimationFrame(schemeFrame);
-		schemeFrame = requestAnimationFrame(() => {
-			schemeFrame = requestAnimationFrame(syncColorScheme);
-		});
-	};
-	document.addEventListener("theme:transition-ready", syncAfterOverlayPaint);
+	document.addEventListener("theme:transition-update", syncColorScheme);
 	window.addEventListener("message", receive);
 	async function resolveTheme(): Promise<string> {
 		if (!stylesheetUrl) return "preferred_color_scheme";
@@ -137,8 +130,7 @@ export function mountGiscus(
 			++generation;
 			intersection?.disconnect();
 			themes.disconnect();
-			document.removeEventListener("theme:transition-ready", syncAfterOverlayPaint);
-			cancelAnimationFrame(schemeFrame);
+			document.removeEventListener("theme:transition-update", syncColorScheme);
 			window.removeEventListener("message", receive);
 			clearWidget();
 		},

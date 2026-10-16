@@ -19,6 +19,7 @@
 		"test:comments:browser": "node scripts/test-comments-browser.mjs",
 		"test:comments:theme": "node scripts/test-comments-theme.mjs",
 		"test:comments:site": "node scripts/test-comments-site.mjs",
+		"test:comments:soak": "node scripts/test-comments-site.mjs --soak=20",
 		"test:frontend": "node scripts/test-frontend.mjs",
 		"update-anime": "node scripts/update-anime.mjs",
 		"update-bangumi": "node scripts/update-bangumi.mjs",

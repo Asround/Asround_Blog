@@ -98,8 +98,8 @@ try {
 		document.documentElement.classList.remove("dark");
 	});
 	await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-	assert.equal(await frame.evaluate(() => matchMedia("(prefers-color-scheme:dark)").matches), true, "遮罩尚未就绪时保留旧配色");
-	await page.evaluate(() => document.dispatchEvent(new Event("theme:transition-ready")));
+	assert.equal(await frame.evaluate(() => matchMedia("(prefers-color-scheme:dark)").matches), true, "旧快照捕获完成前保留旧配色");
+	await page.evaluate(() => document.dispatchEvent(new Event("theme:transition-update")));
 	await frame.waitForFunction(() => !matchMedia("(prefers-color-scheme:dark)").matches);
 	await page.evaluate(() => {
 		document.documentElement.classList.remove("theme-circle-transition");

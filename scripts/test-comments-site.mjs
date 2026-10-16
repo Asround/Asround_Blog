@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import { parse } from "node-html-parser";
 import { chromium } from "playwright-core";
 
-const base = process.argv[2] || "http://localhost:4321";
+const arguments_ = process.argv.slice(2);
+const base = arguments_.find((argument) => !argument.startsWith("--")) || "http://localhost:4321";
+const soakMinutes = Number(arguments_.find((argument) => argument.startsWith("--soak="))?.split("=", 2)[1] || 0);
+assert.ok(Number.isFinite(soakMinutes) && soakMinutes >= 0 && soakMinutes <= 60, "持续巡检时长须为 0–60 分钟");
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ colorScheme: null, viewport: { width: 1440, height: 1000 } });
 const errors = [];
@@ -33,11 +36,28 @@ parent.postMessage({giscus:{resizeHeight:280}},'*');
 });
 
 async function navigate(page, pathname) {
-	await page.evaluate((pathname) => new Promise((resolve) => {
-		const end = () => { window.swup.hooks.off("visit:end", end); resolve(); };
+	await page.evaluate((pathname) => new Promise((resolve, reject) => {
+		const timer = setTimeout(() => {
+			window.swup.hooks.off("visit:end", end);
+			reject(new Error(`Swup navigation timed out: ${pathname}`));
+		}, 30000);
+		const end = () => {
+			clearTimeout(timer);
+			window.swup.hooks.off("visit:end", end);
+			resolve();
+		};
 		window.swup.hooks.on("visit:end", end);
 		window.swup.navigate(pathname);
 	}), pathname);
+}
+
+async function commentFrame(page) {
+	const iframe = await page.locator("giscus-widget").locator("iframe").elementHandle();
+	try {
+		return await iframe.contentFrame();
+	} finally {
+		await iframe.dispose();
+	}
 }
 
 try {
@@ -55,23 +75,25 @@ try {
 	await page.evaluate(() => { window.testCommentVisits = 0; window.swup.hooks.on("visit:start", () => window.testCommentVisits++); });
 	await page.locator("#reader-comment-link").click();
 	await page.waitForURL("**/STA/#article-comments");
-	const frame = await (await page.locator("giscus-widget").locator("iframe").elementHandle()).contentFrame();
+	const frame = await commentFrame(page);
 	await frame.locator("textarea").waitFor();
 	await frame.waitForFunction(() => getComputedStyle(document.querySelector("textarea")).minHeight === "240px");
 	assert.equal(await page.evaluate(() => window.testCommentVisits), 0, "跳转走原生锚点，不触发整页 Swup 导航");
 	assert.equal(await page.evaluate(() => document.activeElement.id), "article-comments", "键盘焦点随锚点进入评论区域");
 	await page.locator(".comment-help summary").click();
+	await page.waitForFunction(() => document.querySelector(".comment-help")?.open);
 	assert.equal(await page.locator(".comment-help").getAttribute("open"), "");
 	assert.ok((await page.locator(".comment-help-content").innerText()).includes('$`E=mc^2`$'));
 	await page.evaluate(() => { window.previousWidget = document.querySelector("giscus-widget"); });
 	await navigate(page, "/archive/");
 	assert.equal(await page.evaluate(() => window.previousWidget.isConnected), false);
+	await page.evaluate(() => { delete window.previousWidget; });
 	assert.equal(await page.locator("#reader-comment-link").count(), 0);
 	await navigate(page, "/Summer-camp/");
 	await page.locator("#reader-comment-link").focus();
 	await page.keyboard.press("Enter");
 	await page.waitForURL("**/Summer-camp/#article-comments");
-	const nextFrame = await (await page.locator("giscus-widget").locator("iframe").elementHandle()).contentFrame();
+	const nextFrame = await commentFrame(page);
 	await nextFrame.locator("textarea").waitFor();
 	assert.equal(new URL(nextFrame.url()).searchParams.get("term"), "/Summer-camp/");
 	assert.equal(await page.locator("giscus-widget").count(), 1);
@@ -102,6 +124,48 @@ try {
 	assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior), "auto");
 	console.log("PASS 1920/1440/1024/900/640px 布局、快速连切主题保留草稿、减少动效偏好");
 
+	if (soakMinutes > 0) {
+		await page.emulateMedia({ reducedMotion: "no-preference" });
+		const session = await context.newCDPSession(page);
+		const deadline = Date.now() + soakMinutes * 60000;
+		let cycle = 0;
+		let baselineMessages;
+		const counters = [];
+		while (Date.now() < deadline) {
+			const pathname = cycle % 2 === 0 ? "/STA/" : "/Summer-camp/";
+			await navigate(page, "/archive/");
+			assert.equal(await page.locator("giscus-widget, #reader-comment-link").count(), 0);
+			await navigate(page, pathname);
+			await page.locator("#reader-comment-link").click();
+			const current = await commentFrame(page);
+			await current.locator("textarea").fill(`Unpublished stress-test draft ${cycle}`);
+			await page.locator('#reading-controls button[aria-label*="切换到"]').click();
+			await page.waitForFunction(() => !document.documentElement.classList.contains("theme-circle-transition"));
+			assert.equal(await current.locator("textarea").inputValue(), `Unpublished stress-test draft ${cycle}`);
+			assert.equal(new URL(current.url()).searchParams.get("term"), pathname);
+			assert.equal(await page.locator("giscus-widget").count(), 1);
+			const listeners = await session.send("Runtime.evaluate", {
+				expression: "(getEventListeners(window).message || []).length", includeCommandLineAPI: true, returnByValue: true,
+			});
+			const messageCount = listeners.result.value;
+			baselineMessages ??= messageCount;
+			assert.equal(messageCount, baselineMessages, "跨页之后不累积评论消息监听器");
+			if (cycle % (soakMinutes < 3 ? 2 : 8) === 0) {
+				await session.send("HeapProfiler.collectGarbage");
+				const memory = await session.send("Memory.getDOMCounters");
+				counters.push({ cycle, messageCount, ...memory });
+				console.log(`PASS sustained cycle ${cycle}: one widget, ${messageCount} message listeners; DOM ${memory.nodes}, listeners ${memory.jsEventListeners}`);
+			}
+			assert.equal(gtmLoads, 1);
+			assert.equal(clarityLoads, 1);
+			assert.deepEqual(errors, []);
+			cycle++;
+			// Allow delayed callbacks, idle tasks and frame cleanup to settle between visits.
+			await page.waitForTimeout(Math.min(6000, Math.max(0, deadline - Date.now())));
+		}
+		console.log(JSON.stringify({ sustainedMinutes: soakMinutes, cycles: cycle, counters }));
+	}
+
 	await context.route(new URL("/STA/?test-no-comments=1", base).href, async (route) => {
 		const response = await route.fetch();
 		const document = parse(await response.text());
@@ -115,4 +179,7 @@ try {
 	assert.equal(await page.locator("#article-comments, #reader-comment-link").count(), 0, "单篇关闭或配置缺失时不显示无效锚点");
 	console.log("PASS 文章没有评论区时隐藏跳转入口");
 	assert.deepEqual(errors, []);
-} finally { await browser.close(); }
+} finally {
+	await context.unrouteAll({ behavior: "ignoreErrors" });
+	await browser.close();
+}

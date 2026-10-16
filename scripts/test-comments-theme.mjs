@@ -39,29 +39,32 @@ try {
 	const box = await frame.locator("textarea").boundingBox();
 	const point = { left: Math.round(box.x + 12), top: Math.round(box.y + box.height - 12), width: 1, height: 1 };
 	assert.ok(point.top < 1000, "采样点必须位于屏幕内");
-	let phase;
+	const phases = [];
 	const samples = [];
 	session.on("Page.screencastFrame", (event) => {
-		if (phase) samples.push({ phase, image: Buffer.from(event.data, "base64") });
+		samples.push({ timestamp: event.metadata.timestamp, image: Buffer.from(event.data, "base64") });
 		void session.send("Page.screencastFrameAck", { sessionId: event.sessionId });
 	});
 	await session.send("Page.startScreencast", { format: "png", everyNthFrame: 1 });
 	for (let cycle = 0; cycle < 4; cycle++) {
 		const dark = cycle % 2 === 1;
-		phase = { cycle, dark };
+		const phase = { cycle, dark, start: Date.now() / 1000 };
+		phases.push(phase);
 		await page.getByRole("button", { name: dark ? "切换到深色模式" : "切换到浅色模式", exact: true }).click();
 		await page.waitForFunction(() => !document.documentElement.classList.contains("theme-circle-transition"));
 		await frame.waitForFunction((dark) => matchMedia("(prefers-color-scheme:dark)").matches === dark, dark);
 		// Include a stable final frame even when the compositor stops sending updates.
-		samples.push({ phase, image: await page.screenshot() });
-		phase = undefined;
+		const image = await page.screenshot();
+		phase.end = Date.now() / 1000;
+		samples.push({ timestamp: phase.end, image });
 		assert.equal(await frame.locator("textarea").inputValue(), "Never publish this local test draft.");
 		assert.equal(await page.locator("giscus-widget").count(), 1);
 	}
 	await session.send("Page.stopScreencast");
 	for (let cycle = 0; cycle < 4; cycle++) {
 		const sequence = [];
-		for (const sample of samples.filter((entry) => entry.phase.cycle === cycle)) {
+		const phase = phases[cycle];
+		for (const sample of samples.filter((entry) => entry.timestamp >= phase.start && entry.timestamp <= phase.end).sort((a, b) => a.timestamp - b.timestamp)) {
 			const pixel = await sharp(sample.image).extract(point).raw().toBuffer();
 			const dark = pixel[0] + pixel[1] + pixel[2] < 384;
 			if (sequence.at(-1) !== dark) sequence.push(dark);
