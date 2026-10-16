@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   check:
-    name: Astro Check
+    name: Content, tests and Astro check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Astro Check
-        run: pnpm astro check
+      - name: Check content, comment config, tests and Astro
+        run: pnpm check:local
         env:
           ENABLE_CONTENT_SYNC: false
 

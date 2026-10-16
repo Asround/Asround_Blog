@@ -1,0 +1,8 @@
+/* Keep both official palettes loaded; the embedding iframe selects color-scheme. */
+@import url("https://giscus.app/themes/preferred_color_scheme.css");
+
+/* Only enlarge new article comments; short inline replies keep their compact box. */
+.gsc-comment-box:not(.gsc-comment-box-is-reply) .gsc-comment-box-textarea,
+.gsc-comment-box:not(.gsc-comment-box-is-reply) .gsc-comment-box-preview {
+  min-height: 240px;
+}

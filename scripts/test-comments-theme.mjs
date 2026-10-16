@@ -1,0 +1,73 @@
+import assert from "node:assert/strict";
+import { chromium } from "playwright-core";
+import sharp from "sharp";
+import { readFile } from "node:fs/promises";
+
+// Exercise the actual reading-toolbar button and the browser compositor. Merely
+// checking the final DOM color misses a new → old → new flash during capture.
+const base = process.argv[2] || "http://localhost:4321";
+const width = Number(process.env.COMMENT_TEST_WIDTH) || 1440;
+const cpuRate = Number(process.env.COMMENT_TEST_CPU_RATE) || 1;
+const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
+const context = await browser.newContext({ colorScheme: null, viewport: { width, height: 1000 } });
+const enhancementCSS = await readFile(new URL("../public/giscus.css", import.meta.url), "utf8");
+await context.route("https://asround-blog.pages.dev/giscus.css", (route) => route.fulfill({ contentType: "text/css", headers: { "access-control-allow-origin": "*" }, body: enhancementCSS }));
+await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com)\//, (route) => route.abort());
+await context.route("https://giscus.app/**", (route) => route.fulfill({
+	contentType: "text/html; charset=utf-8",
+	body: `<!doctype html><html><head><style>
+body{margin:0;background:white;color:black}textarea{display:block;box-sizing:border-box;width:100%;height:200px;background:rgb(246,248,250);color:black}
+@media(prefers-color-scheme:dark){body{background:rgb(13,17,23);color:white}textarea{background:rgb(1,4,9);color:white}}
+</style></head><body><textarea aria-label="test draft"></textarea><script>
+parent.postMessage({giscus:{resizeHeight:220}},'*');
+</script></body></html>`,
+}));
+
+try {
+	const page = await context.newPage();
+	page.setDefaultTimeout(60000);
+	const session = await context.newCDPSession(page);
+	await session.send("Emulation.setCPUThrottlingRate", { rate: cpuRate });
+	await page.goto(new URL("/STA/", base).href, { waitUntil: "domcontentloaded" });
+	await page.locator("#article-comments").scrollIntoViewIfNeeded();
+	const iframe = await page.locator("giscus-widget").locator("iframe").elementHandle();
+	const frame = await iframe.contentFrame();
+	await frame.locator("textarea").fill("Never publish this local test draft.");
+	await frame.locator("textarea").scrollIntoViewIfNeeded();
+	await frame.waitForFunction(() => matchMedia("(prefers-color-scheme:dark)").matches);
+	await page.waitForFunction(() => window.swup && !document.documentElement.classList.contains("is-changing"));
+	const box = await frame.locator("textarea").boundingBox();
+	const point = { left: Math.round(box.x + 12), top: Math.round(box.y + box.height - 12), width: 1, height: 1 };
+	assert.ok(point.top < 1000, "采样点必须位于屏幕内");
+	let phase;
+	const samples = [];
+	session.on("Page.screencastFrame", (event) => {
+		if (phase) samples.push({ phase, image: Buffer.from(event.data, "base64") });
+		void session.send("Page.screencastFrameAck", { sessionId: event.sessionId });
+	});
+	await session.send("Page.startScreencast", { format: "png", everyNthFrame: 1 });
+	for (let cycle = 0; cycle < 4; cycle++) {
+		const dark = cycle % 2 === 1;
+		phase = { cycle, dark };
+		await page.getByRole("button", { name: dark ? "切换到深色模式" : "切换到浅色模式", exact: true }).click();
+		await page.waitForFunction(() => !document.documentElement.classList.contains("theme-circle-transition"));
+		await frame.waitForFunction((dark) => matchMedia("(prefers-color-scheme:dark)").matches === dark, dark);
+		// Include a stable final frame even when the compositor stops sending updates.
+		samples.push({ phase, image: await page.screenshot() });
+		phase = undefined;
+		assert.equal(await frame.locator("textarea").inputValue(), "Never publish this local test draft.");
+		assert.equal(await page.locator("giscus-widget").count(), 1);
+	}
+	await session.send("Page.stopScreencast");
+	for (let cycle = 0; cycle < 4; cycle++) {
+		const sequence = [];
+		for (const sample of samples.filter((entry) => entry.phase.cycle === cycle)) {
+			const pixel = await sharp(sample.image).extract(point).raw().toBuffer();
+			const dark = pixel[0] + pixel[1] + pixel[2] < 384;
+			if (sequence.at(-1) !== dark) sequence.push(dark);
+		}
+		assert.ok(sequence.length <= 2, `第 ${cycle + 1} 次切换出现颜色反转：${sequence.map((dark) => dark ? "dark" : "light").join(" → ")}`);
+		assert.equal(sequence.at(-1), cycle % 2 === 1, "最终配色正确");
+		console.log(`PASS compositor ${width}px / CPU ${cpuRate}x cycle ${cycle + 1}: ${sequence.map((dark) => dark ? "dark" : "light").join(" → ")}`);
+	}
+} finally { await browser.close(); }

@@ -17,7 +17,7 @@ const { default: remarkParse } = await import(pathToFileURL(markdownRequire.reso
 const { slug } = await import(pathToFileURL(astroRequire.resolve("github-slugger")).href);
 const parser = unified().use(remarkParse).use(remarkMath).use(remarkDirective);
 
-async function importTS(source) {
+export async function importTS(source) {
 	const compiled = ts.transpileModule(source, {
 		compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 	}).outputText;
@@ -28,6 +28,7 @@ const schemaSource = await readFile(new URL("../src/content-schema.ts", import.m
 const { postSchema } = await importTS(schemaSource.replace(
 	/(["'])astro\/zod\1/g, JSON.stringify(import.meta.resolve("astro/zod")),
 ));
+const { getCommentTerm } = await importTS(await readFile(new URL("../src/utils/comment-utils.ts", import.meta.url), "utf8"));
 
 export async function readPermalinkConfig(root = projectRoot) {
 	const source = await readFile(path.join(root, "src/config.ts"), "utf8");
@@ -145,6 +146,7 @@ export async function auditContent({ documents, root = projectRoot, permalink = 
 	const articles = [];
 	const resourceCache = new Map();
 	const ids = new Map();
+	const commentTerms = new Map();
 	const staticKeys = new Set(staticRoutes.map(routeKey));
 	const routes = new Map([...staticKeys].map((route) => [route, "src/pages"]));
 	const add = (level, code, file, line, message) => issues.push({ level, code, file, line, message });
@@ -224,6 +226,11 @@ export async function auditContent({ documents, root = projectRoot, permalink = 
 		}
 		article.url = route;
 		article.paths = [...new Set(aliases)];
+		try {
+			const term = getCommentTerm(route, data.commentId);
+			if (commentTerms.has(term)) add("error", "comment-id-collision", file, 2, `评论标识 ${term} 与 ${commentTerms.get(term)} 重复，会混合两篇文章的评论`);
+			commentTerms.set(term, file);
+		} catch { /* 无效路径由下方路由检查报告。 */ }
 		for (const url of article.paths) {
 			let key;
 			try { key = routeKey(url); }

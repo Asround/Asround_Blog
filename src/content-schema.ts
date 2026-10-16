@@ -13,6 +13,7 @@ export const postSchema = z.object({
 	lang: z.string().optional().default(""),
 	pinned: z.boolean().optional().default(false),
 	comment: z.boolean().optional().default(true),
+	commentId: z.string().trim().min(1).max(200).regex(/^[^\u0000-\u001f\u007f]+$/).optional(),
 	priority: z.number().optional(),
 	author: z.string().optional().default(""),
 	sourceLink: z.string().optional().default(""),

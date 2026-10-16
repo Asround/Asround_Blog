@@ -483,7 +483,15 @@ export const expressiveCodeConfig: ExpressiveCodeConfig = {
 };
 
 export const commentConfig: CommentConfig = {
-	enable: false, // 启用评论功能。当设置为 false 时，评论组件将不会显示在文章区域。
+	enable: true, // 设为 false 可立即停用评论，不影响远端讨论数据。
+	provider: "giscus",
+	giscus: {
+		repo: "Asround/Asround_Blog_Comments",
+		repoId: "R_kgDOVLxCwg", // 仓库公开 ID，不是访问令牌。
+		category: "文章评论",
+		categoryId: "DIC_kwDOVLxCws4DIk0E",
+		themeStylesheet: "/giscus.css", // 清空可回退官方输入框高度；保留默认双配色
+	},
 	twikoo: {
 		envId: "https://twikoo.vercel.app",
 		lang: SITE_LANG,

@@ -5,6 +5,7 @@ import ts from "typescript";
 import { parse } from "node-html-parser";
 import * as pagefind from "pagefind";
 import { auditProject } from "./check-content.mjs";
+import { readCommentConfig } from "./check-comments.mjs";
 
 // 使用正在运行的开发预览；索引只在内存中生成，不构建站点或写入 dist。
 const base = process.argv[2] || "http://localhost:4321";
@@ -77,6 +78,7 @@ assert.ok(!preciseExcerpt.includes("State"));
 console.log("PASS: 大小写、多个关键词、中文、字面符号、安全高亮及精确摘要。");
 
 try {
+	const commentConfig = await readCommentConfig();
 	const audit = await auditProject();
 	assert.deepEqual(audit.issues.filter((issue) => issue.level === "error"), [], "文章源检查必须先通过");
 	const publicPosts = audit.articles.filter((post) => !post.data.draft && !post.data.encrypted);
@@ -89,12 +91,15 @@ try {
 		const canonicalLink = canonicalDom.querySelector('link[rel="canonical"]')?.getAttribute("href");
 		assert.ok(canonicalLink, `${post.url}: 缺少 canonical`);
 		assert.equal(decodeURIComponent(new URL(canonicalLink).pathname), decodeURIComponent(post.url), post.url);
+		assert.equal(canonicalDom.querySelector('meta[name="giscus:backlink"]')?.getAttribute("content"), canonicalLink, `${post.url}: 评论回链必须指向正式地址`);
+		if (!commentConfig.enable) assert.equal(canonicalDom.querySelector("[data-comment-provider]"), null, `${post.url}: 关闭评论时不渲染占位框`);
 		const paths = [{ url: post.url, content: canonical }];
 		for (const url of post.paths.filter((url) => url !== post.url)) {
 			const content = await get(url);
 			const legacy = parse(content);
 			assert.equal(legacy.querySelector("html").getAttribute("data-pagefind-ignore"), "all", url);
 			assert.equal(legacy.querySelector('link[rel="canonical"]')?.getAttribute("href"), canonicalLink, url);
+			assert.equal(legacy.querySelector('meta[name="giscus:backlink"]')?.getAttribute("content"), canonicalLink, `${url}: 旧入口的评论回链`);
 			paths.push({ url, content });
 		}
 		return { dom: canonicalDom, paths };

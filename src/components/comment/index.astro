@@ -1,29 +1,33 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { commentConfig } from "@/config";
-import { removeFileExtension } from "@/utils/url-utils";
+import { commentConfig, siteConfig } from "@/config";
+import { getPostUrl } from "@/utils/url-utils";
+import { getCommentTerm, getDiscussionListUrl, getGiscusStylesheetUrl, shouldShowComments } from "@/utils/comment-utils";
+import Giscus from "./Giscus.svelte";
 import Twikoo from "./Twikoo.astro";
 
 interface Props {
 	post: CollectionEntry<"posts">;
 }
 
-const { id, data } = Astro.props.post;
-
-const slug = removeFileExtension(id);
-const path = `/posts/${slug}`;
-// const url = `${Astro.site?.href}${path}`;
-
-let commentService = "";
-if (commentConfig?.enable && commentConfig?.twikoo) {
-	commentService = "twikoo";
-}
-
-const commentEnabled = data.comment ?? true;
+const post = Astro.props.post;
+const visible = shouldShowComments(commentConfig, post.data);
+const provider = commentConfig.provider ?? "twikoo";
+const path = getPostUrl(post);
+const term = getCommentTerm(path, post.data.commentId);
 ---
-{commentConfig?.enable && commentEnabled && (
-  <div class="card-base p-6 mb-4">
-    {commentService === 'twikoo' && <Twikoo path={path} />}
-    {commentService === '' && null}
-  </div>
+{visible && (
+  provider === 'giscus' && commentConfig.giscus ? (
+    <Giscus
+      client:load
+      config={commentConfig.giscus}
+      term={term}
+      discussionsUrl={getDiscussionListUrl(commentConfig.giscus)}
+      stylesheetUrl={getGiscusStylesheetUrl(commentConfig.giscus, siteConfig.siteURL)}
+    />
+  ) : (
+    <div id="article-comments" tabindex="-1" aria-label="评论" class="card-base p-6 mb-4" data-pagefind-ignore data-comment-provider="twikoo">
+      <Twikoo path={path} />
+    </div>
+  )
 )}

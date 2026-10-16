@@ -153,6 +153,9 @@ export function setTheme(theme: LIGHT_DARK_MODE, event?: MouseEvent): void {
 		void transition.ready.then(() => {
 			clearTimeout(deadline);
 			if (request !== themeRequest) return;
+			// Cross-origin frames can repaint while the top-level snapshot is being
+			// captured. Update their palette only once the old-state overlay is ready.
+			document.dispatchEvent(new Event("theme:transition-ready"));
 			activeThemeAnimation = root.animate({ clipPath: dark ? clips : [...clips].reverse() }, {
 				duration: frontendConfig.themeTransitionMs,
 				easing: "ease-in-out",

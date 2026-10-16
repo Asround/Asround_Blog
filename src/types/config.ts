@@ -273,7 +273,17 @@ export type PermalinkConfig = {
 
 export type CommentConfig = {
 	enable: boolean; // 是否启用评论功能
+	provider?: "giscus" | "twikoo"; // 旧配置未指定时继续使用 Twikoo
+	giscus?: GiscusConfig;
 	twikoo?: TwikooConfig;
+};
+
+export type GiscusConfig = {
+	repo: string;
+	repoId: string;
+	category: string;
+	categoryId: string;
+	themeStylesheet?: string; // 站内路径或可信 HTTPS CSS；不可用时回退到官方配色
 };
 
 type TwikooConfig = {

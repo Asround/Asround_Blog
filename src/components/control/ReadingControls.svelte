@@ -16,6 +16,7 @@ let { initialArticle = false }: { initialArticle?: boolean } = $props();
 const reading = frontendConfig.reading;
 const bottomSpace = musicPlayerConfig.enable ? 104 : 24;
 let isArticle = $state(initialArticle);
+let hasComments = $state(false);
 let ready = $state(false);
 let fontSize = $state(reading.defaultFontSize);
 let isDark = $state(false);
@@ -125,6 +126,7 @@ onMount(() => {
 	if (stored === "panel" || stored === "float") tocMode = stored;
 	const refresh = () => {
 		isArticle = !!document.getElementById("post-container");
+		hasComments = !!document.getElementById("article-comments");
 		leftOpen = !reading.collapseLeftSidebar;
 		fontOpen = false;
 		tocOpen = null;
@@ -212,6 +214,11 @@ onMount(() => {
                 <svg class="toc-button-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" /></svg>
             </button>
         {/if}
+        {#if hasComments}
+            <a id="reader-comment-link" class="tool-button" href="#article-comments" title="跳转到评论区" aria-label="跳转到评论区" data-no-swup onclick={() => { fontOpen = false; }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z" /></svg>
+            </a>
+        {/if}
         {#if fontOpen}
             <div id="reader-font-panel" class="reader-popover" role="group" aria-label="阅读字号设置">
                 <div class="font-heading"><label for="reading-font-slider">阅读字号</label><output for="reading-font-slider">{fontSize} px</output></div>
@@ -287,7 +294,7 @@ onMount(() => {
     .font-actions { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 12px; }
     .font-actions button { padding: 6px 9px; border-radius: 6px; background: var(--btn-regular-bg); color: var(--btn-content); font-size: 12px; }
     button:disabled { opacity: 0.4; cursor: default; }
-    button:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+    button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
     .toc-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; padding: 12px 14px 8px; color: var(--content-meta); font-size: 14px; font-weight: 600; }
     .toc-heading-actions { display: flex; gap: 2px; }
     .toc-mode-button { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; color: var(--content-meta); }
