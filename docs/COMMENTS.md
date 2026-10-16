@@ -34,7 +34,8 @@
 - 接近评论区前约 400px 才加载官方组件。加载失败或 20 秒没有收到服务响应时，提供重试和 GitHub 讨论区入口。
 - 使用 `specific` 映射和严格匹配。搜索限制在配置的分类，新讨论也在该分类创建。正式链接、旧 `/posts/.../` 链接、查询参数及不同域名共用文章正式路径作为标识。
 - 跟随网站深浅主题：一次加载官方 `preferred_color_scheme` 双配色样式，通过 iframe 的 `color-scheme` 切换，不在切换中请求另一份主题 CSS，也不重新加载 iframe，保留正在输入的内容。圆形过渡在旧快照完成后的更新回调中同步评论配色，并等待两帧让跨域表面绘制后再捕获新快照，避免点击瞬间目标色与旧色反转。页面离开时清理实例、观察器、定时器与待完成的样式请求。
-- 主评论输入和预览默认至少 240px 高，保留 giscus 的拖动调高和 500px 输入高度上限；短回复使用原有紧凑高度。样式在博客的 `public/giscus.css` 维护，通过 `public/_headers` 允许评论服务跨域读取。
+- 主评论输入恢复官方默认的 100px 最小高度，在支持 `field-sizing: content` 的浏览器中随换行及折行自动增高，达到 500px 后内部滚动；旧浏览器保留 giscus 原有增高逻辑及拖动调高。成功发送清空内容或手动清空时恢复默认高度，未发送的非空内容保留高度。预览和短回复使用官方布局。样式在博客的 `public/giscus.css` 维护，通过 `public/_headers` 允许评论服务跨域读取。
+- 评论仓库 `giscus.json` 的 `defaultCommentOrder` 设为 `newest`，新留言默认排在顶部输入框之后。没有根据评论数量推测本人提交成功或强制滚动，以免其他读者留言时干扰阅读。
 - `commentConfig.giscus.themeStylesheet` 默认为 `/giscus.css`，相对于正式站点解析。加载前检查 HTTP 状态和 CSS 响应类型；2 秒不可用、返回 HTML 或资源尚未部署时回退官方主题，继续显示可用评论。增强样式不新增外部 CDN。
 - 评论区提供折叠的 Markdown 与公式写法提示，以及 GitHub 讨论区入口。浏览器禁用本地存储等情况下，显示重试和 GitHub 入口，避免未捕获的组件构造异常。
 - 评论区标记 `data-pagefind-ignore`，不参与站内搜索；评论 iframe 内的数据也不会进入静态文章索引。
@@ -110,6 +111,6 @@ $$
 
 将 `commentConfig.enable` 改为 `false` 即停止展示和加载评论，不删除远端数据。旧 Twikoo 配置保留；只有拥有真实有效的 Twikoo 服务时才可切换 `provider: "twikoo"` 并启用，当前示例 `envId` 不代表可用服务。
 
-清空 `commentConfig.giscus.themeStylesheet` 可单独恢复官方输入高度；保留它并修改 `public/giscus.css` 的 `min-height` 可调整输入、预览高度。样式需要随博客部署，评论仓库不需要构建。博客源码推送 `master`，独立评论仓库的配置和维护说明推送 `main`。
+`public/giscus.css` 的 `--asround-comment-min-height` 和 `--asround-comment-max-height` 分别控制输入高度上下限；删除空输入框的 `:placeholder-shown` 规则可单独撤销清空后的高度复位。清空 `commentConfig.giscus.themeStylesheet` 可整体恢复官方样式。评论仓库的 `defaultCommentOrder` 改为 `oldest` 可恢复最早优先。样式需要随博客部署，评论仓库不需要构建。博客源码推送 `master`，独立评论仓库的配置和维护说明推送 `main`。
 
 本次新增依赖为固定版本 `giscus`（运行时）与 `playwright-core`（开发测试）。不引入数据库、后端、个人令牌或自建邮件服务。

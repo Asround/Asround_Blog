@@ -28,7 +28,7 @@ await context.route("https://giscus.app/**", (route) => {
 	return route.fulfill({ contentType: "text/html; charset=utf-8", body: `<!doctype html><html><head><style>
 body{margin:0;background:white;color:black}textarea{width:95%;resize:vertical;background:rgb(246,248,250);color:black}
 @media(prefers-color-scheme:dark){body{background:rgb(13,17,23);color:white}textarea{background:rgb(1,4,9);color:white}}
-</style></head><body><form class="gsc-comment-box"><textarea class="gsc-comment-box-textarea" aria-label="test draft"></textarea></form><script>
+</style></head><body><form class="gsc-comment-box"><textarea class="gsc-comment-box-textarea" placeholder="Write a comment" aria-label="test draft"></textarea></form><script>
 const theme=new URL(location.href).searchParams.get('theme');
 if(theme?.startsWith('https://')){const link=document.createElement('link');link.rel='stylesheet';link.crossOrigin='anonymous';link.href=theme;document.head.append(link);}
 parent.postMessage({giscus:{resizeHeight:280}},'*');
@@ -77,7 +77,7 @@ try {
 	await page.waitForURL("**/STA/#article-comments");
 	const frame = await commentFrame(page);
 	await frame.locator("textarea").waitFor();
-	await frame.waitForFunction(() => getComputedStyle(document.querySelector("textarea")).minHeight === "240px");
+	await frame.waitForFunction(() => getComputedStyle(document.querySelector("textarea")).minHeight === "100px");
 	assert.equal(await page.evaluate(() => window.testCommentVisits), 0, "跳转走原生锚点，不触发整页 Swup 导航");
 	assert.equal(await page.evaluate(() => document.activeElement.id), "article-comments", "键盘焦点随锚点进入评论区域");
 	await page.locator(".comment-help summary").click();
@@ -99,7 +99,7 @@ try {
 	assert.equal(await page.locator("giscus-widget").count(), 1);
 	assert.equal(gtmLoads, 1, "站内切页不重复加载 GTM");
 	assert.equal(clarityLoads, 1, "站内切页不重复加载 Clarity");
-	console.log("PASS 首页/归档/关于页隐藏入口、文章锚点与键盘跳转、240px 输入框、写法提示、切页清理、统计脚本只加载一次");
+	console.log("PASS 首页/归档/关于页隐藏入口、文章锚点与键盘跳转、100px 输入框、写法提示、切页清理、统计脚本只加载一次");
 
 	for (const width of [1920, 1440, 1024, 900, 640]) {
 		await page.setViewportSize({ width, height: 1000 });

@@ -1,8 +1,31 @@
 /* Keep both official palettes loaded; the embedding iframe selects color-scheme. */
 @import url("https://giscus.app/themes/preferred_color_scheme.css");
 
-/* Only enlarge new article comments; short inline replies keep their compact box. */
-.gsc-comment-box:not(.gsc-comment-box-is-reply) .gsc-comment-box-textarea,
-.gsc-comment-box:not(.gsc-comment-box-is-reply) .gsc-comment-box-preview {
-  min-height: 240px;
+/* Giscus resizes populated editors as lines wrap. Keep its compact default and
+   original height limit; replies and previews retain the official layout. */
+:root {
+  --asround-comment-min-height: 100px;
+  --asround-comment-max-height: 500px;
+}
+
+.gsc-comment-box:not(.gsc-comment-box-is-reply) textarea.gsc-comment-box-textarea {
+  min-height: var(--asround-comment-min-height);
+  max-height: var(--asround-comment-max-height);
+}
+
+/* Prefer content sizing where supported: giscus' JS also writes an inline
+   height and imposes its own earlier limit. Unsupported browsers keep that
+   upstream autosizer and its manual resize handle. */
+@supports (field-sizing: content) {
+  .gsc-comment-box:not(.gsc-comment-box-is-reply) textarea.gsc-comment-box-textarea {
+    field-sizing: content;
+    height: auto !important;
+    resize: none;
+  }
+}
+
+/* Successful submission clears the value but leaves the measured inline height.
+   Reset only an empty editor, including when its contents are deleted manually. */
+.gsc-comment-box:not(.gsc-comment-box-is-reply) textarea.gsc-comment-box-textarea:placeholder-shown {
+  height: var(--asround-comment-min-height) !important;
 }

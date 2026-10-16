@@ -36,9 +36,12 @@ await context.route("https://giscus.app/**", async (route) => {
 	requests++;
 	await route.fulfill({ contentType: "text/html; charset=utf-8", body: `<!doctype html><html><head><style>
 body{background:rgb(255,255,255);color:rgb(0,0,0)}
+textarea{box-sizing:border-box;min-height:100px;max-height:500px;width:95%;padding:8px;line-height:20px;resize:vertical}
 @media(prefers-color-scheme:dark){body{background:rgb(13,17,23);color:rgb(255,255,255)}}
 </style></head><body>
-<form class="gsc-comment-box"><textarea class="gsc-comment-box-textarea" aria-label="test-draft"></textarea></form><script>
+<form class="gsc-comment-box"><textarea class="gsc-comment-box-textarea" placeholder="Write a comment" aria-label="test-draft"></textarea></form><script>
+const textarea=document.querySelector('textarea');
+textarea.addEventListener('input',()=>{textarea.style.height='0px';textarea.style.height=textarea.scrollHeight+'px';});
 const theme=new URL(location.href).searchParams.get('theme');
 if(theme?.startsWith('https://')){const link=document.createElement('link');link.rel='stylesheet';link.crossOrigin='anonymous';link.href=theme;document.head.append(link);}
 window.addEventListener('message',e=>{if(e.data?.giscus?.setConfig)document.body.dataset.theme=e.data.giscus.setConfig.theme;});
@@ -182,10 +185,37 @@ try {
 		frame = await (await page.locator("giscus-widget").locator("iframe").elementHandle()).contentFrame();
 		await frame.locator("textarea").waitFor();
 		assert.equal(new URL(frame.url()).searchParams.get("theme"), variant === "valid" ? customStylesheet : "preferred_color_scheme");
-		if (variant === "valid") await frame.waitForFunction(() => getComputedStyle(document.querySelector("textarea")).minHeight === "240px");
+		if (variant === "valid") {
+			await frame.waitForFunction(() => getComputedStyle(document.querySelector("textarea")).minHeight === "100px");
+			const editor = frame.locator("textarea");
+			const height = () => editor.evaluate((element) => element.getBoundingClientRect().height);
+			assert.equal(await height(), 100, "空输入框恢复官方默认高度");
+			await editor.fill("Short draft");
+			assert.equal(await height(), 100);
+			await editor.fill("Long draft line\n".repeat(16));
+			assert.ok(await height() > 100, "输入行数增加时自动变高");
+			const expanded = await height();
+			await editor.evaluate((element) => { element.disabled = true; });
+			assert.equal(await height(), expanded, "等待发送时不折叠非空输入框");
+			await editor.evaluate((element) => { element.disabled = false; });
+			assert.equal(await editor.inputValue(), "Long draft line\n".repeat(16), "失败后保留未清空的草稿");
+			await editor.fill("Long draft line\n".repeat(100));
+			assert.equal(await height(), 500, "长评论达到上限后内部滚动");
+			assert.ok(await editor.evaluate((element) => element.scrollHeight > element.clientHeight));
+			// Giscus resets the controlled value after success without firing input.
+			await editor.evaluate((element) => { element.value = ""; });
+			assert.equal(await height(), 100, "程序清空后也折回，不依赖输入事件");
+			await editor.fill("Another draft\n".repeat(12));
+			assert.ok(await height() > 100, "清空后可继续自动增高");
+			await editor.fill("");
+			assert.equal(await height(), 100, "手动清空后折回");
+			await editor.fill("Wrapped words ".repeat(500));
+			assert.ok(await height() > 100, "没有显式换行的长文本也随折行增高");
+			await editor.fill("");
+		}
 		await page.close();
 	}
-	console.log("PASS 默认输入高度 240px；CSS 缺失或返回 HTML 时回退官方样式");
+	console.log("PASS 默认 100px、随行增高、500px 上限、程序/手动清空复位；CSS 缺失或返回 HTML 时回退官方样式");
 
 	page = await fixture("?stylesheet=" + encodeURIComponent(customStylesheet), (page) => page.addInitScript(() => {
 		const original = window.fetch;
