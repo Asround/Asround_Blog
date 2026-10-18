@@ -143,13 +143,13 @@ if (siteConfig.font) {
 	if (siteConfig.font.asciiFont?.fontFamily) {
 		const asciiFont = siteConfig.font.asciiFont.fontFamily;
 		// 如果字体名包含空格，需要用引号包围
-		fonts.push(asciiFont.includes(" ") ? `"${asciiFont}"` : asciiFont);
+		fonts.push(JSON.stringify(asciiFont));
 	}
 	// 再添加 CJK 字体（作为回退）
 	if (siteConfig.font.cjkFont?.fontFamily) {
 		const cjkFont = siteConfig.font.cjkFont.fontFamily;
 		// 如果字体名包含空格，需要用引号包围
-		fonts.push(cjkFont.includes(" ") ? `"${cjkFont}"` : cjkFont);
+		fonts.push(JSON.stringify(cjkFont));
 	}
 	// 添加系统字体作为最终回退
 	fonts.push(

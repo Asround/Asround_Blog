@@ -12,15 +12,17 @@
 /* 导入 TikTokSans-VariableFont_opsz,slnt,wdth,wght 字体 */
 @font-face {
   font-family: "TikTokSans-VariableFont_opsz,slnt,wdth,wght";
-  src: url("/assets/font/TikTokSans-VariableFont_opsz,slnt,wdth,wght.ttf") format("truetype");
-  font-weight: 500;
+  src: url("/assets/font/TikTokSans-VariableFont_opsz,slnt,wdth,wght.woff2") format("woff2"),
+       url("/assets/font/TikTokSans-VariableFont_opsz,slnt,wdth,wght.ttf") format("truetype");
+  font-weight: 100 900;
   font-display: swap;
 }
 
 /* 导入 方正黑体-简体 字体 */
 @font-face {
   font-family: "方正黑体-简体";
-  src: url("/assets/font/方正黑体-简体.TTF") format("truetype");
+  src: url("/assets/font/方正黑体-简体.woff2") format("woff2"),
+       url("/assets/font/方正黑体-简体.TTF") format("truetype");
   font-style: normal;
   font-weight: 400;
   font-display: swap;

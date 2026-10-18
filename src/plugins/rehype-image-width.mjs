@@ -20,8 +20,7 @@ export function rehypeImageWidth() {
 					if (unit === "px") {
 						node.properties.style = `width: ${width}px; max-width: 100%; height: auto;`;
 					} else {
-						node.properties.width = `${width}%`;
-						node.properties.style = "display: block; margin: 0 auto;";
+						node.properties.style = `width: ${width}%; max-width: 100%; height: auto; display: block; margin: 0 auto;`;
 					}
 
 					const figureChildren = [node];
