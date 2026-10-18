@@ -290,7 +290,7 @@ const jsonLd = {
         <a
             href={entry.data.nextSlug
                 ? getPostUrlBySlug(entry.data.nextSlug)
-                : "#"}
+                : undefined}
             class:list={[
                 "w-full font-bold overflow-hidden active:scale-95",
                 { "pointer-events-none": !entry.data.nextSlug },
@@ -314,7 +314,7 @@ const jsonLd = {
         <a
             href={entry.data.prevSlug
                 ? getPostUrlBySlug(entry.data.prevSlug)
-                : "#"}
+                : undefined}
             class:list={[
                 "w-full font-bold overflow-hidden active:scale-95",
                 { "pointer-events-none": !entry.data.prevSlug },

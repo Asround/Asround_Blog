@@ -213,6 +213,7 @@ onMount(() => {
 	const panel = document.getElementById("search-panel");
 	const syncPanelAccessibility = () => {
 		if (panel) panel.inert = panel.classList.contains("float-panel-closed");
+		document.getElementById("search-switch")?.setAttribute("aria-expanded", String(!!panel && !panel.inert));
 	};
 	const panelObserver = new MutationObserver(syncPanelAccessibility);
 	if (panel) panelObserver.observe(panel, { attributes: true, attributeFilter: ["class"] });
@@ -250,14 +251,15 @@ onMount(() => {
 	const handleEscape = (event: KeyboardEvent) => {
 		if (event.key !== "Escape" || !document.getElementById("search-container")?.contains(document.activeElement)) return;
 		event.preventDefault();
+		event.stopPropagation();
 		const trigger = document.getElementById(activeDesktopSearch ? "search-toggle" : "search-switch");
 		closeSearchPanel();
 		trigger?.focus();
 	};
-	document.addEventListener("keydown", handleEscape);
+	document.addEventListener("keydown", handleEscape, true);
 
 	return () => {
-		document.removeEventListener("keydown", handleEscape);
+		document.removeEventListener("keydown", handleEscape, true);
 		panelObserver.disconnect();
 		window.removeEventListener("focus", handleFocus);
 		document.removeEventListener("pagefindready", handleReady);
@@ -342,7 +344,7 @@ onDestroy(() => {
 </div>
 
 <!-- toggle btn for phone/tablet view -->
-<button onclick={togglePanel} aria-label="Search Panel" id="search-switch"
+<button onclick={togglePanel} aria-label="Search Panel" aria-controls="search-panel" aria-expanded="false" id="search-switch"
         class="btn-plain scale-animation lg:!hidden rounded-lg w-11 h-11 active:scale-90">
     <Icon icon="material-symbols:search" class="text-[1.25rem]"></Icon>
 </button>

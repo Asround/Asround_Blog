@@ -40,6 +40,14 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
                 <Icon name="material-symbols:home" class="text-xl" />
                 {i18n(I18nKey.backToHome)}
             </a>
+            <div class="flex flex-wrap justify-center gap-3 mt-4">
+                <a href="/archive/" class="btn-regular rounded-lg px-4 py-2 inline-flex items-center gap-2">
+                    <Icon name="material-symbols:archive-outline" class="text-xl" />浏览文章归档
+                </a>
+                <a href="/archive/#archive-keyword" class="btn-regular rounded-lg px-4 py-2 inline-flex items-center gap-2">
+                    <Icon name="material-symbols:search" class="text-xl" />搜索文章
+                </a>
+            </div>
             
             <!-- 装饰性元素 -->
             <div class="absolute top-4 left-4 opacity-10">

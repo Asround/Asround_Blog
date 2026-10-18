@@ -30,6 +30,7 @@ runOnce("reading-resume", () => {
 	let flush = () => {};
 	function init() {
 		cleanup();
+		cleanup = () => {};
 		flush = () => {};
 		const panel = document.querySelector<HTMLElement>("[data-reading-resume]");
 		const content = document.querySelector<HTMLElement>("#post-container .markdown-content");

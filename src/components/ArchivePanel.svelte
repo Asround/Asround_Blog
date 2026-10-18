@@ -1,5 +1,5 @@
 <script lang="ts">
-import { onMount } from "svelte";
+import { onMount, tick } from "svelte";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { frontendConfig } from "../config";
@@ -117,6 +117,10 @@ function renderSearchText(text: string, query: string, matchCase: boolean) {
 }
 onMount(() => {
 	readFilters();
+	// The 404 search shortcut targets a control that becomes enabled on hydration.
+	tick().then(() => {
+		if (location.hash === "#archive-keyword") document.getElementById("archive-keyword")?.focus();
+	});
 	window.addEventListener("popstate", readFilters);
 	return () => window.removeEventListener("popstate", readFilters);
 });

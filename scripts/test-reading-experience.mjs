@@ -20,6 +20,30 @@ async function test(name, callback) {
 	console.log(`PASS ${name}`);
 }
 try {
+	await test("edges", async () => {
+		const { devicesData } = await importTS(await readFile("src/data/devices.ts", "utf8"));
+		const initial = parse(await (await fetch(`${base}/devices/`)).text());
+		assert.equal(initial.querySelector("#devices-container .device-card").tagName, "ARTICLE");
+		assert.equal(initial.querySelectorAll('#devices-container a[href=""]').length, 0);
+		await page.goto(`${base}/404/`);
+		await page.getByRole("link", { name: "搜索文章", exact: true }).click();
+		await page.waitForURL(`${base}/archive/#archive-keyword`);
+		await page.waitForFunction(() => document.activeElement?.id === "archive-keyword" && !document.activeElement.disabled);
+		await page.goto(`${base}/devices/`);
+		await page.waitForFunction(() => window.swup);
+		for (const [brand, devices] of Object.entries(devicesData)) {
+			await page.getByRole("button", { name: brand, exact: true }).click();
+			assert.equal(await page.locator("#devices-container > .device-card").count(), devices.length);
+			const cards = await page.locator("#devices-container > .device-card").evaluateAll(cards => cards.map(card => ({ tag: card.tagName, href: card.getAttribute("href"), cursor: getComputedStyle(card).cursor })));
+			for (let i = 0; i < devices.length; i++) {
+				assert.equal(cards[i].tag, devices[i].link.trim() ? "A" : "ARTICLE");
+				assert.equal(cards[i].href, devices[i].link.trim() ? devices[i].link : null);
+				if (!devices[i].link.trim()) assert.notEqual(cards[i].cursor, "pointer");
+			}
+		}
+		await page.getByRole("button", { name: "PC", exact: true }).click();
+		assert.equal(await page.locator("#devices-container article .device-action").first().isVisible(), false);
+	});
 	await test("carousel", async () => {
 		const carouselPage = await context.newPage();
 		try {
@@ -178,6 +202,13 @@ try {
 		await page.keyboard.press("Escape");
 		assert.equal(await page.locator("#search-switch").evaluate(el => el === document.activeElement), true);
 		await page.setViewportSize({ width: 1440, height: 1000 });
+		await page.goto(`${base}/STA/`);
+		await page.waitForFunction(() => document.getElementById("reader-toc-toggle")?.getAttribute("aria-expanded") === "true");
+		await page.locator("#search-toggle").focus();
+		await page.keyboard.press("Enter");
+		await page.waitForFunction(() => document.activeElement?.id === "search-input-desktop");
+		await page.keyboard.press("Escape");
+		assert.equal(await page.locator("#reader-toc-toggle").getAttribute("aria-expanded"), "true", "Search Escape leaves the article directory open");
 	});
 	assert.deepEqual(errors, [], "No browser exceptions");
 } finally { await browser.close(); }
