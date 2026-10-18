@@ -29,11 +29,11 @@ const categories = [...new Set(posts.map(post => post.data.category).filter((c):
         import('../scripts/right-sidebar-layout.js');
     </script>
 
-    <!-- 修复：补全缺失的 tags 和 categories 属性 -->
+    <!-- 文章列表静态输出，浏览器加载后接管筛选。 -->
     <ArchivePanel
             sortedPosts={posts}
             tags={tags}
             categories={categories}
-            client:only="svelte"
+            client:load
     ></ArchivePanel>
 </MainGridLayout>

@@ -132,6 +132,7 @@ Remove-Item -LiteralPath @(
 ## 2026-10-18 阅读体验调整
 
 - 搜索使用原生按钮，支持 Enter / Space；Escape 关闭并返回触发按钮。首个 Tab 可跳转主要内容。自动回归：`pnpm test:reading --only=keyboard`（需本地预览）。
+- 归档列表静态输出，脚本加载后启用筛选并恢复 URL 条件；禁用脚本仍能浏览全部文章。`pnpm test:reading --only=archive` 覆盖无脚本、刷新条件、高亮和缩放可用宽度。
 
 ## RSS 使用说明
 

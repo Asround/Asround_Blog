@@ -123,6 +123,7 @@ onMount(() => {
 </script>
 
 <div class="card-base px-8 py-6">
+    <noscript><p class="text-sm text-50 mb-4">以下为全部文章；启用 JavaScript 后可使用分类、标签和关键词筛选。</p></noscript>
     {#if frontendConfig.archiveFilters}
         <div class="archive-filters mb-6 pb-5 border-b border-[var(--line-divider)]">
             <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
@@ -134,14 +135,14 @@ onMount(() => {
             </div>
             <div class="archive-filter-grid">
                 <label class="text-sm text-75">分类
-                    <select aria-label="筛选分类" class="archive-input" value={uncategorized ? '__uncategorized' : selectedCategories.length === 1 ? selectedCategories[0] : ''} on:change={event => selectCategory(event.currentTarget.value)}>
+                    <select aria-label="筛选分类" disabled={!ready} class="archive-input" value={uncategorized ? '__uncategorized' : selectedCategories.length === 1 ? selectedCategories[0] : ''} on:change={event => selectCategory(event.currentTarget.value)}>
                         <option value="">全部分类</option>
                         {#each categories as category}<option value={category}>{getCategoryLabel(category)}</option>{/each}
                         {#if sortedPosts.some(post => !post.data.category)}<option value="__uncategorized">未分类</option>{/if}
                     </select>
                 </label>
                 <label class="text-sm text-75">标签
-                    <select aria-label="筛选标签" class="archive-input" value={tagsOutsideCategory.length ? '__preserved_tags__' : selectedTags.length === 1 ? selectedTags[0] : ''} on:change={event => { selectedTags = event.currentTarget.value ? [event.currentTarget.value] : []; updateUrl(); }}>
+                    <select aria-label="筛选标签" disabled={!ready} class="archive-input" value={tagsOutsideCategory.length ? '__preserved_tags__' : selectedTags.length === 1 ? selectedTags[0] : ''} on:change={event => { selectedTags = event.currentTarget.value ? [event.currentTarget.value] : []; updateUrl(); }}>
                         <option value="">全部标签</option>
                         {#if tagsOutsideCategory.length}<option value="__preserved_tags__" disabled>已选标签不在当前分类</option>{/if}
                         {#each availableTags as tag}<option value={tag}>{tag}</option>{/each}
@@ -151,10 +152,10 @@ onMount(() => {
                     <div class="keyword-options">
                         <label for="archive-keyword">关键词</label>
                         {#if frontendConfig.search.matchCaseOption}
-                            <label class="search-match-case"><input type="checkbox" bind:checked={caseSensitive} on:change={event => { caseSensitive = event.currentTarget.checked; updateUrl(); }} />匹配大小写</label>
+                            <label class="search-match-case"><input type="checkbox" disabled={!ready} bind:checked={caseSensitive} on:change={event => { caseSensitive = event.currentTarget.checked; updateUrl(); }} />匹配大小写</label>
                         {/if}
                     </div>
-                    <input id="archive-keyword" aria-label="筛选文章关键词" type="search" class="archive-input" placeholder="标题、简介或标签" bind:value={keyword} on:input={event => { keyword = event.currentTarget.value; updateUrl(); }} />
+                    <input id="archive-keyword" aria-label="筛选文章关键词" disabled={!ready} type="search" class="archive-input" placeholder="标题、简介或标签" bind:value={keyword} on:input={event => { keyword = event.currentTarget.value; updateUrl(); }} />
                 </div>
             </div>
             {#if hasFilters}
