@@ -305,9 +305,9 @@ async function generatePoster() {
 		}
 
 		// Avatar
+		const avatarSize = 80 * SCALE;
 		if (avatarImg) {
 			ctx.save();
-			const avatarSize = 64 * SCALE;
 			const avatarX = PADDING;
 			const avatarY = footerY + (qrSize - avatarSize) / 2;
 			ctx.beginPath();
@@ -325,15 +325,15 @@ async function generatePoster() {
 		}
 
 		// Author text
-		const avatarOffset = avatarImg ? 64 * SCALE + 16 * SCALE : 0;
+		const avatarOffset = avatarImg ? avatarSize + 16 * SCALE : 0;
 		const textX = PADDING + avatarOffset;
 
-		ctx.fillStyle = "#9ca3af";
-		ctx.font = `${12 * SCALE}px ${FONT_FAMILY}`;
-		ctx.fillText(i18n(I18nKey.author), textX, footerY + 20 * SCALE);
+		ctx.fillStyle = "#6b7280";
+		ctx.font = `500 ${14 * SCALE}px ${FONT_FAMILY}`;
+		ctx.fillText(i18n(I18nKey.author), textX, footerY + 18 * SCALE);
 
 		ctx.fillStyle = "#1f2937";
-		ctx.font = `700 ${20 * SCALE}px ${FONT_FAMILY}`;
+		ctx.font = `700 ${22 * SCALE}px ${FONT_FAMILY}`;
 		ctx.fillText(author, textX, footerY + 38 * SCALE);
 
 		// Caption centered below the QR code.
