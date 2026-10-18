@@ -1,0 +1,30 @@
+---
+import { frontendConfig } from "../config";
+import { readingSeries } from "../data/reading-series";
+import { getSortedPostsList } from "../utils/content-utils";
+const { id } = Astro.props as { id: string };
+const series = frontendConfig.reading.series ? readingSeries.find(item => item.posts.includes(id)) : undefined;
+const posts = series ? (await getSortedPostsList()).filter(post => !post.data.draft && !post.data.encrypted) : [];
+const entries = series?.posts.flatMap(postId => {
+    const post = posts.find(item => item.id === postId);
+    return post ? [post] : [];
+}) || [];
+---
+{entries.length > 1 && entries.some(post => post.id === id) && <nav class="card-base p-6 mb-4 reading-series" aria-label="专题阅读" data-pagefind-ignore>
+    <h2 class="text-lg font-bold text-90 mb-3">专题阅读 · {series!.title}</h2>
+    <ol class="grid md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+        {entries.map((post, index) => <li class="flex gap-2 min-w-0">
+            <span class="text-50 shrink-0" aria-hidden="true">{index + 1}.</span>
+            {post.id === id
+                ? <span class="text-75" aria-current="page">{post.data.title}<span class="current-label">当前</span></span>
+                : <a class="series-link" href={post.url}>{post.data.title}<span aria-hidden="true"> →</span></a>}
+        </li>)}
+    </ol>
+</nav>}
+<style>
+.reading-series li { overflow-wrap: anywhere; }
+.series-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent; border-radius: .25rem; }
+.series-link:hover { text-decoration-color: currentColor; }
+.series-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.current-label { display: inline-block; margin-left: .5rem; padding: 0 .35rem; border-radius: .25rem; background: var(--btn-regular-bg); color: var(--primary); font-size: .75rem; }
+</style>

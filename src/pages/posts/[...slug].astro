@@ -4,6 +4,7 @@ import { render } from "astro:content";
 import path from "node:path";
 import Comment from "@components/comment/index.astro";
 import ReadingResume from "@components/control/ReadingResume.astro";
+import ReadingSeries from "@components/ReadingSeries.astro";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import SharePoster from "@components/misc/SharePoster.svelte";
@@ -404,6 +405,7 @@ const jsonLd = {
         </>
     )}
 
+    <ReadingSeries id={entry.id} />
     <div
         class="flex flex-col md:flex-row justify-between mb-4 gap-4 overflow-hidden w-full"
     >

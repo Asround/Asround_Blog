@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright-core";
+import { readFile } from "node:fs/promises";
+import { parse } from "node-html-parser";
+import { auditProject, importTS } from "./check-content.mjs";
 
 const args = process.argv.slice(2);
 const base = args.find(arg => !arg.startsWith("--")) || "http://localhost:4321";
@@ -17,6 +20,29 @@ async function test(name, callback) {
 	console.log(`PASS ${name}`);
 }
 try {
+	await test("series", async () => {
+		const { readingSeries } = await importTS(await readFile("src/data/reading-series.ts", "utf8"));
+		const { articles } = await auditProject();
+		const ids = new Set();
+		for (const group of readingSeries) for (const id of group.posts) {
+			assert.ok(!ids.has(id), "An article belongs to only one curated reading group");
+			ids.add(id);
+			const post = articles.find(post => post.id === id);
+			assert.ok(post && !post.data.draft && !post.data.encrypted, `Published article: ${id}`);
+			const response = await fetch(new URL(post.url, base));
+			assert.equal(response.status, 200);
+			const nav = parse(await response.text()).querySelector(".reading-series");
+			assert.ok(nav?.querySelector('[aria-current="page"]')?.text.includes(post.data.title));
+			const expected = group.posts.filter(other => other !== id).map(other => articles.find(post => post.id === other).url);
+			assert.deepEqual(nav.querySelectorAll("a[href]").map(link => link.getAttribute("href")), expected);
+		}
+		await page.goto(`${base}/STA/`);
+		await page.locator('.reading-series a[href="/IC-3rd-Year/"]').click();
+		await page.waitForURL(`${base}/IC-3rd-Year/`);
+		assert.equal(await page.locator('.reading-series [aria-current="page"]').count(), 1);
+		await page.goto(`${base}/Summer-camp/`);
+		assert.equal(await page.locator(".reading-series").count(), 0);
+	});
 	await test("resume", async () => {
 		await page.goto(`${base}/STA/`);
 		await page.waitForFunction(() => window.swup);
