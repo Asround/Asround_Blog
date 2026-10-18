@@ -12,7 +12,6 @@ export let description = "";
 export let pubDate: string;
 export let coverImage: string | null = null;
 export let url: string;
-export let siteTitle: string;
 export let avatar: string | null = null;
 
 // Constants
@@ -153,12 +152,14 @@ async function generatePoster() {
 		const titleFontSize = 24 * SCALE;
 		const descFontSize = 14 * SCALE;
 		const qrSize = 80 * SCALE;
-		const footerHeight = qrSize;
+		const qrCaptionGap = 8 * SCALE;
+		const footerHeight = qrSize + qrCaptionGap + 14 * SCALE;
 
 		ctx.font = `700 ${titleFontSize}px ${FONT_FAMILY}`;
 		const titleLines = getLines(ctx, title, CONTENT_WIDTH);
 		const titleLineHeight = 30 * SCALE;
 		const titleHeight = titleLines.length * titleLineHeight;
+		const titleSpacing = 16 * SCALE - (titleLineHeight - titleFontSize);
 
 		let descHeight = 0;
 		if (description) {
@@ -167,8 +168,8 @@ async function generatePoster() {
 			descHeight = Math.min(descLines.length, 6) * (25 * SCALE);
 		}
 
-		const canvasHeight = coverHeight + PADDING + titleHeight + 16 * SCALE + descHeight +
-			(description ? 24 * SCALE : 8 * SCALE) + 24 * SCALE + footerHeight + PADDING;
+		const canvasHeight = coverHeight + PADDING + titleHeight + titleSpacing + descHeight +
+			(description ? 0 : 8 * SCALE) + 24 * SCALE + 16 * SCALE + footerHeight + PADDING;
 
 		canvas.width = WIDTH;
 		canvas.height = canvasHeight;
@@ -254,7 +255,7 @@ async function generatePoster() {
 			ctx.fillText(line, PADDING, drawY);
 			drawY += titleLineHeight;
 		}
-		drawY += 16 * SCALE - (titleLineHeight - titleFontSize);
+		drawY += titleSpacing;
 
 		// Description
 		if (description) {
@@ -308,40 +309,38 @@ async function generatePoster() {
 			ctx.save();
 			const avatarSize = 64 * SCALE;
 			const avatarX = PADDING;
+			const avatarY = footerY + (qrSize - avatarSize) / 2;
 			ctx.beginPath();
-			ctx.arc(avatarX + avatarSize / 2, footerY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+			ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
 			ctx.closePath();
 			ctx.clip();
-			ctx.drawImage(avatarImg, avatarX, footerY, avatarSize, avatarSize);
+			ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
 			ctx.restore();
 
 			ctx.beginPath();
-			ctx.arc(avatarX + avatarSize / 2, footerY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+			ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
 			ctx.strokeStyle = "#ffffff";
 			ctx.lineWidth = 2 * SCALE;
 			ctx.stroke();
 		}
 
 		// Author text
-		const avatarOffset = avatar ? 64 * SCALE + 16 * SCALE : 0;
+		const avatarOffset = avatarImg ? 64 * SCALE + 16 * SCALE : 0;
 		const textX = PADDING + avatarOffset;
 
 		ctx.fillStyle = "#9ca3af";
 		ctx.font = `${12 * SCALE}px ${FONT_FAMILY}`;
-		ctx.fillText(i18n(I18nKey.author), textX, footerY + 4 * SCALE);
+		ctx.fillText(i18n(I18nKey.author), textX, footerY + 20 * SCALE);
 
 		ctx.fillStyle = "#1f2937";
 		ctx.font = `700 ${20 * SCALE}px ${FONT_FAMILY}`;
-		ctx.fillText(author, textX, footerY + 20 * SCALE);
+		ctx.fillText(author, textX, footerY + 38 * SCALE);
 
-		// Site title
+		// Caption centered below the QR code.
 		ctx.fillStyle = "#9ca3af";
 		ctx.font = `${12 * SCALE}px ${FONT_FAMILY}`;
-		ctx.fillText(i18n(I18nKey.scanToRead), textX, footerY + 44 * SCALE);
-
-		ctx.fillStyle = "#1f2937";
-		ctx.font = `700 ${20 * SCALE}px ${FONT_FAMILY}`;
-		ctx.fillText(siteTitle, textX, footerY + 60 * SCALE);
+		ctx.textAlign = "center";
+		ctx.fillText(i18n(I18nKey.scanToRead), qrX + qrSize / 2, footerY + qrSize + qrCaptionGap);
 
 		posterImage = canvas.toDataURL("image/png");
 	} catch (error) {
