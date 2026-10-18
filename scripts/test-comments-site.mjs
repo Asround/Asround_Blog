@@ -32,7 +32,7 @@ body{margin:0;background:white;color:black}textarea{width:95%;resize:vertical;ba
 const theme=new URL(location.href).searchParams.get('theme');
 if(theme && /^https?:/.test(theme)){const link=document.createElement('link');link.rel='stylesheet';link.crossOrigin='anonymous';link.href=theme;document.head.append(link);}
 window.addEventListener('message',e=>{const theme=e.data?.giscus?.setConfig?.theme;if(theme?.startsWith('data:text/css;')){const link=document.createElement('link');link.rel='stylesheet';link.href=theme;document.head.append(link);}});
-parent.postMessage({giscus:{resizeHeight:280}},'*');
+parent.postMessage({giscus:{resizeHeight:280,discussion:{id:'D_fixture'}}},'*');
 </script></body></html>` });
 });
 

@@ -8,6 +8,18 @@
 	} = $props();
 	let host: HTMLDivElement;
 	let state = $state<CommentState>("waiting");
+	const statusText: Record<CommentState, string> = {
+		waiting: "滚动到此处时加载评论。",
+		loading: "正在加载评论…",
+		ready: "",
+		slow: "评论加载时间较长，可以继续等待或重新加载。",
+		warning: "评论服务暂时出现异常，已保留评论区域，可稍后再试。",
+		limited: "评论服务暂时限流，请稍后再试；若未登录，可尝试在下方登录 GitHub。",
+		configuration: "评论配置暂不可用，请稍后重试或前往 GitHub 讨论区。",
+		error: "暂时无法连接评论服务。",
+		reload: "评论组件加载失败，请刷新页面后重试。",
+	};
+	const keepsEditor = $derived(state === "slow" || state === "warning" || state === "limited");
 	let controller: ReturnType<typeof mountGiscus> | undefined;
 	onMount(() => {
 		controller = mountGiscus(host, config, term, (next) => { state = next; }, stylesheetUrl);
@@ -30,17 +42,16 @@
 		</div>
 	</details>
 	<div aria-live="polite" class="text-sm text-75">
-		{#if state === "waiting"}<p>滚动到此处时加载评论。</p>
-		{:else if state === "loading"}<p>正在加载评论…</p>
-		{:else if state === "error" || state === "reload"}
-			<p>{state === "reload" ? "评论组件加载失败，请刷新页面后重试。" : "暂时无法连接评论服务。"}</p>
+		{#if state !== "ready"}<p>{statusText[state]}</p>{/if}
+		{#if state !== "waiting" && state !== "loading" && state !== "ready"}
+			{#if keepsEditor}<p class="mt-1">重新加载会清空尚未发送的留言，请先复制保存。</p>{/if}
 			<div class="flex flex-wrap gap-4 mt-2 mb-4">
 				<button type="button" class="btn-regular rounded-lg px-3 py-2" onclick={() => state === "reload" ? window.location.reload() : controller?.retry()}>{state === "reload" ? "刷新页面" : "重新加载"}</button>
 				<a class="underline underline-offset-4 self-center" href={discussionsUrl} target="_blank" rel="noopener noreferrer">前往 GitHub 讨论区</a>
 			</div>
 		{/if}
 	</div>
-	<div bind:this={host} class={state === "error" || state === "reload" ? "" : "min-h-[150px]"}></div>
+	<div bind:this={host} class={state === "error" || state === "reload" || state === "configuration" ? "" : "min-h-[150px]"}></div>
 </section>
 
 <style>

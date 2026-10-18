@@ -39,13 +39,14 @@ body{background:rgb(255,255,255);color:rgb(0,0,0)}
 textarea{box-sizing:border-box;min-height:100px;max-height:500px;width:95%;padding:8px;line-height:20px;resize:vertical}
 @media(prefers-color-scheme:dark){body{background:rgb(13,17,23);color:rgb(255,255,255)}}
 </style></head><body>
-<form class="gsc-comment-box"><textarea class="gsc-comment-box-textarea" placeholder="Write a comment" aria-label="test-draft"></textarea></form><script>
+<form class="gsc-comment-box"><textarea class="gsc-comment-box-textarea" placeholder="Write a comment" aria-label="test-draft"></textarea><a href="https://github.com/login">GitHub sign in</a></form><script>
 const textarea=document.querySelector('textarea');
 textarea.addEventListener('input',()=>{textarea.style.height='0px';textarea.style.height=textarea.scrollHeight+'px';});
 const theme=new URL(location.href).searchParams.get('theme');
 if(theme?.startsWith('https://')){const link=document.createElement('link');link.rel='stylesheet';link.crossOrigin='anonymous';link.href=theme;document.head.append(link);}
 window.addEventListener('message',e=>{if(e.data?.giscus?.setConfig)document.body.dataset.theme=e.data.giscus.setConfig.theme;});
-${mode === "ready" ? "parent.postMessage({giscus:{resizeHeight:200}},'*');" : ""}
+${mode !== "silent" ? "parent.postMessage({giscus:{resizeHeight:200}},'*');" : ""}
+${mode === "ready" ? "parent.postMessage({giscus:{discussion:{id:'D_fixture'}}},'*');" : ""}
 </script></body></html>` });
 });
 await context.route(new URL("/__comment-test__**", base).href, async (route) => {
@@ -71,6 +72,13 @@ async function fixture(query = "", initialize) {
 	return page;
 }
 const widgetCount = async (page) => page.locator("giscus-widget").count();
+async function widgetFrame(page) {
+	const element = await page.locator("giscus-widget iframe").elementHandle();
+	const frame = await element.contentFrame();
+	await element.dispose();
+	await frame.waitForURL("https://giscus.app/**");
+	return frame;
+}
 try {
 	let page = await fixture();
 	assert.equal(await widgetCount(page), 0, "未接近文章底部时不加载");
@@ -114,8 +122,10 @@ try {
 	await frame.evaluate(() => parent.postMessage({ giscus: { error: "Discussion not found" } }, "*"));
 	assert.equal(await widgetCount(page), 1, "空讨论仍保留编辑器");
 	await frame.evaluate(() => parent.postMessage({ giscus: { error: "Repository not found" } }, "*"));
-	await page.getByText("暂时无法连接评论服务。").waitFor();
-	assert.equal(await widgetCount(page), 0);
+	await page.getByText("评论服务暂时出现异常，已保留评论区域，可稍后再试。").waitFor();
+	assert.equal(await widgetCount(page), 1, "已有数据时，即使再次收到配置错误也不自动销毁编辑器");
+	assert.equal(await frame.locator("textarea").inputValue(), "保持未发布草稿 $x^2$");
+	await page.getByText("重新加载会清空尚未发送的留言，请先复制保存。").waitFor();
 	await page.getByRole("button", { name: "重新加载" }).click();
 	await page.waitForFunction(() => document.querySelector("giscus-widget")?.iframeRef?.contentWindow);
 	await page.waitForFunction(() => !document.querySelector('[aria-live]').textContent.trim());
@@ -127,20 +137,78 @@ try {
 	await page.close();
 	console.log("PASS 延迟加载、严格映射、正式回链、主题及草稿保留、消息来源、空讨论、失败重试、卸载与重新进入");
 
+	mode = "resize-only";
+	page = await fixture();
+	await page.clock.install();
+	await page.evaluate(() => scrollTo(0, 3500));
+	await page.waitForFunction(() => document.querySelector("giscus-widget")?.iframeRef);
+	frame = await widgetFrame(page);
+	await frame.locator("textarea").fill("Keep this draft while data is slow.");
+	await page.evaluate(() => { window.originalWidget = document.querySelector("giscus-widget"); });
+	await page.clock.fastForward(21000);
+	await page.getByText("评论加载时间较长，可以继续等待或重新加载。").waitFor();
+	assert.equal(await widgetCount(page), 1, "只收到高度仍会超时，但保留 iframe");
+	await frame.evaluate(() => parent.postMessage({ giscus: { resizeHeight: 300, discussion: {} } }, "*"));
+	await page.clock.runFor(100);
+	await page.getByText("评论加载时间较长，可以继续等待或重新加载。").waitFor();
+	assert.equal(await frame.locator("textarea").inputValue(), "Keep this draft while data is slow.");
+	await frame.evaluate(() => parent.postMessage({ giscus: { discussion: { id: "D_late" } } }, "*"));
+	await page.waitForFunction(() => !document.querySelector('[aria-live]').textContent.trim());
+	assert.equal(await page.evaluate(() => window.originalWidget === document.querySelector("giscus-widget")), true, "晚到数据原地恢复，不重建");
+	await page.close();
+	console.log("PASS 高度消息不当作数据就绪、慢加载保留草稿、无效元数据不清除提示、晚到元数据原地恢复");
+
+	for (const error of ["API rate limit exceeded", "Failed to fetch"]) {
+		page = await fixture();
+		await page.evaluate(() => scrollTo(0, 3500));
+		await page.waitForFunction(() => document.querySelector("giscus-widget")?.iframeRef);
+		frame = await widgetFrame(page);
+		await frame.locator("textarea").fill("Unsent fault-test draft");
+		await page.evaluate(() => { window.originalWidget = document.querySelector("giscus-widget"); });
+		await frame.evaluate((error) => parent.postMessage({ giscus: { error } }, "*"), error);
+		await page.getByText("重新加载会清空尚未发送的留言，请先复制保存。").waitFor();
+		if (error.includes("rate limit")) {
+			await page.getByText("评论服务暂时限流，请稍后再试；若未登录，可尝试在下方登录 GitHub。").waitFor();
+			assert.equal(await frame.getByRole("link", { name: "GitHub sign in" }).count(), 1);
+		}
+		await frame.evaluate(() => parent.postMessage({ giscus: { resizeHeight: 250 } }, "*"));
+		await page.getByText("重新加载会清空尚未发送的留言，请先复制保存。").waitFor();
+		assert.equal(await page.evaluate(() => window.originalWidget === document.querySelector("giscus-widget")), true);
+		assert.equal(await frame.locator("textarea").inputValue(), "Unsent fault-test draft");
+		await frame.evaluate(() => parent.postMessage({ giscus: { discussion: { id: "D_recovered" } } }, "*"));
+		await page.waitForFunction(() => !document.querySelector('[aria-live]').textContent.trim());
+		await page.close();
+	}
+	console.log("PASS 初次限流保留登录入口、临时错误保留编辑器和草稿、高度不清除错误、元数据恢复");
+
+	page = await fixture();
+	await page.evaluate(() => scrollTo(0, 3500));
+	await page.waitForFunction(() => document.querySelector("giscus-widget")?.iframeRef);
+	frame = await widgetFrame(page);
+	await frame.locator("textarea").waitFor();
+	await frame.evaluate(() => parent.postMessage({ giscus: { error: "Repository not found" } }, "*"));
+	await page.getByText("评论配置暂不可用，请稍后重试或前往 GitHub 讨论区。").waitFor();
+	assert.equal(await widgetCount(page), 0, "首次明确配置错误单独处理");
+	mode = "ready";
+	await page.getByRole("button", { name: "重新加载" }).click();
+	await page.waitForFunction(() => !document.querySelector('[aria-live]').textContent.trim());
+	await page.close();
+	console.log("PASS 初次配置错误明确提示、手动重新加载恢复");
+
 	mode = "silent";
 	page = await fixture();
 	await page.clock.install();
 	await page.evaluate(() => scrollTo(0, 3500));
 	await page.waitForFunction(() => document.querySelector("giscus-widget")?.iframeRef);
 	await page.clock.fastForward(21000);
-	await page.getByText("暂时无法连接评论服务。").waitFor();
-	assert.equal(await widgetCount(page), 0, "超时清理旧实例");
+	await page.getByText("评论加载时间较长，可以继续等待或重新加载。").waitFor();
+	assert.equal(await widgetCount(page), 1, "无响应 iframe 也允许继续等待");
 	mode = "ready";
 	await page.getByRole("button", { name: "重新加载" }).click();
 	await page.clock.runFor(100);
 	await page.waitForFunction(() => !document.querySelector('[aria-live]').textContent.trim());
 	await page.close();
-	console.log("PASS 远端无响应超时、重新加载恢复");
+	console.log("PASS iframe 无响应超时提示、手动重新加载恢复");
 
 	page = await fixture("?giscus=test-local-callback");
 	await page.waitForFunction(() => document.querySelector("giscus-widget")?.iframeRef);

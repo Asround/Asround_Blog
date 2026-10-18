@@ -1,7 +1,7 @@
 import type { GiscusWidget } from "giscus";
 import type { GiscusConfig } from "../types/config";
 
-export type CommentState = "waiting" | "loading" | "ready" | "error" | "reload";
+export type CommentState = "waiting" | "loading" | "ready" | "slow" | "warning" | "limited" | "configuration" | "error" | "reload";
 
 /** Each mounted article owns its widget, observers and timer. Never reload on theme changes. */
 export function mountGiscus(
@@ -17,6 +17,7 @@ export function mountGiscus(
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	let intersection: IntersectionObserver | undefined;
 	let assetRequest: AbortController | undefined;
+	let dataReady = false;
 	const theme = () => document.documentElement.classList.contains("dark") ? "dark" : "light";
 	const syncColorScheme = () => {
 		// Embedded prefers-color-scheme follows the iframe's color-scheme, including
@@ -31,24 +32,42 @@ export function mountGiscus(
 		widget?.remove();
 		widget = undefined;
 	};
-	const fail = (state: "error" | "reload" = "error") => {
+	const fail = (state: "error" | "reload" | "configuration" = "error") => {
 		clearWidget();
 		onState(state);
+	};
+	const ready = () => {
+		dataReady = true;
+		clearTimeout(timer);
+		onState("ready");
 	};
 	const receive = (event: MessageEvent) => {
 		if (event.origin !== "https://giscus.app" || !widget?.iframeRef ||
 			event.source !== widget.iframeRef.contentWindow) return;
 		const message = event.data?.giscus;
 		if (!message || typeof message !== "object") return;
-		// An empty discussion is normal: giscus creates it with the first comment.
-		if (message.error && !String(message.error).includes("Discussion not found") &&
-			!String(message.error).match(/Bad credentials|Invalid state|expired/i)) {
-			fail();
-		} else if (typeof message.resizeHeight === "number" || message.discussion ||
-			String(message.error || "").includes("Discussion not found")) {
+		const error = String(message.error || "");
+		// Empty discussions are a completed load, not a configuration failure.
+		if (error.includes("Discussion not found")) {
+			ready();
+		} else if (/Bad credentials|Invalid state|expired/i.test(error)) {
+			// The official component clears the expired session and reloads itself.
+		} else if (error) {
 			clearTimeout(timer);
-			onState("ready");
+			if (/rate.?limit|too many requests|\b429\b/i.test(error)) {
+				// Retain the service's sign-in / rate-limit UI and any existing editor.
+				onState("limited");
+			} else if (!dataReady && /repository not found|category not found|not installed|invalid (?:repo|category)|not enabled/i.test(error)) {
+				fail("configuration");
+			} else {
+				// A transient error must not destroy the iframe and its unsent draft.
+				onState("warning");
+			}
+		} else if (message.discussion && typeof message.discussion.id === "string" && message.discussion.id.trim()) {
+			ready();
 		}
+		// resizeHeight is layout information only: it neither proves that data has
+		// arrived nor clears a warning. The official component handles iframe sizing.
 	};
 	const themes = new MutationObserver(() => {
 		if (!document.documentElement.classList.contains("theme-circle-transition")) syncColorScheme();
@@ -82,9 +101,17 @@ export function mountGiscus(
 		intersection?.disconnect();
 		const attempt = ++generation;
 		clearWidget();
+		dataReady = false;
 		onState("loading");
 		timer = setTimeout(() => {
-			if (!disposed && attempt === generation) { ++generation; fail(); }
+			if (disposed || attempt !== generation) return;
+			if (widget?.iframeRef) {
+				// Late metadata may still recover without replacing an open editor.
+				onState("slow");
+			} else {
+				++generation;
+				fail();
+			}
 		}, 20000);
 		let moduleLoaded = false;
 		try {
