@@ -9,6 +9,7 @@
 import type { CollectionEntry } from "astro:content";
 import { render } from "astro:content";
 import Comment from "@components/comment/index.astro";
+import ReadingResume from "@components/control/ReadingResume.astro";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import PasswordProtection from "@components/PasswordProtection.astro";
@@ -183,6 +184,7 @@ const jsonLd = {
                 </div>
             </div>
 
+            {!isEncrypted && <ReadingResume path={getPostUrl(entry)} />}
             <!-- metadata -->
             <div class="onload-animation">
                 <PostMetadata

@@ -1,0 +1,17 @@
+---
+import { frontendConfig } from "../../config";
+const { path } = Astro.props as { path: string };
+---
+{frontendConfig.reading.resume && <div hidden class="reading-resume text-75" data-reading-resume={path} data-pagefind-ignore>
+    <p>上次读到：<span data-resume-title></span></p>
+    <div class="flex gap-2 shrink-0">
+        <button type="button" data-resume-continue class="btn-regular rounded-lg px-3 py-1">继续阅读</button>
+        <button type="button" data-resume-dismiss class="btn-plain rounded-lg px-3 py-1" aria-label="清除本篇阅读记录">忽略</button>
+    </div>
+</div>}
+<script>import "../../scripts/reading-resume";</script>
+<style>
+.reading-resume { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; padding: .75rem 1rem; margin-block: 1rem; border: 1px solid var(--line-divider); border-radius: .75rem; font-size: .875rem; background: var(--btn-plain-bg-hover); }
+.reading-resume[hidden] { display: none; }
+.reading-resume p { min-width: 0; overflow-wrap: anywhere; }
+</style>

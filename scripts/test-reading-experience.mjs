@@ -17,6 +17,42 @@ async function test(name, callback) {
 	console.log(`PASS ${name}`);
 }
 try {
+	await test("resume", async () => {
+		await page.goto(`${base}/STA/`);
+		await page.waitForFunction(() => window.swup);
+		const heading = await page.locator(".markdown-content :is(h1,h2,h3,h4)[id]").nth(8).getAttribute("id");
+		await page.mouse.move(600, 600);
+		await page.mouse.wheel(0, 1);
+		await page.evaluate(id => {
+			const el = document.getElementById(id);
+			window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 120, behavior: "instant" });
+		}, heading);
+		await page.waitForFunction(() => JSON.parse(localStorage.getItem("reader-progress-v1") || "{}")["/STA/"]?.heading);
+		const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("reader-progress-v1"))["/STA/"].heading);
+		await page.goto(`${base}/archive/`);
+		await page.goto(`${base}/STA/`);
+		await page.locator("[data-reading-resume]").waitFor({ state: "visible" });
+		await page.locator("[data-resume-continue]").click();
+		await page.waitForFunction(id => Math.abs(document.getElementById(id).getBoundingClientRect().top - 120) < 8, saved);
+		assert.equal(await page.locator("[data-reading-resume]").isVisible(), false);
+		await page.goto(`${base}/STA/#${encodeURIComponent(heading)}`);
+		await page.waitForFunction(() => window.swup);
+		assert.equal(await page.locator("[data-reading-resume]").isVisible(), false, "Explicit fragments suppress resume");
+		await page.goto(`${base}/STA/`);
+		await page.locator("[data-reading-resume]").waitFor({ state: "visible" });
+		await page.locator("[data-resume-dismiss]").click();
+		assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("reader-progress-v1"))["/STA/"]), undefined);
+		await page.evaluate(() => localStorage.setItem("reader-progress-v1", "invalid JSON"));
+		await page.goto(`${base}/STA/`);
+		await page.waitForFunction(() => window.swup);
+		assert.equal(await page.locator("[data-reading-resume]").isVisible(), false);
+		await page.evaluate(() => localStorage.setItem("reader-progress-v1", JSON.stringify({ "/STA/": { heading: "deleted-chapter", updatedAt: Date.now() } })));
+		await page.goto(`${base}/STA/`);
+		await page.waitForFunction(() => JSON.parse(localStorage.getItem("reader-progress-v1"))["/STA/"] === undefined);
+		await page.goto(`${base}/PDF-decrypt/`);
+		await page.waitForFunction(() => window.swup);
+		assert.equal(await page.locator("[data-reading-resume]").isVisible(), false, "Short article has no resume prompt");
+	});
 	await test("archive", async () => {
 		const staticContext = await browser.newContext({ javaScriptEnabled: false });
 		try {

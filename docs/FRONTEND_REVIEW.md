@@ -133,6 +133,7 @@ Remove-Item -LiteralPath @(
 
 - 搜索使用原生按钮，支持 Enter / Space；Escape 关闭并返回触发按钮。首个 Tab 可跳转主要内容。自动回归：`pnpm test:reading --only=keyboard`（需本地预览）。
 - 归档列表静态输出，脚本加载后启用筛选并恢复 URL 条件；禁用脚本仍能浏览全部文章。`pnpm test:reading --only=archive` 覆盖无脚本、刷新条件、高亮和缩放可用宽度。
+- 长文再次访问可点击恢复上次章节，显式 `#章节` 链接优先；短文和加密文章不提示。`frontendConfig.reading.resume` 可关闭；浏览器 `reader-progress-v1` 仅保存章节 ID 和时间，最多 30 篇、90 天，读到末尾清除。`pnpm test:reading --only=resume` 验证恢复、忽略、锚点优先及损坏记录降级。
 
 ## RSS 使用说明
 

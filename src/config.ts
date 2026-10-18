@@ -47,6 +47,7 @@ export const frontendConfig = {
 		collapseLeftSidebar: true, // 仅文章页默认收起左侧栏
 		balanceArticleWithSidebar: true, // 左栏优先利用框架外空白，正文仅在左侧预留实际占位
 		leftSidebarEdge: 38, // 左栏距屏幕左边缘的最小距离（px），给收起箭头留出空间
+		resume: true, // 长文提示上次阅读章节，仅点击后恢复；本地保存 90 天，最多 30 篇
 	},
 	themeTransitionEffect: "circle" as "circle" | "fade", // 圆形展开/收起；fade 恢复颜色渐变
 	themeTransitionMs: 300, // 动效时长；0 为即时切换
