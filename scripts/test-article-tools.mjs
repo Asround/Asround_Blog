@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright-core";
 import { parse } from "node-html-parser";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { rm } from "node:fs/promises";
 
 const args = process.argv.slice(2);
 const base = args.find(arg => !arg.startsWith("--")) || "http://localhost:4321";
@@ -13,8 +16,38 @@ await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com|gi
 const errors = [];
 context.on("page", page => page.on("pageerror", error => errors.push(error.message)));
 const page = await context.newPage();
+const printFiles = [];
 async function test(name, callback) { if (only && only !== name) return; await callback(); console.log(`PASS ${name}`); }
 try {
+	await test("print", async () => {
+		for (const slug of ["STA", "Summer-camp"]) {
+			await page.goto(`${base}/${slug}/`);
+			await page.getByRole("button", { name: "打印 / PDF", exact: true }).waitFor();
+			await page.evaluate(() => {
+				window.print = () => { window.testPrinted = true; window.dispatchEvent(new Event("beforeprint")); window.dispatchEvent(new Event("afterprint")); };
+				const detail = document.createElement("details");
+				detail.dataset.testPrint = ""; detail.innerHTML = "<summary>Print test</summary><p>Expanded print content</p>";
+				document.querySelector(".markdown-content").append(detail);
+			});
+			await page.getByRole("button", { name: "打印 / PDF", exact: true }).click();
+			await page.waitForFunction(() => window.testPrinted);
+			assert.equal(await page.locator("[data-test-print]").getAttribute("open"), null, "Restore screen disclosure state after printing");
+			await page.locator("[data-test-print]").evaluate(el => el.remove());
+			await page.emulateMedia({ media: "print" });
+			assert.equal(await page.locator("#sidebar").isVisible(), false);
+			assert.equal(await page.locator("#share-component").isVisible(), false);
+			assert.equal(await page.locator(".chapter-copy").first().isVisible(), false);
+			assert.equal(await page.locator(".markdown-content").evaluate(el => getComputedStyle(el).color), "rgb(17, 17, 17)");
+			const box = await page.locator("#post-container").boundingBox();
+			assert.ok(box.width > 1200 && box.x < 20, "Article uses printable page width rather than sidebar grid");
+			const file = path.join(tmpdir(), `asround-print-${slug}.pdf`);
+			printFiles.push(file);
+			await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
+			console.log("PDF QA", file);
+			await page.emulateMedia({ media: "screen" });
+			assert.ok(await page.locator("#share-component").isVisible());
+		}
+	});
 	await test("chapters", async () => {
 		await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.testCopied = value; } } }); });
 		await page.goto(`${base}/STA/`);
@@ -101,4 +134,7 @@ try {
 		} finally { release(); await delayedPage.close(); }
 	});
 	assert.deepEqual(errors, [], "No uncaught browser errors");
-} finally { await browser.close(); }
+} finally {
+	await browser.close();
+	if (!args.includes("--keep-print")) for (const file of printFiles) await rm(file, { force: true });
+}
