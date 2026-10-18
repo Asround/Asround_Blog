@@ -26,6 +26,9 @@ let showModal = false;
 let posterImage: string | null = null;
 let generating = false;
 let themeColor = "#558e88";
+let generationError = "";
+let disposed = false;
+let copyTimer: ReturnType<typeof setTimeout>;
 
 onMount(() => {
 	const temp = document.createElement("div");
@@ -38,25 +41,19 @@ onMount(() => {
 	if (computedColor) {
 		themeColor = computedColor;
 	}
+	return () => { disposed = true; clearTimeout(copyTimer); };
 });
 
 async function loadImage(src: string): Promise<HTMLImageElement | null> {
 	return new Promise((resolve) => {
 		const img = new Image();
 		img.crossOrigin = "anonymous";
+		const timer = setTimeout(() => { img.onload = null; img.onerror = null; resolve(null); }, 8000);
 
-		img.onload = () => resolve(img);
+		img.onload = () => { clearTimeout(timer); resolve(img); };
 		img.onerror = () => {
-			if (src.includes("images.weserv.nl") || src.startsWith("data:")) {
-				resolve(null);
-				return;
-			}
-
-			const proxyImg = new Image();
-			proxyImg.crossOrigin = "anonymous";
-			proxyImg.onload = () => resolve(proxyImg);
-			proxyImg.onerror = () => resolve(null);
-			proxyImg.src = `https://images.weserv.nl/?url=${encodeURIComponent(src)}&output=png`;
+			clearTimeout(timer);
+			resolve(null);
 		};
 
 		img.src = src;
@@ -125,9 +122,10 @@ function parseDate(dateStr: string): DateObj | null {
 
 async function generatePoster() {
 	showModal = true;
-	if (posterImage) return;
+	if (posterImage || generating) return;
 
 	generating = true;
+	generationError = "";
 	try {
 		const qrCodeUrl = await QRCode.toDataURL(url, {
 			margin: 1,
@@ -140,6 +138,7 @@ async function generatePoster() {
 			coverImage ? loadImage(coverImage) : Promise.resolve(null),
 			avatar ? loadImage(avatar) : Promise.resolve(null),
 		]);
+		if (disposed) return;
 
 		const canvas = document.createElement("canvas");
 		const ctx = canvas.getContext("2d");
@@ -343,6 +342,7 @@ async function generatePoster() {
 		posterImage = canvas.toDataURL("image/png");
 	} catch (error) {
 		console.error("Failed to generate poster:", error);
+		generationError = "分享图片生成失败，可以重试或直接复制文章链接。";
 	} finally {
 		generating = false;
 	}
@@ -380,7 +380,8 @@ async function copyLink() {
 		}
 
 		copied = true;
-		setTimeout(() => {
+		clearTimeout(copyTimer);
+		copyTimer = setTimeout(() => {
 			copied = false;
 		}, COPY_FEEDBACK_DURATION);
 	} catch (error) {
@@ -388,13 +389,13 @@ async function copyLink() {
 	}
 }
 
-function portal(node: HTMLElement) {
-	document.body.appendChild(node);
+function modal(node: HTMLDialogElement) {
+	const trigger = document.activeElement as HTMLElement | null;
+	node.showModal();
 	return {
 		destroy() {
-			if (node.parentNode) {
-				node.parentNode.removeChild(node);
-			}
+			node.close();
+			if (trigger?.isConnected) trigger.focus({ preventScroll: true });
 		},
 	};
 }
@@ -403,18 +404,27 @@ function portal(node: HTMLElement) {
 <button 
   class="btn-regular px-6 py-3 rounded-lg inline-flex items-center gap-2"
   on:click={generatePoster}
-  aria-label="Generate Share Poster"
+  aria-label="分享文章"
+  aria-haspopup="dialog"
 >
   <span>{i18n(I18nKey.shareArticle)}</span>
 </button>
 
 {#if showModal}
-  <div use:portal class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity" on:click={closeModal}>
-    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl transform transition-all" on:click|stopPropagation>
+  <dialog use:modal aria-labelledby="share-dialog-title" on:cancel={closeModal}
+    on:click={(event) => { const box = event.currentTarget.getBoundingClientRect(); if (event.target === event.currentTarget && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) closeModal(); }}
+    class="share-dialog p-0 rounded-2xl max-w-sm w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto shadow-2xl bg-[var(--card-bg)] text-90">
+    <div class="flex items-center justify-between gap-4 p-4">
+      <h2 id="share-dialog-title" class="font-bold">分享文章</h2>
+      <button type="button" autofocus aria-label="关闭分享窗口" class="btn-plain rounded-lg p-2" on:click={closeModal}>✕</button>
+    </div>
       
       <div class="p-6 flex justify-center bg-gray-50 dark:bg-gray-900 min-h-[200px] items-center">
         {#if posterImage}
           <img src={posterImage} alt="Poster" class="max-w-full h-auto shadow-lg rounded-lg" />
+        {:else if generationError}
+           <p role="status" class="text-sm text-75">{generationError}</p>
+           <button type="button" class="btn-regular rounded-lg p-2" on:click={generatePoster}>重新生成</button>
         {:else}
            <div class="flex flex-col items-center gap-3">
              <div class="w-8 h-8 border-2 border-gray-200 rounded-full animate-spin" style="border-top-color: {themeColor}"></div>
@@ -446,6 +456,11 @@ function portal(node: HTMLElement) {
           {i18n(I18nKey.savePoster)}
         </button>
       </div>
-    </div>
-  </div>
+  </dialog>
 {/if}
+
+<style>
+.share-dialog::backdrop { background: rgb(0 0 0 / .6); backdrop-filter: blur(4px); }
+.share-dialog { width: min(24rem, calc(100vw - 2rem)); }
+.share-dialog :is(button,a):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+</style>

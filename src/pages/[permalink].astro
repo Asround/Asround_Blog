@@ -13,6 +13,7 @@ import ReadingResume from "@components/control/ReadingResume.astro";
 import ReadingSeries from "@components/ReadingSeries.astro";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
+import ArticleShare from "@components/misc/ArticleShare.astro";
 import PasswordProtection from "@components/PasswordProtection.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
@@ -229,6 +230,7 @@ const jsonLd = {
                         <Markdown class="mb-6 markdown-content onload-animation">
                             <Content />
                         </Markdown>
+                        <ArticleShare post={entry} />
                         {licenseConfig.enable && (
                             <License
                                 title={entry.data.title}

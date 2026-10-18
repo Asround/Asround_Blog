@@ -1,0 +1,29 @@
+---
+import path from "node:path";
+import type { CollectionEntry } from "astro:content";
+import { getImage } from "astro:assets";
+import { profileConfig, shareConfig, siteConfig } from "../../config";
+import { getFileDirFromPath, getPostUrl } from "../../utils/url-utils";
+import { formatDateToYYYYMMDD } from "../../utils/date-utils";
+import SharePoster from "./SharePoster.svelte";
+
+const { post } = Astro.props as { post: CollectionEntry<"posts"> };
+const visible = shareConfig.enable && !post.data.encrypted;
+const assets = import.meta.glob<ImageMetadata>("/src/**/*.{png,jpg,jpeg,webp,avif,gif,svg}", { import: "default" });
+async function imageUrl(src: string | undefined, base = "") {
+    if (!src) return null;
+    if (/^(?:https?:|data:|\/)/.test(src)) return src;
+    const key = path.posix.normalize("/src/" + path.posix.join(base, src));
+    const asset = assets[key] && await assets[key]();
+    if (!asset) return null;
+    if (asset.format === "svg") return asset.src;
+    return (await getImage({ src: asset, width: Math.min(850, asset.width) })).src;
+}
+const cover = visible ? await imageUrl(post.data.image, getFileDirFromPath(post.filePath || "")) : null;
+const avatar = visible ? await imageUrl(profileConfig.avatar) : null;
+---
+{visible && <div id="share-component" class="mb-6 flex flex-wrap items-center justify-end gap-3" data-pagefind-ignore>
+    <SharePoster client:idle title={post.data.title} author={post.data.author || profileConfig.name}
+        description={post.data.description || ""} pubDate={formatDateToYYYYMMDD(post.data.published)}
+        coverImage={cover} avatar={avatar} url={new URL(getPostUrl(post), siteConfig.siteURL).href} siteTitle={siteConfig.title} />
+</div>}

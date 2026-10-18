@@ -15,6 +15,30 @@ context.on("page", page => page.on("pageerror", error => errors.push(error.messa
 const page = await context.newPage();
 async function test(name, callback) { if (only && only !== name) return; await callback(); console.log(`PASS ${name}`); }
 try {
+	await test("modal", async () => {
+		await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { value: { writeText: async value => { window.testCopied = value; } } }); });
+		for (const path of ["/STA/", "/posts/2026-10-02_sta/"]) {
+			await page.goto(`${base}${path}`);
+			await page.waitForFunction(() => document.querySelector("#share-component astro-island") && !document.querySelector("#share-component astro-island").hasAttribute("ssr"));
+			const trigger = page.getByRole("button", { name: "分享文章", exact: true });
+			await trigger.focus(); await page.keyboard.press("Enter");
+			const dialog = page.getByRole("dialog", { name: "分享文章", exact: true });
+			await dialog.waitFor();
+			assert.equal(await page.getByRole("button", { name: "关闭分享窗口" }).evaluate(el => el === document.activeElement), true);
+			for (let i = 0; i < 8; i++) {
+				await page.keyboard.press(i % 2 ? "Shift+Tab" : "Tab");
+				assert.ok(await dialog.evaluate(el => el.contains(document.activeElement)), "Native dialog traps keyboard focus");
+			}
+			await page.keyboard.press("Escape");
+			await dialog.waitFor({ state: "detached" });
+			assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+			await trigger.click();
+			await dialog.getByRole("button", { name: "复制链接", exact: true }).click();
+			assert.equal(await page.evaluate(() => window.testCopied), "https://asround-blog.pages.dev/STA/");
+			await page.getByRole("button", { name: "关闭分享窗口" }).click();
+			assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+		}
+	});
 	await test("loading", async () => {
 		await page.goto(`${base}/STA/`);
 		await page.evaluate(() => document.fonts.ready);

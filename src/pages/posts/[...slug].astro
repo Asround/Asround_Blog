@@ -1,13 +1,12 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import { render } from "astro:content";
-import path from "node:path";
 import Comment from "@components/comment/index.astro";
 import ReadingResume from "@components/control/ReadingResume.astro";
 import ReadingSeries from "@components/ReadingSeries.astro";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
-import SharePoster from "@components/misc/SharePoster.svelte";
+import ArticleShare from "@components/misc/ArticleShare.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
@@ -25,7 +24,7 @@ import {
 import { Icon } from "astro-icon/components";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { frontendConfig, licenseConfig, permalinkConfig, shareConfig } from "src/config";
+import { frontendConfig, licenseConfig, permalinkConfig } from "src/config";
 import ImageWrapper from "../../components/misc/ImageWrapper.astro";
 import PostMetadata from "../../components/PostMeta.astro";
 import { profileConfig, siteConfig } from "../../config";
@@ -102,66 +101,6 @@ const excludeFromSearch = frontendConfig.search.excludeLegacyFromIndex &&
 const { Content, headings } = await render(entry);
 const { remarkPluginFrontmatter } = await render(entry);
 
-// Process cover image for SharePoster
-let posterCoverUrl = entry.data.image;
-if (entry.data.image) {
-	const isLocal = !(
-		entry.data.image.startsWith("/") ||
-		entry.data.image.startsWith("http") ||
-		entry.data.image.startsWith("https") ||
-		entry.data.image.startsWith("data:")
-	);
-	if (isLocal) {
-		const basePath = getFileDirFromPath(entry.filePath || "");
-		const files = import.meta.glob<ImageMetadata>("../../**", {
-			import: "default",
-		});
-		let normalizedPath = path
-			.normalize(path.join("../../", basePath, entry.data.image))
-			.replace(/\\/g, "/");
-		const file = files[normalizedPath];
-		if (file) {
-			const img = await file();
-			posterCoverUrl = img.src;
-		}
-	} else if (entry.data.image.startsWith("http")) {
-		try {
-			const response = await fetch(entry.data.image);
-			const arrayBuffer = await response.arrayBuffer();
-			const base64 = Buffer.from(arrayBuffer).toString("base64");
-			const contentType = response.headers.get("content-type") || "image/jpeg";
-			posterCoverUrl = `data:${contentType};base64,${base64}`;
-		} catch {
-			posterCoverUrl = entry.data.image;
-		}
-	}
-}
-
-// Process avatar image for SharePoster
-let posterAvatarUrl = profileConfig.avatar;
-if (profileConfig.avatar) {
-	const isLocal = !(
-		profileConfig.avatar.startsWith("/") ||
-		profileConfig.avatar.startsWith("http") ||
-		profileConfig.avatar.startsWith("https") ||
-		profileConfig.avatar.startsWith("data:")
-	);
-	if (isLocal) {
-		const files = import.meta.glob<ImageMetadata>("../../**", {
-			import: "default",
-		});
-		let normalizedPath = path
-			.normalize(path.join("../../", profileConfig.avatar))
-			.replace(/\\/g, "/");
-		const file = files[normalizedPath];
-		if (file) {
-			const img = await file();
-			posterAvatarUrl = img.src;
-		}
-	}
-}
-
-// 判断是否为加密文章
 let isEncrypted = entry.data.encrypted && entry.data.password;
 
 dayjs.extend(utc);
@@ -317,41 +256,7 @@ const jsonLd = {
                 )
             }
 
-            {shareConfig.enable && (
-                <div id="share-component" class:list={["p-6 bg-[var(--license-block-bg)] rounded-xl mb-6 onload-animation", { "encrypted-hidden": isEncrypted }]}>
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div class="flex items-center gap-3 flex-1">
-                            <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-[var(--enter-btn-bg)]">
-                                <Icon
-                                    name="material-symbols:share"
-                                    class="text-3xl text-[var(--primary)]"
-                                />
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <div class="text-[1.0rem] leading-tight text-black/75 dark:text-white/75">
-                                    {i18n(I18nKey.shareOnSocial)}
-                                </div>
-                                <p class="text-[0.8rem] leading-tight text-black/75 dark:text-white/75">
-                                    {i18n(I18nKey.shareOnSocialDescription)}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <SharePoster
-                                client:load
-                                title={entry.data.title}
-                                author={entry.data.author || profileConfig.name}
-                                description={entry.data.description || ""}
-                                pubDate={formatDateToYYYYMMDD(entry.data.published)}
-                                coverImage={posterCoverUrl}
-                                url={Astro.url.toString()}
-                                siteTitle={siteConfig.title}
-                                avatar={posterAvatarUrl}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ArticleShare post={entry} />
 
             {licenseConfig.enable && (
                 <div id="license-component" class:list={["encrypted-hidden-wrapper", { "encrypted-hidden": isEncrypted }]}>
