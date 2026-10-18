@@ -8,6 +8,7 @@
 /* 导入渐变按钮样式 */
 @import "./gradient-buttons.css";
 @import "./print.css";
+@import "./image-recovery.css";
 /* 加密内容样式已移除，现在直接使用非加密文章的样式 */
 
 /* 导入 TikTokSans-VariableFont_opsz,slnt,wdth,wght 字体 */

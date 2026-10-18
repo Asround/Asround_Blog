@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { onMount } from "svelte";
 import I18nKey from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
+import { copyText } from "../../utils/clipboard";
 
 export let title: string;
 export let author: string;
@@ -362,30 +363,22 @@ function closeModal() {
 }
 
 let copied = false;
+let copyError = "";
 const COPY_FEEDBACK_DURATION = 2000;
 
 async function copyLink() {
+	copied = false;
+	copyError = "";
 	try {
-		if (navigator.clipboard?.writeText) {
-			await navigator.clipboard.writeText(url);
-		} else {
-			const textarea = document.createElement("textarea");
-			textarea.value = url;
-			textarea.style.position = "fixed";
-			textarea.style.left = "-9999px";
-			document.body.appendChild(textarea);
-			textarea.select();
-			document.execCommand("copy");
-			document.body.removeChild(textarea);
-		}
+		await copyText(url);
 
 		copied = true;
 		clearTimeout(copyTimer);
 		copyTimer = setTimeout(() => {
 			copied = false;
 		}, COPY_FEEDBACK_DURATION);
-	} catch (error) {
-		console.error("Failed to copy link:", error);
+	} catch {
+		copyError = `复制失败，请手动复制：${url}`;
 	}
 }
 
@@ -456,6 +449,7 @@ function modal(node: HTMLDialogElement) {
           {i18n(I18nKey.savePoster)}
         </button>
       </div>
+      {#if copyError}<p role="status" class="px-4 pb-4 text-sm text-75 break-all select-text">{copyError}</p>{/if}
   </dialog>
 {/if}
 

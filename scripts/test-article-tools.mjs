@@ -11,6 +11,7 @@ const only = args.find(arg => arg.startsWith("--only="))?.slice(7);
 assert.ok(!only || ["loading", "modal", "chapters", "print", "images"].includes(only));
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ colorScheme: null, viewport: { width: 1440, height: 1000 } });
+await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.testCopied = value; } } }); });
 await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com|giscus\.app)\//,
 	route => route.fulfill({ contentType: "application/javascript", body: "" }));
 const errors = [];
@@ -19,6 +20,54 @@ const page = await context.newPage();
 const printFiles = [];
 async function test(name, callback) { if (only && only !== name) return; await callback(); console.log(`PASS ${name}`); }
 try {
+	await test("images", async () => {
+		const html = parse(await (await fetch(`${base}/STA/`)).text());
+		const src = html.querySelector(".markdown-content img").getAttribute("src");
+		let broken = true;
+		const imagePage = await context.newPage();
+		try {
+			await imagePage.route(new URL(src, base).href, route => broken ? route.abort() : route.continue());
+			await imagePage.goto(`${base}/STA/`);
+			const image = imagePage.locator(".markdown-content img").first();
+			await image.scrollIntoViewIfNeeded();
+			const panel = imagePage.locator(".image-recovery-panel").first();
+			await panel.getByRole("button", { name: "重试", exact: true }).waitFor();
+			assert.equal(await panel.getByRole("link", { name: "查看原图" }).getAttribute("href"), new URL(src, base).href);
+			assert.equal(await panel.evaluate(el => Boolean(el.closest("a"))), false, "Recovery controls never nest inside links");
+			broken = false;
+			await panel.getByRole("button", { name: "重试", exact: true }).click();
+			await image.evaluate(img => img.decode());
+			await panel.waitFor({ state: "detached" });
+			assert.equal(await imagePage.locator(".image-recovery-frame").count(), 0);
+			assert.equal(await image.evaluate(img => getComputedStyle(img).opacity), "1");
+			await imagePage.goto(`${base}/`);
+			const cover = imagePage.locator("[data-image-recovery] img").first();
+			const coverSrc = await cover.getAttribute("src");
+			let coverBroken = true;
+			await imagePage.route(new URL(coverSrc, base).href, route => coverBroken ? route.abort() : route.continue());
+			await imagePage.reload();
+			await imagePage.locator("[data-image-recovery] .image-recovery-panel").first().waitFor();
+			assert.equal(await imagePage.locator(".image-recovery-panel").first().evaluate(el => Boolean(el.closest("a"))), false);
+			assert.ok(await imagePage.locator(".image-recovery-panel a").first().getAttribute("href"));
+			coverBroken = false;
+			await imagePage.locator(".image-recovery-panel button").first().click();
+			await cover.evaluate(img => img.decode());
+			await imagePage.locator(".image-recovery-panel").waitFor({ state: "detached" });
+			await imagePage.goto(`${base}/STA/`);
+			await imagePage.route("https://example.invalid/recovery.png", route => route.abort());
+			await imagePage.evaluate(() => {
+				const anchor = document.createElement("a"); anchor.href = "https://example.invalid/original";
+				const img = document.createElement("img"); img.width = 500; img.height = 250; img.src = "https://example.invalid/recovery.png";
+				anchor.append(img); document.querySelector(".markdown-content").append(anchor);
+			});
+			const external = imagePage.locator('.image-recovery-panel:has(a[href="https://example.invalid/recovery.png"])');
+			await external.scrollIntoViewIfNeeded();
+			assert.equal(await external.evaluate(el => Boolean(el.closest("a"))), false);
+			await external.getByRole("button", { name: "重试", exact: true }).click();
+			await external.getByRole("button", { name: "重试", exact: true }).waitFor();
+			await imagePage.waitForFunction(() => !document.querySelector(".image-recovery-panel button:disabled"));
+		} finally { await imagePage.close(); }
+	});
 	await test("print", async () => {
 		for (const slug of ["STA", "Summer-camp"]) {
 			await page.goto(`${base}/${slug}/`);
@@ -49,7 +98,6 @@ try {
 		}
 	});
 	await test("chapters", async () => {
-		await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.testCopied = value; } } }); });
 		await page.goto(`${base}/STA/`);
 		await page.locator(".chapter-copy").first().waitFor({ state: "attached" });
 		await page.waitForFunction(() => window.swup);
@@ -76,7 +124,6 @@ try {
 		assert.ok((await page.evaluate(() => window.testCopied)).startsWith("https://asround-blog.pages.dev/STA/#"));
 	});
 	await test("modal", async () => {
-		await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { value: { writeText: async value => { window.testCopied = value; } } }); });
 		for (const path of ["/STA/", "/posts/2026-10-02_sta/"]) {
 			await page.goto(`${base}${path}`);
 			await page.waitForFunction(() => document.querySelector("#share-component astro-island") && !document.querySelector("#share-component astro-island").hasAttribute("ssr"));
@@ -95,6 +142,15 @@ try {
 			await trigger.click();
 			await dialog.getByRole("button", { name: "复制链接", exact: true }).click();
 			assert.equal(await page.evaluate(() => window.testCopied), "https://asround-blog.pages.dev/STA/");
+			await page.evaluate(() => {
+				Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+				document.execCommand = () => { const textarea = document.activeElement; window.testFallbackInDialog = Boolean(textarea.closest("dialog")); return true; };
+			});
+			await dialog.getByRole("button", { name: /复制链接|已复制/ }).click();
+			assert.equal(await page.evaluate(() => window.testFallbackInDialog), true, "Fallback copy uses a focused field inside the modal");
+			await page.evaluate(() => { document.execCommand = () => false; });
+			await dialog.getByRole("button", { name: /复制链接|已复制/ }).click();
+			await dialog.getByRole("status").filter({ hasText: "复制失败，请手动复制" }).waitFor();
 			await page.getByRole("button", { name: "关闭分享窗口" }).click();
 			assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
 		}

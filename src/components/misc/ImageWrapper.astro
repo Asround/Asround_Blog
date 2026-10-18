@@ -12,6 +12,7 @@ interface Props {
 	loading?: "eager" | "lazy";
 	width?: number;
 	fetchpriority?: "high" | "low" | "auto";
+	recovery?: boolean;
 }
 
 import { Image } from "astro:assets";
@@ -59,8 +60,9 @@ const isBilibiliImage = !isLocal && src.includes("hdslb.com");
 // 对于外部图片（特别是Bilibili），需要设置referrerpolicy避免403错误
 const referrerPolicy = !isLocal && isBilibiliImage ? "no-referrer" : undefined;
 ---
-<div id={id} class:list={[className, 'overflow-hidden relative']}>
+<div id={id} data-image-recovery={Astro.props.recovery ? "" : undefined} class:list={[className, 'overflow-hidden relative']}>
     <div class="transition absolute inset-0 dark:bg-black/10 bg-opacity-50 pointer-events-none"></div>
-    {isLocal && img && <Image src={img} width={outputWidth} alt={alt || ""} class={imageClass} style={imageStyle} loading={loading} decoding="async" fetchpriority={fetchpriority}/>}
+    {isLocal && img && <Image src={img} data-original-src={img.src} width={outputWidth} alt={alt || ""} class={imageClass} style={imageStyle} loading={loading} decoding="async" fetchpriority={fetchpriority}/>}
     {!isLocal && <img src={isPublic ? url(src) : src} alt={alt || ""} width={publicSize.width} height={publicSize.height} class={imageClass} style={imageStyle} loading={loading} decoding="async" fetchpriority={fetchpriority} referrerpolicy={referrerPolicy} crossorigin={isBilibiliImage ? "anonymous" : undefined}/>}
 </div>
+<script>import "../../scripts/image-recovery";</script>
