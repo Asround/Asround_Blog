@@ -15,6 +15,33 @@ context.on("page", page => page.on("pageerror", error => errors.push(error.messa
 const page = await context.newPage();
 async function test(name, callback) { if (only && only !== name) return; await callback(); console.log(`PASS ${name}`); }
 try {
+	await test("chapters", async () => {
+		await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.testCopied = value; } } }); });
+		await page.goto(`${base}/STA/`);
+		await page.locator(".chapter-copy").first().waitFor({ state: "attached" });
+		await page.waitForFunction(() => window.swup);
+		const heading = page.locator("#post-container .markdown-content h2[id]").first();
+		const id = await heading.getAttribute("id");
+		const toc = page.locator(`a[href="#${encodeURIComponent(id)}"]:visible`).filter({ hasNot: page.locator(".anchor-icon") });
+		await toc.first().click();
+		assert.equal(decodeURIComponent(new URL(page.url()).hash.slice(1)), id);
+		await heading.hover();
+		await heading.getByRole("button", { name: "复制本节链接" }).click();
+		assert.equal(decodeURIComponent(await page.evaluate(() => window.testCopied)), `https://asround-blog.pages.dev/STA/#${id}`);
+		assert.equal(await heading.getByRole("button").getAttribute("data-state"), "copied");
+		await page.evaluate(() => window.swup.navigate("/archive/"));
+		await page.waitForFunction(() => location.pathname === "/archive/" && !document.querySelector("#post-container"));
+		await page.goBack();
+		await page.locator("#post-container .chapter-copy").first().waitFor({ state: "attached" });
+		assert.equal(decodeURIComponent(new URL(page.url()).hash.slice(1)), id);
+		await page.goForward();
+		await page.waitForFunction(() => location.pathname === "/archive/" && !document.querySelector("#post-container"));
+		await page.goto(`${base}/posts/2026-10-02_sta/`);
+		const legacy = page.locator(".chapter-copy").first();
+		await legacy.waitFor({ state: "attached" });
+		await legacy.click({ force: true });
+		assert.ok((await page.evaluate(() => window.testCopied)).startsWith("https://asround-blog.pages.dev/STA/#"));
+	});
 	await test("modal", async () => {
 		await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { value: { writeText: async value => { window.testCopied = value; } } }); });
 		for (const path of ["/STA/", "/posts/2026-10-02_sta/"]) {

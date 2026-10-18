@@ -14,6 +14,7 @@ const className = Astro.props.class;
 </div>
 
 <script>
+import "../../scripts/article-links";
 import { runOnce } from "../../utils/page-view";
 runOnce("markdown-delegation", () => {
 document.addEventListener("click", function (e: MouseEvent) {

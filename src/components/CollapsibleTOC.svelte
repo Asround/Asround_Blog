@@ -4,6 +4,7 @@ import { siteConfig } from "../config";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { onPageView } from "../utils/page-view";
+import { updateChapterUrl } from "../utils/article-links";
 
 export let onNavigate: () => void = () => {};
 export let followActive = false;
@@ -116,6 +117,7 @@ function navigate(event: MouseEvent, item: Heading) {
 	)
 		return;
 	event.preventDefault();
+	updateChapterUrl(item.id);
 	window.scrollTo({
 		top: item.element.getBoundingClientRect().top + window.scrollY - 80,
 		behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches

@@ -12,10 +12,36 @@
       }
     }
 
-    &:hover .anchor {
+    &:hover .anchor, &:focus-within .anchor {
       @apply opacity-100;
     }
   }
+
+  .chapter-copy {
+    position: relative;
+    display: inline-flex;
+    vertical-align: middle;
+    margin-inline-start: .4rem;
+    padding: .35rem;
+    border-radius: .35rem;
+    color: var(--primary);
+    opacity: 0;
+    font: 12px/1.3 sans-serif;
+  }
+  :is(h1,h2,h3,h4,h5,h6):is(:hover,:focus-within) .chapter-copy,
+  .chapter-copy[data-state] { opacity: 1; }
+  .chapter-copy:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .chapter-copy[data-state]::after {
+    position: absolute;
+    inset-inline-start: 100%;
+    white-space: nowrap;
+    padding: .3rem;
+    border-radius: .3rem;
+    background: var(--card-bg);
+    content: "已复制";
+  }
+  .chapter-copy[data-state="failed"]::after { content: "复制失败"; }
+  @media (hover: none) { .chapter-copy { opacity: 1; } }
 
   /* --- 链接 --- */
   a:not(.no-styling) {
