@@ -24,7 +24,7 @@ const avatar = visible ? await imageUrl(profileConfig.avatar) : null;
 ---
 {!post.data.encrypted && <div id="share-component" class="mb-6 flex flex-wrap items-center justify-end gap-3" data-pagefind-ignore>
     <button type="button" data-print-article class="btn-regular px-6 py-3 rounded-lg">打印 / PDF</button>
-    {visible && <SharePoster client:idle title={post.data.title} author={post.data.author || profileConfig.name}
+    {visible && <SharePoster client:load title={post.data.title} author={post.data.author || profileConfig.name}
         description={post.data.description || ""} pubDate={formatDateToYYYYMMDD(post.data.published)}
         coverImage={cover} avatar={avatar} url={new URL(getPostUrl(post), siteConfig.siteURL).href} siteTitle={siteConfig.title} />}
 </div>}

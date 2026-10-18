@@ -30,6 +30,7 @@ let themeColor = "#558e88";
 let generationError = "";
 let disposed = false;
 let copyTimer: ReturnType<typeof setTimeout>;
+let shareButton: HTMLButtonElement;
 
 onMount(() => {
 	const temp = document.createElement("div");
@@ -42,6 +43,8 @@ onMount(() => {
 	if (computedColor) {
 		themeColor = computedColor;
 	}
+	shareButton.dataset.shareReady = "";
+	document.dispatchEvent(new CustomEvent("article-share:ready"));
 	return () => { disposed = true; clearTimeout(copyTimer); };
 });
 
@@ -395,6 +398,8 @@ function modal(node: HTMLDialogElement) {
 </script>
 
 <button 
+  bind:this={shareButton}
+  data-share-article
   class="btn-regular px-6 py-3 rounded-lg inline-flex items-center gap-2"
   on:click={generatePoster}
   aria-label="分享文章"
@@ -404,7 +409,7 @@ function modal(node: HTMLDialogElement) {
 </button>
 
 {#if showModal}
-  <dialog use:modal aria-labelledby="share-dialog-title" on:cancel={closeModal}
+  <dialog id="article-share-dialog" use:modal aria-labelledby="share-dialog-title" on:cancel={closeModal}
     on:click={(event) => { const box = event.currentTarget.getBoundingClientRect(); if (event.target === event.currentTarget && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) closeModal(); }}
     class="share-dialog p-0 rounded-2xl max-w-sm w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto shadow-2xl bg-[var(--card-bg)] text-90">
     <div class="flex items-center justify-between gap-4 p-4">

@@ -41,7 +41,7 @@
     text-shadow: none !important;
   }
   #post-container .onload-animation { transform: none !important; }
-  #post-container :is(#post-cover, #share-component, .license-container, [data-reading-resume], .anchor, .chapter-copy, button) {
+  #post-container :is(#share-component, .license-container, [data-reading-resume], .anchor, .chapter-copy, button) {
     display: none !important;
   }
   #post-container, #post-container .custom-md {
@@ -60,6 +60,28 @@
   #post-container > div:not(.custom-md) :is(div,span,a) { color: #444 !important; }
   #post-container .meta-icon { background: #eee !important; }
   #post-container .custom-md :is(p,li,th,td,blockquote,strong,a,h1,h2,h3,h4,h5,h6) { color: #111 !important; }
+  #post-cover {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-block: 5mm !important;
+    overflow: visible !important;
+    contain: none !important;
+    break-inside: avoid;
+  }
+  #post-cover > div { display: none !important; }
+  #post-cover img {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 80mm !important;
+    object-fit: contain !important;
+  }
+  #post-container .custom-md blockquote {
+    border-inline-start: 3px solid #d1d5db !important;
+    padding-inline-start: 1rem !important;
+  }
+  #post-container .custom-md blockquote::before { display: none !important; }
   #post-container :is(h1,h2,h3,h4,h5,h6) { break-after: avoid-page; }
   #post-container :is(p,li) { orphans: 3; widows: 3; }
   #post-container .custom-md h1 { font-size: 20pt !important; }

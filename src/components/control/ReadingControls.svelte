@@ -17,6 +17,7 @@ const reading = frontendConfig.reading;
 const bottomSpace = musicPlayerConfig.enable ? 104 : 24;
 let isArticle = $state(initialArticle);
 let hasComments = $state(false);
+let hasShare = $state(false);
 let ready = $state(false);
 let fontSize = $state(reading.defaultFontSize);
 let isDark = $state(false);
@@ -41,6 +42,14 @@ function changeFont(value: number) {
 }
 function toggleTheme(event: MouseEvent) {
 	setTheme(getCurrentTheme() === DARK_MODE ? LIGHT_MODE : DARK_MODE, event);
+}
+function refreshShare() {
+	hasShare = !!document.querySelector("#share-component [data-share-article][data-share-ready]");
+}
+function shareArticle(event: MouseEvent) {
+	fontOpen = false;
+	(event.currentTarget as HTMLButtonElement).focus({ preventScroll: true });
+	document.querySelector<HTMLButtonElement>("#share-component [data-share-article][data-share-ready]")?.click();
 }
 function syncLayout() {
 	const root = document.documentElement;
@@ -127,6 +136,7 @@ onMount(() => {
 	const refresh = () => {
 		isArticle = !!document.getElementById("post-container");
 		hasComments = !!document.getElementById("article-comments");
+		refreshShare();
 		leftOpen = !reading.collapseLeftSidebar;
 		fontOpen = false;
 		tocOpen = null;
@@ -144,7 +154,7 @@ onMount(() => {
 		if (!tools?.contains(event.target as Node)) fontOpen = false;
 	};
 	const escape = (event: KeyboardEvent) => {
-		if (event.key === "Escape") {
+		if (event.key === "Escape" && !document.querySelector("dialog[open]")) {
 			if (fontOpen) {
 				fontOpen = false;
 				fontButton?.focus();
@@ -173,6 +183,7 @@ onMount(() => {
 	document.addEventListener("click", clickOutside);
 	document.addEventListener("keydown", escape);
 	document.addEventListener("toc:progress", syncProgress);
+	document.addEventListener("article-share:ready", refreshShare);
 	window.addEventListener("resize", resize);
 	const leftMedia = window.matchMedia("(min-width: 1024px), (hover: hover) and (pointer: fine)");
 	leftMedia.addEventListener("change", resize);
@@ -184,6 +195,7 @@ onMount(() => {
 		document.removeEventListener("click", clickOutside);
 		document.removeEventListener("keydown", escape);
 		document.removeEventListener("toc:progress", syncProgress);
+		document.removeEventListener("article-share:ready", refreshShare);
 		window.removeEventListener("resize", resize);
 		leftMedia.removeEventListener("change", resize);
 		window.removeEventListener("scroll", updatePosition);
@@ -212,6 +224,11 @@ onMount(() => {
                     <svg class="toc-progress-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" pathLength="100" fill="none" style:stroke-dashoffset={100 * (1 - readingProgress)} /></svg>
                 {/if}
                 <svg class="toc-button-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" /></svg>
+            </button>
+        {/if}
+        {#if hasShare}
+            <button id="reader-share-button" class="tool-button" title="分享文章" aria-label="分享文章" aria-haspopup="dialog" aria-controls="article-share-dialog" onclick={shareArticle}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" /></svg>
             </button>
         {/if}
         {#if hasComments}

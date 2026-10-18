@@ -12,7 +12,7 @@ runOnce("article-print", () => {
 			opened.push(detail);
 			detail.open = true;
 		}
-		for (const image of document.querySelectorAll<HTMLImageElement>("#post-container .custom-md img")) image.loading = "eager";
+		for (const image of document.querySelectorAll<HTMLImageElement>("#post-container .custom-md img, #post-cover img")) image.loading = "eager";
 	});
 	window.addEventListener("afterprint", restore);
 	const print = async (button?: HTMLButtonElement) => {
@@ -22,7 +22,7 @@ runOnce("article-print", () => {
 		if (button) { button.disabled = true; button.textContent = "准备打印…"; }
 		let timer = 0;
 		try {
-			const images = [...article.querySelectorAll<HTMLImageElement>("img")];
+			const images = [...document.querySelectorAll<HTMLImageElement>("#post-container .custom-md img, #post-cover img")];
 			for (const image of images) image.loading = "eager";
 			await Promise.race([
 				Promise.allSettled([document.fonts.ready, ...images.map(image => image.decode())]),

@@ -86,12 +86,18 @@ try {
 			assert.equal(await page.locator("#sidebar").isVisible(), false);
 			assert.equal(await page.locator("#share-component").isVisible(), false);
 			assert.equal(await page.locator(".chapter-copy").first().isVisible(), false);
+			assert.ok(await page.locator("#post-cover img").isVisible(), "Print includes the article cover");
+			const quote = page.locator(".markdown-content blockquote").first();
+			if (await quote.count()) {
+				const border = await quote.evaluate(el => { const style = getComputedStyle(el); return [style.borderInlineStartWidth, style.borderInlineStartStyle, style.borderInlineStartColor]; });
+				assert.deepEqual(border, ["3px", "solid", "rgb(209, 213, 219)"], "Quote bar stays light grey even with print backgrounds disabled");
+			}
 			assert.equal(await page.locator(".markdown-content").evaluate(el => getComputedStyle(el).color), "rgb(17, 17, 17)");
 			const box = await page.locator("#post-container").boundingBox();
 			assert.ok(box.width > 1200 && box.x < 20, "Article uses printable page width rather than sidebar grid");
 			const file = path.join(tmpdir(), `asround-print-${slug}.pdf`);
 			printFiles.push(file);
-			await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
+			await page.pdf({ path: file, preferCSSPageSize: true, printBackground: false });
 			console.log("PDF QA", file);
 			await page.emulateMedia({ media: "screen" });
 			assert.ok(await page.locator("#share-component").isVisible());
@@ -127,7 +133,7 @@ try {
 		for (const path of ["/STA/", "/posts/2026-10-02_sta/"]) {
 			await page.goto(`${base}${path}`);
 			await page.waitForFunction(() => document.querySelector("#share-component astro-island") && !document.querySelector("#share-component astro-island").hasAttribute("ssr"));
-			const trigger = page.getByRole("button", { name: "分享文章", exact: true });
+			const trigger = page.locator("#share-component").getByRole("button", { name: "分享文章", exact: true });
 			await trigger.focus(); await page.keyboard.press("Enter");
 			const dialog = page.getByRole("dialog", { name: "分享文章", exact: true });
 			await dialog.waitFor();
@@ -153,7 +159,29 @@ try {
 			await dialog.getByRole("status").filter({ hasText: "复制失败，请手动复制" }).waitFor();
 			await page.getByRole("button", { name: "关闭分享窗口" }).click();
 			assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+			await page.evaluate(() => window.scrollTo(0, 0));
+			const toolbarShare = page.locator("#reader-share-button");
+			await toolbarShare.waitFor();
+			await toolbarShare.focus();
+			const scrollBefore = await page.evaluate(() => scrollY);
+			const tocWasOpen = await page.locator("#reader-toc-panel").getAttribute("aria-hidden");
+			await page.keyboard.press("Enter");
+			await dialog.waitFor();
+			assert.equal(await page.getByRole("dialog").count(), 1, "Both share entrances open the same single dialog");
+			assert.ok(Math.abs(await page.evaluate(() => scrollY) - scrollBefore) < 2, "Toolbar share never scrolls to the footer");
+			await page.keyboard.press("Escape");
+			await dialog.waitFor({ state: "detached" });
+			assert.ok(await toolbarShare.evaluate(el => el === document.activeElement), "Focus returns to the toolbar trigger");
+			assert.equal(await page.locator("#reader-toc-panel").getAttribute("aria-hidden"), tocWasOpen, "Closing the modal leaves the directory unchanged");
 		}
+		await page.evaluate(() => window.swup.navigate("/archive/"));
+		await page.waitForFunction(() => location.pathname === "/archive/" && !document.querySelector("#post-container"));
+		assert.equal(await page.locator("#reader-share-button").count(), 0);
+		await page.evaluate(() => window.swup.navigate("/STA/"));
+		await page.locator("#reader-share-button").waitFor();
+		await page.locator("#reader-share-button").click();
+		await page.getByRole("dialog", { name: "分享文章", exact: true }).waitFor();
+		await page.keyboard.press("Escape");
 	});
 	await test("loading", async () => {
 		await page.goto(`${base}/STA/`);
