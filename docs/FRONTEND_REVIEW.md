@@ -135,6 +135,7 @@ Remove-Item -LiteralPath @(
 - 归档列表静态输出，脚本加载后启用筛选并恢复 URL 条件；禁用脚本仍能浏览全部文章。`pnpm test:reading --only=archive` 覆盖无脚本、刷新条件、高亮和缩放可用宽度。
 - 长文再次访问可点击恢复上次章节，显式 `#章节` 链接优先；短文和加密文章不提示。`frontendConfig.reading.resume` 可关闭；浏览器 `reader-progress-v1` 仅保存章节 ID 和时间，最多 30 篇、90 天，读到末尾清除。`pnpm test:reading --only=resume` 验证恢复、忽略、锚点优先及损坏记录降级。
 - 专题阅读放在原上一篇／下一篇前，编排位于 `src/data/reading-series.ts`，使用文章 ID 解析正式链接并排除草稿、加密文章；`frontendConfig.reading.series` 可关闭。`pnpm test:reading --only=series` 检查编排中的每篇文章及链接、当前文章标记和跳转。
+- 横幅轮播在滚出视口、页面隐藏或减少动态效果时暂停，恢复可见后按正常间隔继续；悬停和触摸的暂停状态独立处理。水波动画同步暂停，站内切换不会重复安装控制器。回归：`pnpm test:reading --only=carousel`。
 
 ## RSS 使用说明
 

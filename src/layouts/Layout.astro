@@ -737,6 +737,9 @@ function disableAnimation() {
 	}
 
 	function initCarousel() {
+		const carousel = document.getElementById("banner-carousel");
+		if (!carousel || carousel.dataset.carouselInitialized) return;
+		carousel.dataset.carouselInitialized = "true";
 		const carouselItems = document.querySelectorAll(".carousel-item");
 		// 根据屏幕尺寸过滤有效的轮播项
 		const isMobile = window.innerWidth < 768; // md breakpoint
@@ -753,15 +756,18 @@ function disableAnimation() {
 		if (validItems.length > 1 && siteConfig.banner.carousel?.enable) {
 			let currentIndex = 0;
 			const interval = siteConfig.banner.carousel?.interval || 6;
-			let carouselInterval: any;
-			let isPaused = false;
+			let carouselInterval: ReturnType<typeof setInterval> | undefined;
+			let touchPaused = false;
+			let hoverPaused = false;
+			let inView = false;
+			let pageActive = true;
+			const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+			const banner = document.getElementById("banner-wrapper");
 
 			// 移动端触摸手势支持
 			let startX = 0;
 			let startY = 0;
 			let isSwiping = false;
-
-			const carousel = document.getElementById("banner-carousel");
 
 			// 切换图片的函数 - 基于有效项目
 			function switchToSlide(index: number) {
@@ -799,7 +805,7 @@ function disableAnimation() {
 						startX = e.touches[0].clientX;
 						startY = e.touches[0].clientY;
 						isSwiping = false;
-						isPaused = true;
+						touchPaused = true;
 						clearInterval(carouselInterval);
 					},
 					{ passive: true },
@@ -826,7 +832,7 @@ function disableAnimation() {
 					"touchend",
 					(e) => {
 						if (!startX || !startY || !isSwiping) {
-							isPaused = false;
+							touchPaused = false;
 							startCarousel();
 							return;
 						}
@@ -853,19 +859,26 @@ function disableAnimation() {
 						startX = 0;
 						startY = 0;
 						isSwiping = false;
-						isPaused = false;
+						touchPaused = false;
 						// 重新开始自动轮播
 						startCarousel();
 					},
 					{ passive: true },
 				);
+				carousel.addEventListener("touchcancel", () => {
+					startX = 0; startY = 0; isSwiping = false;
+					touchPaused = false;
+					startCarousel();
+				}, { passive: true });
 			}
 
 			// 开始轮播的函数
 			function startCarousel() {
 				clearInterval(carouselInterval);
+				carouselInterval = undefined;
+				if (touchPaused || hoverPaused || !inView || document.hidden || !pageActive || reducedMotion.matches) return;
 				carouselInterval = setInterval(() => {
-					if (!isPaused) {
+					if (!touchPaused && !hoverPaused && inView && !document.hidden && pageActive) {
 						const nextIndex =
 							(currentIndex + 1) % validItems.length;
 						switchToSlide(nextIndex);
@@ -876,17 +889,30 @@ function disableAnimation() {
 			// 鼠标悬停暂停（桌面端）
 			if (carousel) {
 				carousel.addEventListener("mouseenter", () => {
-					isPaused = true;
+					hoverPaused = true;
 					clearInterval(carouselInterval);
 				});
 				carousel.addEventListener("mouseleave", () => {
-					isPaused = false;
+					hoverPaused = false;
 					startCarousel();
 				});
 			}
 
-			// 开始自动轮播
-			startCarousel();
+			// The banner persists outside Swup's main container; install one controller only.
+			const updateActivity = () => {
+				banner?.classList.toggle("banner-paused", !inView || document.hidden || !pageActive || reducedMotion.matches);
+				startCarousel();
+			};
+			const visibility = new IntersectionObserver(entries => {
+				inView = entries.some(entry => entry.isIntersecting);
+				updateActivity();
+			});
+			visibility.observe(banner || carousel);
+			document.addEventListener("visibilitychange", updateActivity);
+			reducedMotion.addEventListener("change", updateActivity);
+			window.addEventListener("pagehide", () => { pageActive = false; updateActivity(); });
+			window.addEventListener("pageshow", () => { pageActive = true; updateActivity(); });
+			updateActivity();
 		}
 	}
 

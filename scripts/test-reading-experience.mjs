@@ -20,6 +20,54 @@ async function test(name, callback) {
 	console.log(`PASS ${name}`);
 }
 try {
+	await test("carousel", async () => {
+		const carouselPage = await context.newPage();
+		try {
+			await carouselPage.clock.install();
+			await carouselPage.addInitScript(() => {
+				const intervals = new Set();
+				const set = window.setInterval.bind(window), clear = window.clearInterval.bind(window);
+				window.setInterval = (...args) => { const id = set(...args); if (args[1] === 3000) intervals.add(id); return id; };
+				window.clearInterval = id => { intervals.delete(id); clear(id); };
+				window.testCarouselIntervals = () => intervals.size;
+			});
+			await carouselPage.goto(`${base}/`);
+			await carouselPage.mouse.move(1400, 950);
+			await carouselPage.waitForFunction(() => window.swup && document.querySelector("#banner-carousel[data-carousel-initialized]") && !document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
+			const slide = () => carouselPage.locator("#banner-carousel .carousel-item").evaluateAll(items => items.findIndex(item => item.classList.contains("opacity-100")));
+			let before = await slide();
+			await carouselPage.clock.fastForward(3500);
+			assert.notEqual(await slide(), before, "Visible carousel advances");
+			await carouselPage.evaluate(() => scrollTo({ top: 1600, behavior: "instant" }));
+			await carouselPage.waitForFunction(() => document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
+			before = await slide();
+			await carouselPage.clock.fastForward(10000);
+			assert.equal(await slide(), before, "Offscreen carousel stops");
+			assert.equal(await carouselPage.locator("#header-waves use").first().evaluate(el => getComputedStyle(el).animationPlayState), "paused");
+			await carouselPage.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+			await carouselPage.waitForFunction(() => !document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
+			await carouselPage.evaluate(() => { Object.defineProperty(document, "hidden", { configurable: true, value: true }); document.dispatchEvent(new Event("visibilitychange")); });
+			before = await slide();
+			await carouselPage.clock.fastForward(10000);
+			assert.equal(await slide(), before, "Background visibility event stops carousel");
+			await carouselPage.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event("visibilitychange")); });
+			await carouselPage.clock.fastForward(3500);
+			assert.notEqual(await slide(), before, "Visibility restores carousel");
+			await carouselPage.emulateMedia({ reducedMotion: "reduce" });
+			await carouselPage.waitForFunction(() => document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
+			before = await slide();
+			await carouselPage.clock.fastForward(10000);
+			assert.equal(await slide(), before, "Reduced motion stops carousel");
+			await carouselPage.emulateMedia({ reducedMotion: "no-preference" });
+			await carouselPage.waitForFunction(() => !document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
+			assert.equal(await carouselPage.evaluate(() => window.testCarouselIntervals()), 1);
+			await carouselPage.evaluate(() => { window.testBanner = document.getElementById("banner-carousel"); swup.navigate("/archive/"); });
+			await carouselPage.waitForURL(`${base}/archive/`);
+			await carouselPage.clock.fastForward(2000);
+			assert.equal(await carouselPage.evaluate(() => window.testBanner === document.getElementById("banner-carousel")), true);
+			assert.ok(await carouselPage.evaluate(() => window.testCarouselIntervals() <= 1), "No duplicate carousel intervals on navigation");
+		} finally { await carouselPage.close(); }
+	});
 	await test("series", async () => {
 		const { readingSeries } = await importTS(await readFile("src/data/reading-series.ts", "utf8"));
 		const { articles } = await auditProject();

@@ -39,6 +39,8 @@
 .skip-to-content:focus { transform: none; outline: 2px solid var(--primary); }
 #swup-container { scroll-margin-top: 6rem; }
 
+#banner-wrapper.banner-paused .parallax use { animation-play-state: paused !important; }
+
 /* 确保平滑滚动 */
 html {
   scroll-behavior: smooth;
