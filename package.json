@@ -21,6 +21,7 @@
 		"test:comments:site": "node scripts/test-comments-site.mjs",
 		"test:comments:soak": "node scripts/test-comments-site.mjs --soak=20",
 		"test:frontend": "node scripts/test-frontend.mjs",
+		"test:reading": "node scripts/test-reading-experience.mjs",
 		"test:navigation:memory": "node scripts/test-navigation-memory.mjs",
 		"update-anime": "node scripts/update-anime.mjs",
 		"update-bangumi": "node scripts/update-bangumi.mjs",

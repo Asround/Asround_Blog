@@ -30,6 +30,15 @@
 @tailwind components;
 @tailwind utilities;
 
+.skip-to-content {
+  position: fixed; left: 1rem; top: 1rem; z-index: 10000;
+  padding: 0.75rem 1rem; border-radius: 0.5rem;
+  background: var(--card-bg); color: var(--primary);
+  transform: translateY(-200%);
+}
+.skip-to-content:focus { transform: none; outline: 2px solid var(--primary); }
+#swup-container { scroll-margin-top: 6rem; }
+
 /* 确保平滑滚动 */
 html {
   scroll-behavior: smooth;

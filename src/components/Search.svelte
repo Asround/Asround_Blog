@@ -12,7 +12,7 @@ import {
 	matchingSearchExcerpt,
 	type SearchArticle,
 } from "@utils/search-utils";
-import { onMount, onDestroy } from "svelte";
+import { onMount, onDestroy, tick } from "svelte";
 import type { SearchResult } from "@/global";
 import { frontendConfig } from "@/config";
 
@@ -89,20 +89,20 @@ const togglePanel = () => {
 	activeDesktopSearch = false;
 	const panel = document.getElementById("search-panel");
 	panel?.classList.toggle("float-panel-closed");
+	if (panel && !panel.classList.contains("float-panel-closed")) {
+		panel.inert = false;
+		panel.querySelector<HTMLInputElement>("input:not([type=checkbox])")?.focus();
+	}
 };
 
-const toggleDesktopSearch = () => {
+const openDesktopSearch = async (fromHover = false) => {
 	// 如果窗口刚获得焦点，不自动展开搜索框
-	if (windowJustFocused) {
+	if (fromHover && windowJustFocused) {
 		return;
 	}
-	isDesktopSearchExpanded = !isDesktopSearchExpanded;
-	if (isDesktopSearchExpanded) {
-		setTimeout(() => {
-			const input = document.getElementById("search-input-desktop") as HTMLInputElement;
-			input?.focus();
-		}, 0);
-	}
+	isDesktopSearchExpanded = true;
+	await tick();
+	if (isDesktopSearchExpanded) document.getElementById("search-input-desktop")?.focus();
 };
 
 const collapseDesktopSearch = () => {
@@ -247,8 +247,17 @@ onMount(() => {
 	};
 
 	window.addEventListener("focus", handleFocus);
+	const handleEscape = (event: KeyboardEvent) => {
+		if (event.key !== "Escape" || !document.getElementById("search-container")?.contains(document.activeElement)) return;
+		event.preventDefault();
+		const trigger = document.getElementById(activeDesktopSearch ? "search-toggle" : "search-switch");
+		closeSearchPanel();
+		trigger?.focus();
+	};
+	document.addEventListener("keydown", handleEscape);
 
 	return () => {
+		document.removeEventListener("keydown", handleEscape);
 		panelObserver.disconnect();
 		window.removeEventListener("focus", handleFocus);
 		document.removeEventListener("pagefindready", handleReady);
@@ -307,22 +316,22 @@ onDestroy(() => {
         class="flex transition-all items-center h-11 rounded-lg absolute right-0 top-0 shrink-0
             {isDesktopSearchExpanded ? 'bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10' : 'btn-plain active:scale-90'}
             {isDesktopSearchExpanded ? 'w-48' : 'w-11'}"
-        role="button"
-        tabindex="0"
-        aria-label="Search"
-        onmouseenter={() => {if (!isDesktopSearchExpanded) toggleDesktopSearch()}}
+        role="group"
+        aria-label="文章搜索"
+        onmouseenter={() => {if (!isDesktopSearchExpanded) openDesktopSearch(true)}}
         onmouseleave={collapseDesktopSearch}
-        onclick={() => {
-            const input = document.getElementById("search-input-desktop") as HTMLInputElement;
-            input?.focus();
-        }}
     >
-        <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none {isDesktopSearchExpanded ? 'left-3' : 'left-1/2 -translate-x-1/2'} transition top-1/2 -translate-y-1/2 {isDesktopSearchExpanded ? 'text-black/30 dark:text-white/30' : ''}"></Icon>
+        <button id="search-toggle" type="button" aria-label="搜索文章" aria-expanded={isDesktopSearchExpanded}
+            aria-controls="search-panel" onclick={() => openDesktopSearch()}
+            class="absolute left-0 top-0 z-10 w-11 h-11 rounded-lg flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--primary)]">
+            <Icon icon="material-symbols:search" class="text-[1.25rem]"></Icon>
+        </button>
         <input id="search-input-desktop" placeholder={i18n(I18nKey.search)} bind:value={keywordDesktop}
+            aria-label="搜索文章关键词" tabindex={isDesktopSearchExpanded ? 0 : -1}
             onfocus={() => {
 				activeDesktopSearch = true;
                 clearTimeout(blurTimer);
-                if (!isDesktopSearchExpanded) toggleDesktopSearch(); 
+                isDesktopSearchExpanded = true;
                 search(keywordDesktop, true);
             }}
             onblur={handleBlur}

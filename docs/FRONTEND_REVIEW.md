@@ -129,6 +129,10 @@ Remove-Item -LiteralPath @(
 
 阅读字号的浏览器记忆不会更改项目文件；还原后旧排版不会使用这个值。重新启用功能时可点击“恢复默认阅读字号”。
 
+## 2026-10-18 阅读体验调整
+
+- 搜索使用原生按钮，支持 Enter / Space；Escape 关闭并返回触发按钮。首个 Tab 可跳转主要内容。自动回归：`pnpm test:reading --only=keyboard`（需本地预览）。
+
 ## RSS 使用说明
 
 RSS 是供阅读器获取文章更新的订阅文件。项目已有 `@astrojs/rss` 依赖及 `rss.xml.ts` 生成端点，`/rss/` 是介绍与复制订阅地址的页面，真正的订阅源是 `/rss.xml`；另提供 `/atom.xml`。
