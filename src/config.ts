@@ -492,7 +492,7 @@ export const commentConfig: CommentConfig = {
 		repoId: "R_kgDOVLxCwg", // 仓库公开 ID，不是访问令牌。
 		category: "文章评论",
 		categoryId: "DIC_kwDOVLxCws4DIk0E",
-		themeStylesheet: "/giscus.css", // 清空可回退官方输入框高度；保留默认双配色
+		themeStylesheet: "/giscus.css", // 随组件加载博客双配色；仅手动清空时使用官方样式
 	},
 	twikoo: {
 		envId: "https://twikoo.vercel.app",

@@ -283,7 +283,7 @@ export type GiscusConfig = {
 	repoId: string;
 	category: string;
 	categoryId: string;
-	themeStylesheet?: string; // 站内路径或可信 HTTPS CSS；不可用时回退到官方配色
+	themeStylesheet?: string; // /giscus.css 随组件加载；其他可信 CSS 请求失败时保留博客配色，留空使用官方样式
 };
 
 type TwikooConfig = {

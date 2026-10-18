@@ -20,12 +20,16 @@ let requests = 0;
 let stylesheetMode = "valid";
 const customStylesheet = "https://blog.example/giscus.css";
 const enhancementCSS = await readFile(new URL("../public/giscus.css", import.meta.url), "utf8");
-await context.route(customStylesheet, (route) => route.fulfill({
+await context.route(customStylesheet, async (route) => {
+	if (stylesheetMode === "network") return route.abort();
+	if (stylesheetMode === "slow") await new Promise(resolve => setTimeout(resolve, 2500));
+	return route.fulfill({
 	status: stylesheetMode === "missing" ? 404 : 200,
 	contentType: stylesheetMode === "html" ? "text/html" : "text/css",
 	headers: { "access-control-allow-origin": "*" },
-	body: stylesheetMode === "valid" ? enhancementCSS : "Unavailable stylesheet",
-}));
+	body: ["valid", "slow"].includes(stylesheetMode) ? enhancementCSS : "Unavailable stylesheet",
+	});
+});
 const errors = [];
 context.on("page", (page) => page.on("pageerror", (error) => { errors.push(error.message); console.error(error.message); }));
 await context.route("https://giscus.app/**", async (route) => {
@@ -44,7 +48,13 @@ const textarea=document.querySelector('textarea');
 textarea.addEventListener('input',()=>{textarea.style.height='0px';textarea.style.height=textarea.scrollHeight+'px';});
 const theme=new URL(location.href).searchParams.get('theme');
 if(theme?.startsWith('https://')){const link=document.createElement('link');link.rel='stylesheet';link.crossOrigin='anonymous';link.href=theme;document.head.append(link);}
-window.addEventListener('message',e=>{if(e.data?.giscus?.setConfig)document.body.dataset.theme=e.data.giscus.setConfig.theme;});
+let droppedTheme=false;
+window.addEventListener('message',e=>{
+ const next=e.data?.giscus?.setConfig?.theme;if(!next)return;
+ if(${JSON.stringify(mode)}==='late-listener' && next.startsWith('data:') && !droppedTheme){droppedTheme=true;document.body.dataset.droppedTheme='true';return;}
+ document.body.dataset.theme=next;
+ if(next.startsWith('data:text/css;')){let link=document.getElementById('test-theme');if(!link){link=document.createElement('link');link.id='test-theme';link.rel='stylesheet';document.head.append(link);}link.href=next;}
+});
 ${mode !== "silent" ? "parent.postMessage({giscus:{resizeHeight:200}},'*');" : ""}
 ${mode === "ready" ? "parent.postMessage({giscus:{discussion:{id:'D_fixture'}}},'*');" : ""}
 </script></body></html>` });
@@ -56,7 +66,8 @@ await context.route(new URL("/__comment-test__**", base).href, async (route) => 
 <script type="module">
 import {mount,unmount} from ${JSON.stringify(svelteModule)};
 import Comments from ${JSON.stringify(componentPath)};
-const props={config:{repo:'owner/comments',repoId:'R_example',category:'文章评论',categoryId:'DIC_example'},term:'/STA/',discussionsUrl:'https://github.com/owner/comments/discussions',stylesheetUrl:new URL(location.href).searchParams.get('stylesheet')||undefined};
+const params=new URL(location.href).searchParams;
+const props={config:{repo:'owner/comments',repoId:'R_example',category:'文章评论',categoryId:'DIC_example',...(params.has('bundled')?{themeStylesheet:'/giscus.css'}:{})},term:'/STA/',discussionsUrl:'https://github.com/owner/comments/discussions',stylesheetUrl:params.get('stylesheet')||undefined};
 window.mountComments=(term='/STA/')=>{window.component=mount(Comments,{target:document.querySelector('main'),props:{...props,term}})};
 window.removeComments=()=>unmount(window.component);
 history.replaceState({source:'swup',url:location.pathname+location.search},'',location.href);
@@ -245,7 +256,7 @@ try {
 	await page.close();
 	console.log("PASS 导入尚未完成时离开页面，不遗留实例或远端请求");
 
-	for (const variant of ["valid", "missing", "html"]) {
+	for (const variant of ["valid", "missing", "html", "slow", "network"]) {
 		stylesheetMode = variant;
 		page = await fixture("?stylesheet=" + encodeURIComponent(customStylesheet));
 		await page.evaluate(() => scrollTo(0, 3500));
@@ -253,6 +264,10 @@ try {
 		frame = await (await page.locator("giscus-widget").locator("iframe").elementHandle()).contentFrame();
 		await frame.locator("textarea").waitFor();
 		assert.equal(new URL(frame.url()).searchParams.get("theme"), variant === "valid" ? customStylesheet : "preferred_color_scheme");
+		if (variant !== "valid") {
+			await frame.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue("--asround-accent").trim());
+			assert.ok((await page.locator("giscus-widget").evaluate(el => el.theme)).startsWith("data:text/css;"), "Configured CSS failures retain the blog theme");
+		}
 		if (variant === "valid") {
 			await frame.waitForFunction(() => getComputedStyle(document.querySelector("textarea")).minHeight === "100px");
 			const editor = frame.locator("textarea");
@@ -283,7 +298,34 @@ try {
 		}
 		await page.close();
 	}
-	console.log("PASS 默认 100px、随行增高、500px 上限、程序/手动清空复位；CSS 缺失或返回 HTML 时回退官方样式");
+	console.log("PASS 默认 100px、随行增高、500px 上限、清空复位；CSS 404/HTML/超时/网络失败保留博客样式");
+
+	mode = "late-listener";
+	let bundledRequests = 0;
+	page = await fixture("?bundled=1&stylesheet=" + encodeURIComponent(new URL("/giscus.css", base)), async page => {
+		await page.route("**/giscus.css", route => { bundledRequests++; return route.abort(); });
+	});
+	await page.evaluate(() => scrollTo(0, 3500));
+	frame = await widgetFrame(page);
+	await frame.waitForFunction(() => document.body.dataset.droppedTheme === "true");
+	await frame.locator("textarea").fill("Unsent draft survives a late theme handshake");
+	const themeRequests = requests;
+	await frame.evaluate(() => parent.postMessage({ giscus: { discussion: { id: "D_theme_ready" } } }, "*"));
+	await frame.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue("--asround-accent").trim());
+	assert.equal(await frame.locator("textarea").inputValue(), "Unsent draft survives a late theme handshake");
+	assert.equal(requests, themeRequests, "Theme recovery does not recreate the iframe");
+	for (const dark of [false, true, false, true]) {
+		await page.evaluate(dark => document.documentElement.classList.toggle("dark", dark), dark);
+		await frame.waitForFunction(dark => matchMedia("(prefers-color-scheme:dark)").matches === dark && !!getComputedStyle(document.documentElement).getPropertyValue("--asround-accent").trim(), dark);
+	}
+	await Promise.all([frame.waitForNavigation({ waitUntil: "load" }), frame.evaluate(() => location.reload())]);
+	await frame.waitForFunction(() => document.body.dataset.droppedTheme === "true");
+	await frame.evaluate(() => parent.postMessage({ giscus: { discussion: { id: "D_theme_reloaded" } } }, "*"));
+	await frame.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue("--asround-accent").trim());
+	assert.equal(bundledRequests, 0, "Bundled blog CSS does not make a separate stylesheet request");
+	await page.close();
+	mode = "ready";
+	console.log("PASS 博客样式随组件加载无需额外 CSS 请求；初次配置消息丢失及 iframe 重载后可恢复主题，切主题保留草稿");
 
 	page = await fixture("?stylesheet=" + encodeURIComponent(customStylesheet), (page) => page.addInitScript(() => {
 		const original = window.fetch;

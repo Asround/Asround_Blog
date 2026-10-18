@@ -1,5 +1,8 @@
 import type { GiscusWidget } from "giscus";
 import type { GiscusConfig } from "../types/config";
+import bundledStylesheet from "../../public/giscus.css?raw";
+
+const bundledTheme = `data:text/css;charset=utf-8,${encodeURIComponent(bundledStylesheet)}`;
 
 export type CommentState = "waiting" | "loading" | "ready" | "slow" | "warning" | "limited" | "configuration" | "error" | "reload";
 
@@ -18,6 +21,9 @@ export function mountGiscus(
 	let intersection: IntersectionObserver | undefined;
 	let assetRequest: AbortController | undefined;
 	let dataReady = false;
+	let inlineTheme: string | undefined;
+	let themeResent = false;
+	let themedFrame: HTMLIFrameElement | undefined;
 	const theme = () => document.documentElement.classList.contains("dark") ? "dark" : "light";
 	const syncColorScheme = () => {
 		// Embedded prefers-color-scheme follows the iframe's color-scheme, including
@@ -29,14 +35,25 @@ export function mountGiscus(
 		clearTimeout(timer);
 		assetRequest?.abort();
 		assetRequest = undefined;
+		themedFrame?.removeEventListener("load", onFrameLoad);
+		themedFrame = undefined;
 		widget?.remove();
 		widget = undefined;
+		inlineTheme = undefined;
+		themeResent = false;
 	};
+	const onFrameLoad = () => { themeResent = false; syncColorScheme(); };
 	const fail = (state: "error" | "reload" | "configuration" = "error") => {
 		clearWidget();
 		onState(state);
 	};
 	const ready = () => {
+		// Metadata proves the child app is running. Re-send our theme in case its
+		// initial load/config message raced the child's message-listener setup.
+		if (inlineTheme && !themeResent && widget?.iframeRef?.contentWindow) {
+			themeResent = true;
+			widget.iframeRef.contentWindow.postMessage({ giscus: { setConfig: { theme: inlineTheme } } }, "https://giscus.app");
+		}
 		dataReady = true;
 		clearTimeout(timer);
 		onState("ready");
@@ -77,22 +94,20 @@ export function mountGiscus(
 	window.addEventListener("message", receive);
 	async function resolveTheme(): Promise<string> {
 		if (!stylesheetUrl) return "preferred_color_scheme";
+		// The standard blog theme ships with the component: no timeout, extra
+		// iframe fetch, stale CDN response or localhost network permission.
+		if (config.themeStylesheet?.split(/[?#]/, 1)[0] === "/giscus.css") return bundledTheme;
 		const request = new AbortController();
 		assetRequest = request;
 		const timeout = setTimeout(() => request.abort(), 2000);
 		try {
-			// Local previews may run before the CSS has been deployed. Never trade a
-			// readable official widget for a missing/HTML stylesheet or a network error.
+			// Other explicitly configured URLs retain their CSS base path. A failed
+			// preflight uses the bundled blog theme, never a permanent official fallback.
 			const response = await fetch(stylesheetUrl, { mode: "cors", signal: request.signal });
 			const valid = response.ok && response.headers.get("content-type")?.includes("text/css");
-			if (valid && import.meta.env.DEV && new URL(stylesheetUrl).origin === location.origin) {
-				// The parent reads its own dev CSS. Send it as a theme message rather
-				// than asking a remote iframe to access localhost (local-network permissions).
-				return `data:text/css;charset=utf-8,${encodeURIComponent(await response.text())}`;
-			}
 			await response.body?.cancel();
-			return valid ? stylesheetUrl : "preferred_color_scheme";
-		} catch { return "preferred_color_scheme"; }
+			return valid ? stylesheetUrl : bundledTheme;
+		} catch { return bundledTheme; }
 		finally { clearTimeout(timeout); if (assetRequest === request) assetRequest = undefined; }
 	}
 
@@ -119,8 +134,9 @@ export function mountGiscus(
 			moduleLoaded = true;
 			if (disposed || attempt !== generation) return;
 			const widgetTheme = await resolveTheme();
-			const inlineTheme = widgetTheme.startsWith("data:text/css;");
 			if (disposed || attempt !== generation) return;
+			const usesInlineTheme = widgetTheme.startsWith("data:text/css;");
+			inlineTheme = usesInlineTheme ? widgetTheme : undefined;
 			const returningFromLogin = new URL(location.href).searchParams.has("giscus");
 			const savedState = history.state;
 			// The official component consumes OAuth callbacks. Preserve Swup's history state.
@@ -136,15 +152,17 @@ export function mountGiscus(
 				category: config.category, categoryId: config.categoryId,
 				mapping: "specific", term, strict: "1", reactionsEnabled: "0",
 				emitMetadata: "1", inputPosition: "top", lang: "zh-CN",
-				// Keep the iframe URL short; dev CSS is sent via the official config
+				// Keep the iframe URL short; bundled CSS is sent via the official config
 				// message after its initial render, including when it finishes loading.
-				theme: inlineTheme ? "preferred_color_scheme" : widgetTheme, loading: "eager",
+				theme: usesInlineTheme ? "preferred_color_scheme" : widgetTheme, loading: "eager",
 			});
 			host.append(element);
 			await element.updateComplete;
 			if (disposed || attempt !== generation) return;
+			themedFrame = element.iframeRef;
+			themedFrame?.addEventListener("load", onFrameLoad);
 			syncColorScheme();
-			if (inlineTheme) element.theme = widgetTheme;
+			if (usesInlineTheme) element.theme = widgetTheme;
 			if (returningFromLogin) host.closest("section")?.scrollIntoView({ block: "start" });
 		} catch {
 			if (!disposed && attempt === generation) fail(moduleLoaded ? "error" : "reload");
