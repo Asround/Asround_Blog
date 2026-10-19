@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "sourceCommit": "24cf7ed",
+  "sourceRun": "https://github.com/Asround/Asround_Blog/actions/runs/39240438581",
+  "measuredAt": "2026-10-19",
+  "environment": {
+    "viewport": "1440x1000",
+    "samples": 3,
+    "cpuSlowdown": 2,
+    "latencyMs": 40,
+    "megabitsPerSecond": 10,
+    "thirdParty": "HTTPS blocked",
+    "reducedMotion": true,
+    "build": "Astro and Pagefind; full local WOFF2",
+    "duration": "fonts and visible images ready + 2s"
+  },
+  "rows": [
+    {
+      "route": "/",
+      "cache": "cold",
+      "requests": 74,
+      "decodedBytes": 6969988,
+      "scriptBytes": 310447,
+      "fontBytes": 1566564,
+      "imageBytes": 4301079,
+      "transferBytes": 6992188,
+      "textReadyMs": 3451,
+      "readyMs": 6350,
+      "lcpMs": 6356,
+      "cls": 0.0044
+    },
+    {
+      "route": "/",
+      "cache": "warm",
+      "requests": 74,
+      "decodedBytes": 6969988,
+      "scriptBytes": 310447,
+      "fontBytes": 1566564,
+      "imageBytes": 4301079,
+      "transferBytes": 449888,
+      "textReadyMs": 540,
+      "readyMs": 668,
+      "lcpMs": 204,
+      "cls": 0.0008
+    },
+    {
+      "route": "/STA/",
+      "cache": "cold",
+      "requests": 83,
+      "decodedBytes": 7831272,
+      "scriptBytes": 487932,
+      "fontBytes": 1642280,
+      "imageBytes": 4539448,
+      "transferBytes": 7856172,
+      "textReadyMs": 4129,
+      "readyMs": 6295,
+      "lcpMs": 1556,
+      "cls": 0.0024
+    },
+    {
+      "route": "/STA/",
+      "cache": "warm",
+      "requests": 83,
+      "decodedBytes": 7831272,
+      "scriptBytes": 487932,
+      "fontBytes": 1642280,
+      "imageBytes": 4539448,
+      "transferBytes": 819602,
+      "textReadyMs": 1335,
+      "readyMs": 1337,
+      "lcpMs": 512,
+      "cls": 0
+    },
+    {
+      "route": "/Summer-camp/",
+      "cache": "cold",
+      "requests": 77,
+      "decodedBytes": 7161999,
+      "scriptBytes": 487932,
+      "fontBytes": 1566564,
+      "imageBytes": 4260405,
+      "transferBytes": 7185099,
+      "textReadyMs": 3667,
+      "readyMs": 5876,
+      "lcpMs": 1236,
+      "cls": 0.0018
+    },
+    {
+      "route": "/Summer-camp/",
+      "cache": "warm",
+      "requests": 77,
+      "decodedBytes": 7161999,
+      "scriptBytes": 487932,
+      "fontBytes": 1566564,
+      "imageBytes": 4260405,
+      "transferBytes": 505088,
+      "textReadyMs": 798,
+      "readyMs": 800,
+      "lcpMs": 460,
+      "cls": 0
+    }
+  ]
+}

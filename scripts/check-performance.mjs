@@ -4,6 +4,7 @@ import { chromium } from "playwright-core";
 import { withBuiltSite } from "./built-site.mjs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { execFileSync } from "node:child_process";
 
 export async function waitForReadingReady() {
 	await document.fonts.ready;
@@ -31,6 +32,18 @@ assert.ok(Number.isInteger(samples) && samples >= 1 && samples <= 5);
 const routes = ["/", "/STA/", "/Summer-camp/"];
 const median = values => values.sort((a,b) => a-b)[Math.floor(values.length / 2)];
 const baselinePath = "scripts/performance-baseline.json";
+export function performanceBudgetAdvisories(rows, baseline) {
+	const advisories=[];
+	for (const row of rows.filter(row => row.cache === "cold")) {
+		const prior = baseline.rows.find(item => item.route === row.route && item.cache === row.cache);
+		assert.ok(prior, `Missing baseline: ${row.route}`);
+		for (const key of ["decodedBytes", "scriptBytes", "fontBytes", "imageBytes"]) assert.ok(row[key] <= prior[key] * 1.25 + 16384, `${row.route} ${key}: ${row[key]} exceeds baseline ${prior[key]} by >25% +16KiB`);
+		assert.ok(row.requests <= prior.requests * 1.25 + 3, `${row.route}: request count regression`);
+		assert.ok(row.cls <= Math.max(.1, prior.cls + .03), `${row.route}: layout shift regression ${row.cls}`);
+		if (row.readyMs > prior.readyMs * 2 + 1000 || row.lcpMs > prior.lcpMs * 2 + 1000) advisories.push(`Timing advisory ${row.route}: compare several runs; CI speed is not a field performance measurement.`);
+	}
+	return advisories;
+}
 async function measure(base) {
 	const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 	const rows = [];
@@ -81,22 +94,17 @@ async function measure(base) {
 			}
 		}
 	} finally { await browser.close(); }
-	const report = { schema: 1, measuredAt: new Date().toISOString(), environment: { viewport: "1440x1000", samples, cpuSlowdown: 2, latencyMs: 40, megabitsPerSecond: 10, thirdParty: "blocked", duration: "fonts and visible images ready + 2s" }, rows };
+	const report = { schema: 1, sourceCommit: process.env.GITHUB_SHA || execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),
+		sourceRun: process.env.GITHUB_RUN_ID ? `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}` : undefined,
+		measuredAt: new Date().toISOString(), environment: { viewport: "1440x1000", samples, cpuSlowdown: 2, latencyMs: 40, megabitsPerSecond: 10, thirdParty: "HTTPS blocked", reducedMotion: true, build: "Astro and Pagefind; full local WOFF2", duration: "fonts and visible images ready + 2s" }, rows };
 	if (option("report")) await writeFile(option("report"), JSON.stringify(report, null, 2) + "\n");
 	if (args.includes("--record")) {
 		assert.ok(samples >= 3, "Record at least 3 samples; never replace a baseline with one noisy run");
-		await writeFile(baselinePath, JSON.stringify(report, null, 2) + "\n");
+		await writeFile(baselinePath, JSON.stringify({...report,rows:rows.map(({largest,...row})=>row)}, null, 2) + "\n");
 		console.log("Recorded performance baseline; review its diff before committing.");
 	} else if (!args.includes("--no-budget")) {
 		const baseline = JSON.parse(await readFile(baselinePath, "utf8"));
-		for (const row of rows.filter(row => row.cache === "cold")) {
-			const prior = baseline.rows.find(item => item.route === row.route && item.cache === row.cache);
-			assert.ok(prior, `Missing baseline: ${row.route}`);
-			for (const key of ["decodedBytes", "scriptBytes", "fontBytes", "imageBytes"]) assert.ok(row[key] <= prior[key] * 1.25 + 16384, `${row.route} ${key}: ${row[key]} exceeds baseline ${prior[key]} by >25% +16KiB`);
-			assert.ok(row.requests <= prior.requests * 1.25 + 3, `${row.route}: request count regression`);
-			assert.ok(row.cls <= Math.max(.1, prior.cls + .03), `${row.route}: layout shift regression ${row.cls}`);
-			if (row.readyMs > prior.readyMs * 2 + 1000 || row.lcpMs > prior.lcpMs * 2 + 1000) console.warn(`Timing advisory ${row.route}: compare several runs; CI speed is not a field performance measurement.`);
-		}
+		for(const advisory of performanceBudgetAdvisories(rows,baseline))console.warn(advisory);
 		console.log("PASS performance budgets: first-party decoded bytes, requests and layout stability");
 	}
 	return report;

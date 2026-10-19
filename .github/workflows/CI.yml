@@ -100,9 +100,10 @@ jobs:
           PLAYWRIGHT_CHANNEL: chromium
         run: |
           node scripts/test-performance.mjs
-          node scripts/check-performance.mjs --no-budget --report=.git/performance-report.json
+          node scripts/check-performance.mjs --report=.git/performance-report.json
 
       - name: Save desktop performance measurements
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: desktop-performance
