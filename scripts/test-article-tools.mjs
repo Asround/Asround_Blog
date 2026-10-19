@@ -3,7 +3,7 @@ import { chromium } from "playwright-core";
 import { parse } from "node-html-parser";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { rm } from "node:fs/promises";
+import { rm, stat } from "node:fs/promises";
 
 const args = process.argv.slice(2);
 const base = args.find(arg => !arg.startsWith("--")) || "http://localhost:4321";
@@ -134,17 +134,25 @@ try {
 		for (const slug of ["STA", "Summer-camp"]) {
 			await page.goto(`${base}/${slug}/`);
 			await page.getByRole("button", { name: "打印 / PDF", exact: true }).waitFor();
+			const screenSources = await page.locator(".markdown-content img").evaluateAll(images => images.map(img => [img.getAttribute("src"), img.getAttribute("srcset")]));
 			await page.evaluate(() => {
-				window.print = () => { window.testPrinted = true; window.dispatchEvent(new Event("beforeprint")); window.dispatchEvent(new Event("afterprint")); };
+				window.print = () => {
+					window.testPrinted = true; window.dispatchEvent(new Event("beforeprint"));
+					window.testPrintSources = [...document.querySelectorAll('.markdown-content img[data-print-src], #post-cover img[data-print-src]')].map(img => img.getAttribute("src") === img.dataset.printSrc && !img.hasAttribute("srcset"));
+					window.dispatchEvent(new Event("afterprint"));
+				};
 				const detail = document.createElement("details");
 				detail.dataset.testPrint = ""; detail.innerHTML = "<summary>Print test</summary><p>Expanded print content</p>";
 				document.querySelector(".markdown-content").append(detail);
 			});
 			await page.getByRole("button", { name: "打印 / PDF", exact: true }).click();
 			await page.waitForFunction(() => window.testPrinted);
+			assert.ok((await page.evaluate(() => window.testPrintSources)).every(Boolean));
+			assert.deepEqual(await page.locator(".markdown-content img").evaluateAll(images => images.map(img => [img.getAttribute("src"), img.getAttribute("srcset")])), screenSources, "Restore responsive reading sources after print");
 			assert.equal(await page.locator("[data-test-print]").getAttribute("open"), null, "Restore screen disclosure state after printing");
 			await page.locator("[data-test-print]").evaluate(el => el.remove());
 			await page.emulateMedia({ media: "print" });
+			assert.equal(await page.locator(".print-duplicate-title").first().isVisible(), false);
 			assert.equal(await page.locator("#sidebar").isVisible(), false);
 			assert.equal(await page.locator("#share-component").isVisible(), false);
 			assert.equal(await page.locator(".chapter-copy").first().isVisible(), false);
@@ -159,11 +167,29 @@ try {
 			assert.ok(box.width > 1200 && box.x < 20, "Article uses printable page width rather than sidebar grid");
 			const file = path.join(tmpdir(), `asround-print-${slug}.pdf`);
 			printFiles.push(file);
+			await page.evaluate(async () => {
+				window.dispatchEvent(new Event("beforeprint"));
+				await Promise.all([...document.querySelectorAll('.markdown-content img, #post-cover img')].map(img => img.decode()));
+			});
 			await page.pdf({ path: file, preferCSSPageSize: true, printBackground: false });
-			console.log("PDF QA", file);
+			const bytes = (await stat(file)).size;
+			assert.ok(bytes < 50 * 1024 * 1024, `${slug} PDF exceeds 50 MiB: ${bytes}`);
+			console.log("PDF QA", slug, bytes, "bytes");
 			await page.emulateMedia({ media: "screen" });
+			assert.ok(await page.locator(".print-duplicate-title").first().isVisible(), "Screen title remains unchanged");
 			assert.ok(await page.locator("#share-component").isVisible());
 		}
+		await page.goto(`${base}/STA/`);
+		const first = page.locator(".markdown-content img[data-print-src]").first();
+		const printSrc = new URL(await first.getAttribute("data-print-src"), base).href;
+		const originalSource = await first.getAttribute("src");
+		await page.route(printSrc, route => route.abort());
+		await page.evaluate(() => { window.testPrinted = false; window.print = () => { window.testPrinted = true; }; });
+		await page.getByRole("button", { name: "打印 / PDF", exact: true }).click();
+		await page.getByRole("status").filter({ hasText: "部分图片尚未就绪" }).waitFor();
+		assert.equal(await page.evaluate(() => window.testPrinted), false, "Failed print images do not silently create an incomplete PDF");
+		assert.equal(await first.getAttribute("src"), originalSource);
+		await page.unroute(printSrc);
 	});
 	await test("chapters", async () => {
 		await page.goto(`${base}/STA/`);

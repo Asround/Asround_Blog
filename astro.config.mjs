@@ -28,6 +28,7 @@ import { remarkMermaid } from "./src/plugins/remark-mermaid.js";
 import { remarkContent } from "./src/plugins/remark-content.mjs";
 import { rehypeImageWidth } from "./src/plugins/rehype-image-width.mjs";
 import { rehypeArticleImages } from "./src/plugins/rehype-article-images.mjs";
+import { rehypePrintTitle } from "./src/plugins/rehype-print-title.mjs";
 
 // https://astro.build/config
 export default defineConfig({
@@ -127,6 +128,7 @@ export default defineConfig({
 			rehypeMermaid,
 			rehypeImageWidth,
 			rehypeArticleImages,
+			rehypePrintTitle,
 			[
 				rehypeComponents,
 				{

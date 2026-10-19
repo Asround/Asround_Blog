@@ -41,6 +41,7 @@
     text-shadow: none !important;
   }
   #post-container .onload-animation { transform: none !important; }
+  #post-container .print-duplicate-title { display: none !important; }
   #post-container :is(#share-component, .license-container, [data-reading-resume], .anchor, .chapter-copy, button) {
     display: none !important;
   }

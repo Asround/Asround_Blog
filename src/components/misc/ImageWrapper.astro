@@ -62,7 +62,7 @@ const referrerPolicy = !isLocal && isBilibiliImage ? "no-referrer" : undefined;
 ---
 <div id={id} data-image-recovery={Astro.props.recovery ? "" : undefined} class:list={[className, 'overflow-hidden relative']}>
     <div class="transition absolute inset-0 dark:bg-black/10 bg-opacity-50 pointer-events-none"></div>
-    {isLocal && img && <Image src={img} data-original-src={img.src} width={outputWidth} alt={alt || ""} class={imageClass} style={imageStyle} loading={loading} decoding="async" fetchpriority={fetchpriority}/>}
+    {isLocal && img && <Image src={img} data-original-src={img.src} data-print-image={id === "post-cover" ? "true" : undefined} width={outputWidth} alt={alt || ""} class={imageClass} style={imageStyle} loading={loading} decoding="async" fetchpriority={fetchpriority}/>}
     {!isLocal && <img src={isPublic ? url(src) : src} alt={alt || ""} width={publicSize.width} height={publicSize.height} class={imageClass} style={imageStyle} loading={loading} decoding="async" fetchpriority={fetchpriority} referrerpolicy={referrerPolicy} crossorigin={isBilibiliImage ? "anonymous" : undefined}/>}
 </div>
 <script>import "../../scripts/image-recovery";</script>
