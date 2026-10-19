@@ -1,9 +1,12 @@
 # Asround's Blog
-<img align='right' src='logo.png' width='200px' alt="Mizuki logo">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./logo-dark.png">
+  <img align="right" src="./logo.png" width="200" alt="Asround logo">
+</picture>
 
 基于 [Mizuki](https://github.com/matsuzaka-yuki/mizuki) 模板搭建的个人博客项目, 通过亚马逊 Cloudflare Pages 服务搭建网站. 可通过 [https://asround-blog.pages.dev](https://asround-blog.pages.dev) 访问.
 
-![Mizuki Preview](./README.webp)
+![Asround 博客预览](./README.webp)
 
 ## 📄 许可证
 

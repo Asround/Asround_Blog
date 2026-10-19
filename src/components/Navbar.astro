@@ -64,7 +64,12 @@ const mobileLinks = links.filter((link) =>
 				{/* 使用navbarTitle配置或默认配置 */}
                 {siteConfig.navbarTitle ? (
                     siteConfig.navbarTitle.mode === "logo" ? (
-                        <img src={url(siteConfig.navbarTitle.logo || "/assets/home/default-logo.png")} alt={siteConfig.navbarTitle.text} class="h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-300" loading="lazy" />
+                        <>
+                            <img src={url(siteConfig.navbarTitle.logo || "/assets/home/default-logo.png")} alt="" width="843" height="189" class:list={["navbar-logo h-8 w-auto max-w-full object-contain", siteConfig.navbarTitle.logoDark && "dark:hidden"]} loading="eager" />
+                            {siteConfig.navbarTitle.logoDark && (
+                                <img src={url(siteConfig.navbarTitle.logoDark)} alt="" width="843" height="189" class="navbar-logo hidden dark:block h-8 w-auto max-w-full object-contain" loading="eager" />
+                            )}
+                        </>
                     ) : (
                         <>
                             <img src={url(siteConfig.navbarTitle.icon || "/assets/home/home.png")} alt={siteConfig.navbarTitle.text} class="h-[1.75rem] w-[1.75rem] mr-2 object-contain" loading="lazy" />

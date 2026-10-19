@@ -97,13 +97,14 @@ export const siteConfig: SiteConfig = {
 	// 顶栏标题配置
 	navbarTitle: {
 		// 显示模式："text-icon" 显示图标+文本，"logo" 仅显示Logo
-		mode: "text-icon",
+		mode: "logo",
 		// 顶栏标题文本
 		text: "Asround",
 		// 顶栏标题图标路径，默认使用 public/assets/home/home.png
 		icon: "assets/home/home.svg",
-		// 网站Logo图片路径
-		logo: "assets/home/default-logo.png",
+		// 网站 Logo 的明暗版本；切换主题时仅切换图片显示。
+		logo: "assets/home/default-logo.svg",
+		logoDark: "assets/home/default-logo-dark.svg",
 	},
 
 	// 页面自动缩放配置

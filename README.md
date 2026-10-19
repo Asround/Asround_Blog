@@ -1,9 +1,12 @@
 # Asround's Blog
-<img align='right' src='logo.png' width='200px' alt="Mizuki logo">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./logo-dark.png">
+  <img align="right" src="./logo.png" width="200" alt="Asround logo">
+</picture>
 
 A personal blog project based on [Mizuki](https://github.com/matsuzaka-yuki/mizuki)  template, using Amazon Cloudflare Pages service to build a website. Access the website [here](https://asround-blog.pages.dev/).
 
-![Mizuki Preview](./README.webp)
+![Asround Blog Preview](./README.webp)
 
 ## 📄 License
 
