@@ -78,3 +78,15 @@ jobs:
 
       - name: Verify every emitted article and feed image
         run: node scripts/check-image-integrity.mjs --built=dist
+
+      - name: Generate the production search index
+        run: pnpm exec pagefind --site dist
+
+      - name: Install Chromium for production checks
+        run: pnpm exec playwright-core install --with-deps chromium
+
+      - name: Check the generated production search and article navigation
+        timeout-minutes: 5
+        env:
+          PLAYWRIGHT_CHANNEL: chromium
+        run: node scripts/test-production-search.mjs
