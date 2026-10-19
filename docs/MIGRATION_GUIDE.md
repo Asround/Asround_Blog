@@ -1,5 +1,30 @@
 # Mizuki 内容迁移指南
 
+## 本博客：从外部目录导入一篇文章
+
+本节用于 Asround_blog 的日常文章导入。下面原有“代码内容分离”步骤用于另一种仓库组织方式，日常导入无需执行。
+
+1. 先准备带有效 frontmatter 的最终 Markdown 稿。标题、日期、分类、标签、简介等先确定；已有文章迁移还需保持正式地址或通过 commentId 保留原评论标识。正文图片使用 Markdown 语法，附件先确定可发布地址。
+2. 生成只读计划，不复制、不改名、不写入文章：
+
+   ```powershell
+   pnpm check:migration --source="E:/Notes/draft.md" --target=src/content/posts/2026-10-19_example/index.md --report=.git/article-import.json
+   ```
+
+   计划列出原稿哈希、每张被引用图片的新旧路径及哈希、有序引用、正式地址、评论标识，以及需要保护的全部既有文章文件。封面在 Markdown 同级，正文图片归入 index.assets；默认名称优先根据图片说明提出命名，已有有意义的安全名称保留，重名追加序号。可以用 `--map=.git/image-map.json` 指定 `{ "原引用": "index.assets/新名称.png" }`。名称建议仍需执行迁移的人员核对语义。外部图片只核对 URL；如需确保图片内容长期稳定，应先纳入本地资源再生成计划。
+3. 审阅计划后，按计划复制图片、更新 Markdown 引用。工具本身不执行这一步，也不创建任何目录。路径或评论标识冲突、同名目标图片内容不同、相对附件未确定发布位置时阻止计划；已存在的目标文章需要显式 `--allow-existing`，该选项不会允许评论串发生变化。
+4. 迁移完成后验证：
+
+   ```powershell
+   pnpm check:migration --verify=.git/article-import.json
+   pnpm check:local
+   pnpm check:links --base=http://localhost:4321
+   node scripts/check-image-integrity.mjs http://localhost:4321
+   ```
+
+   核验元数据、正文语法树、公式与代码、图片说明和宽度、图片引用数量及顺序、图片原始字节，并确认其他文章及资源没有变化、既有 URL 和评论标识未变。只允许计划声明的图片路径变化，不靠图片数量或 HTTP 200 判断迁移成功。CI 再验证最终发布产物中的图片、链接与全文搜索。
+5. 所有检查通过并提交后，删除 `.git/article-import.json` 等本次临时计划；保留 Git 提交和必要的简短说明。中断时从已有计划继续，工具拒绝覆盖已有报告，防止丢失迁移前证据。
+
 本指南将帮助你将现有的 Mizuki 博客从单仓库模式迁移到代码内容分离模式。
 
 > 💡 **提示**: 如果是新项目,建议先阅读 [内容分离完整指南](./CONTENT_SEPARATION.md)

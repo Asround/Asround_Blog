@@ -29,6 +29,7 @@ const { postSchema } = await importTS(schemaSource.replace(
 	/(["'])astro\/zod\1/g, JSON.stringify(import.meta.resolve("astro/zod")),
 ));
 const { getCommentTerm } = await importTS(await readFile(new URL("../src/utils/comment-utils.ts", import.meta.url), "utf8"));
+export const commentTermForArticle = article => getCommentTerm(article.url, article.data.commentId);
 
 export async function readPermalinkConfig(root = projectRoot) {
 	const source = await readFile(path.join(root, "src/config.ts"), "utf8");

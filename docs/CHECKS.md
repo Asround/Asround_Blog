@@ -22,6 +22,8 @@ pnpm check:local
 | `pnpm test:production-search` | 只读启动已有 dist，验证真实 Pagefind 全文搜索、正式链接及正文命中导航；不自动构建 |
 | `pnpm check:performance` | 对已有 dist 测量首页、STA、夏令营的桌面冷／热缓存加载并与基线比较；不自动构建 |
 | `pnpm check:links` | 检查已有 dist 中正文链接的目标、章节锚点和附件，站内错误会阻止 CI |
+| `pnpm check:migration --source=... --target=... --report=.git/article-import.json` | 生成单篇迁移前的路径、图片身份、内容与评论标识计划；不复制或改写原稿 |
+| `pnpm check:migration --verify=.git/article-import.json` | 对照迁移前计划核验目标文章，保护其他文章和资源；用法见 MIGRATION_GUIDE.md |
 | `pnpm check:links --base=http://localhost:4321` | 对当前开发服务检查全部文章及旧入口，无需构建 |
 | `node --use-env-proxy scripts/check-links.mjs --external-only --report=.git/external-links.json` | 对源文章中的外链、外部图片及资源卡片生成只读报告，不因外部网络不确定而阻止提交 |
 | `pnpm test:frontend http://localhost:4322` | 检查指定地址的本地服务 |
