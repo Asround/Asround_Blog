@@ -158,11 +158,11 @@ Remove-Item -LiteralPath @(
 
 本轮六项按顺序实施、检查并独立提交，可按对应 Git 提交回滚。没有创建目录，没有执行本地网站构建。
 
-执行基线：`47d78ab`；图片重命名基线：`95570b6`。38 项单元测试通过，Astro 为 0 错误、0 警告，仅保留原有剪贴板弃用提示。图片迁移逐项比对 133 个源文件哈希及 113 处有序引用；页面与订阅全量核验覆盖 35 个文章入口、226 处页面图片引用、198 处订阅图片引用和 776 个去重资源，全部成功解码。临时映射及迁移脚本验收后删除，Git 保留重命名记录；长期维护 `scripts/check-image-integrity.mjs`。
+执行基线：`47d78ab`；图片重命名基线：`95570b6`。39 项单元测试通过，Astro 为 0 错误、0 警告，仅保留原有剪贴板弃用提示。图片迁移逐项比对 133 个源文件哈希及 113 处有序引用；页面与订阅全量核验覆盖 35 个文章入口、226 处页面图片引用、198 处订阅图片引用和 776 个去重资源，全部成功解码。临时映射及迁移脚本验收后删除，Git 保留重命名记录；长期维护 `scripts/check-image-integrity.mjs`。
 
 正文搜索定位：顶栏与归档结果共用 `highlight`、`highlightCase` 参数，保留原参数及章节锚点。文章底部显示命中导航，可关闭高亮并清理参数；正文无命中时提示可能匹配标题或标签。公式及交互控件不改写，查询内容按纯文本处理，切页清理标记与计时器。`frontendConfig.search.highlightMatches` 同时控制此功能；回归 `pnpm test:article-tools --only=search`。示例：`http://localhost:4321/STA/?highlight=setup&highlightCase=1`。
 
-正文图片：`rehype-article-images.mjs` 为本地静态 PNG／JPEG／WebP 设置 480–2560px 候选及 1280px 默认输出，不放大源图；PNG 无损编码，JPEG 使用 WebP 82，已有 WebP 使用保守的 95 质量。SVG、动图及外链不改写。`article-image-service.mjs` 保留原图到 `data-original-src` 和灯箱 `data-src`，阅读缩图和点击放大彼此独立，源文件不变。参数集中在插件中；撤销该插件注册可关闭正文多尺寸输出。回归 `pnpm test:article-tools --only=responsive`，图片重试及加载占位检查继续覆盖 srcset。
+正文图片：`rehype-article-images.mjs` 为本地静态 PNG／JPEG／WebP 设置 480–2560px 候选及 1280px 默认输出，不放大源图；PNG 无损编码，JPEG 使用 WebP 82，已有 WebP 使用保守的 95 质量。SVG、动图及外链不改写。`article-image-service.mjs` 通过原样输出转换注册原图，逐字节保留源文件，并使用独立缓存键；不能直接引用导入元数据的 src，否则 Astro 可能在生产构建中清理原图。原图地址写入 `data-original-src` 和灯箱 `data-src`，阅读缩图和点击放大彼此独立，源文件不变。参数集中在插件中；撤销该插件注册可关闭正文多尺寸输出。回归 `pnpm test:article-tools --only=responsive`，图片重试及加载占位检查继续覆盖 srcset。
 
 海报文本：`src/utils/poster-text.ts` 按英文单词和 Unicode 字素换行，只有超出整行宽度的单词才拆分；标题最多 12 行、简介 6 行、作者 2 行，超出显示省略号。作者宽度避让二维码，不修改原海报字体及配色。`--only=poster` 用真实组件验证普通及极长文本的每次画布绘制均在边界内，并检查 hold 保持完整。
 
