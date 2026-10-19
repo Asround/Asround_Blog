@@ -2,6 +2,27 @@ import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import { chromium } from "playwright-core";
 import { withBuiltSite } from "./built-site.mjs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+export async function waitForReadingReady() {
+	await document.fonts.ready;
+	window.lab.textReady = performance.now();
+	const images=[...document.images].filter(image=>{
+		const src=image.currentSrc||image.getAttribute("src"), box=image.getBoundingClientRect();
+		if(!src || new URL(src,location.href).origin!==location.origin || box.width<=0 || box.height<=0 || box.top>=innerHeight || box.bottom<=0)return false;
+		for(let parent=image;parent;parent=parent.parentElement){const style=getComputedStyle(parent);if(style.display==="none"||style.visibility==="hidden"||Number(style.opacity)===0)return false;}
+		return true;
+	});
+	let timer;
+	try {
+		await Promise.race([
+			Promise.all(images.map(async image=>{try{await image.decode();}catch{throw new Error(`Visible first-party image failed: ${image.currentSrc||image.src}`);}})),
+			new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("Visible images not ready after 45s")),45000);}),
+		]);
+		window.lab.ready=performance.now();
+	} finally {clearTimeout(timer);}
+}
 
 const args = process.argv.slice(2);
 const option = (name, fallback) => args.find(arg => arg.startsWith(`--${name}=`))?.slice(name.length + 3) || fallback;
@@ -35,15 +56,7 @@ async function measure(base) {
 					for (const cache of ["cold", "warm"]) {
 						if (cache === "cold") await page.goto(base + route, { waitUntil: "domcontentloaded" }); else await page.reload({ waitUntil: "domcontentloaded" });
 						await page.locator("#swup-container").waitFor({ state: "visible" });
-						await page.evaluate(async () => {
-							await document.fonts.ready;
-							window.lab.textReady = performance.now();
-							await Promise.race([
-								Promise.all([...document.images].filter(image => { const box = image.getBoundingClientRect(); const style = getComputedStyle(image); return new URL(image.currentSrc || image.src, location.href).origin === location.origin && style.visibility !== "hidden" && style.display !== "none" && box.width > 0 && box.height > 0 && box.top < innerHeight && box.bottom > 0; }).map(async image => { try { await image.decode(); } catch { throw new Error(`Visible first-party image failed: ${image.currentSrc || image.src}`); } })),
-								new Promise((_, reject) => setTimeout(() => reject(new Error("Visible images not ready after 45s")), 45000)),
-							]);
-							window.lab.ready = performance.now();
-						});
+						await page.evaluate(waitForReadingReady);
 						await page.waitForTimeout(2000);
 						runs[cache].push(await page.evaluate(() => {
 							const navigation = performance.getEntriesByType("navigation")[0];
@@ -88,6 +101,8 @@ async function measure(base) {
 	}
 	return report;
 }
-const base = option("base");
-if (base) assert.ok(["localhost", "127.0.0.1"].includes(new URL(base).hostname) && new URL(base).protocol === "http:", "Performance lab requires an HTTP loopback server");
-if (base) await measure(base); else await withBuiltSite(measure, option("site", "dist"));
+if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){
+	const base = option("base");
+	if (base) assert.ok(["localhost", "127.0.0.1"].includes(new URL(base).hostname) && new URL(base).protocol === "http:", "Performance lab requires an HTTP loopback server");
+	if (base) await measure(base); else await withBuiltSite(measure, option("site", "dist"));
+}
