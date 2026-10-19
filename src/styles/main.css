@@ -16,7 +16,8 @@
   font-family: "TikTokSans-VariableFont_opsz,slnt,wdth,wght";
   src: url("/assets/font/TikTokSans-VariableFont_opsz,slnt,wdth,wght.woff2") format("woff2"),
        url("/assets/font/TikTokSans-VariableFont_opsz,slnt,wdth,wght.ttf") format("truetype");
-  font-weight: 100 900;
+  font-weight: 300 900;
+  unicode-range: U+0000-007F;
   font-display: swap;
 }
 

@@ -15,7 +15,8 @@
 		"check:local": "pnpm check:content && pnpm check:comments && pnpm test && pnpm check",
 		"test:content": "node --test scripts/test-content.mjs",
 		"test:feed": "node --test scripts/test-feed.mjs",
-		"test": "node --test scripts/test-content.mjs scripts/test-feed.mjs scripts/test-comments.mjs",
+		"test": "node --test scripts/test-content.mjs scripts/test-feed.mjs scripts/test-comments.mjs scripts/test-font-processing.mjs",
+		"test:fonts": "node --test scripts/test-font-processing.mjs",
 		"test:comments:browser": "node scripts/test-comments-browser.mjs",
 		"test:comments:theme": "node scripts/test-comments-theme.mjs",
 		"test:comments:site": "node scripts/test-comments-site.mjs",
@@ -38,7 +39,7 @@
 		"lint": "eslint ./src --fix",
 		"preinstall": "npx only-allow pnpm",
 		"compress-fonts": "node scripts/compress-fonts.js",
-		"test-font-compression": "node scripts/test-font-compression.js"
+		"test-font-compression": "node --test scripts/test-font-processing.mjs"
 	},
 	"dependencies": {
 		"@astrojs/check": "^0.9.6",

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import Fontmin from "fontmin";
+import { isVariableFont, webFontJob } from "./font-processing.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1041,20 +1041,9 @@ async function compressFonts() {
 					// TTF/OTF 需要压缩为 woff2
 					console.log(`Compressing ${fontFile}...`);
 
-					const fontmin = new Fontmin()
-						.src(fontSrc)
-						.use(
-							Fontmin.glyph({
-								text: text,
-								hinting: false,
-							}),
-						)
-						.use(
-							Fontmin.ttf2woff2({
-								deflate: true,
-							}),
-						)
-						.dest(distFontDir);
+					const bytes = fs.readFileSync(fontSrc);
+					if (isVariableFont(bytes)) console.log("Preserving all variable-font glyphs and axes");
+					const fontmin = webFontJob(fontSrc, bytes, text).dest(distFontDir);
 
 					await new Promise((resolve, reject) => {
 						fontmin.run((err, files) => {

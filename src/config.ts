@@ -256,10 +256,10 @@ export const siteConfig: SiteConfig = {
 	// 字体配置
 	font: {
 		// 注意：自定义字体需要在 src/styles/main.css 中引入字体文件
-		// 注意：字体子集优化功能目前仅支持 TTF 格式字体,开启后需要在生产环境才能看到效果,在Dev环境下显示的是浏览器默认字体!
+		// 开发预览使用完整 WOFF2；构建时仅对静态字体做子集化，可变字体保留全部字形和变化轴。
 		asciiFont: {
 			// 英文字体 - 优先级最高
-			// 指定为英文字体则无论字体包含多大范围，都只会保留 ASCII 字符子集
+			// 英文字体通过 CSS 限定 ASCII 范围；可变字体保留完整文件，避免丢失字重变化。
 			fontFamily: "TikTokSans-VariableFont_opsz,slnt,wdth,wght",
 			fontWeight: "400",
 			localFonts: ["TikTokSans-VariableFont_opsz,slnt,wdth,wght.ttf"],

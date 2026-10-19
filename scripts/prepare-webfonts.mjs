@@ -2,7 +2,7 @@ import { readFile, writeFile, stat } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import ts from "typescript";
-import Fontmin from "fontmin";
+import { isVariableFont, webFontJob } from "./font-processing.mjs";
 import { importTS } from "./check-content.mjs";
 
 // Rebuild full web fonts without building the site or changing the original TTF.
@@ -17,15 +17,15 @@ for (const name of new Set(Object.values(settings).flatMap(font => font.localFon
 	if (!/\.ttf$/i.test(name)) continue;
 	if (path.basename(name) !== name) throw new Error("Font must be in public/assets/font");
 	const input = path.join("public/assets/font", name);
-	let job = new Fontmin().src(input);
-	if (!name.includes("VariableFont")) {
+	const bytes = await readFile(input);
+	let text = "";
+	if (!isVariableFont(bytes)) {
 		// Rewriting cmap also repairs duplicate private-use ranges in the original
 		// CJK font, which Chromium rejects. Keep every mapped Unicode character.
-		const data = new TTFReader().read(toArrayBuffer(await readFile(input)));
-		const text = Object.keys(data.cmap).map(Number).filter(code => code > 0).map(code => String.fromCodePoint(code)).join("");
-		job = job.use(Fontmin.glyph({ text, hinting: false }));
+		const data = new TTFReader().read(toArrayBuffer(bytes));
+		text = Object.keys(data.cmap).map(Number).filter(code => code > 0).map(code => String.fromCodePoint(code)).join("");
 	}
-	const files = await new Promise((resolve, reject) => job.use(Fontmin.ttf2woff2()).run((error, files) => error ? reject(error) : resolve(files)));
+	const files = await new Promise((resolve, reject) => webFontJob(input, bytes, text).run((error, files) => error ? reject(error) : resolve(files)));
 	const result = files.find(file => file.path.endsWith(".woff2"));
 	if (!result) throw new Error(`Failed to convert ${name}`);
 	const output = input.replace(/\.ttf$/i, ".woff2");

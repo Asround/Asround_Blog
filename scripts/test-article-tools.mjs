@@ -186,6 +186,16 @@ try {
 	await test("loading", async () => {
 		await page.goto(`${base}/STA/`);
 		await page.evaluate(() => document.fonts.ready);
+		const weights = await page.evaluate(async () => {
+			const family = '"TikTokSans-VariableFont_opsz,slnt,wdth,wght"';
+			await document.fonts.load(`700 24px ${family}`);
+			const context = document.createElement("canvas").getContext("2d");
+			context.font = `400 24px ${family}`;
+			const regular = context.measureText("STA setup hold Timing Analysis").width;
+			context.font = `700 24px ${family}`;
+			return { regular, bold: context.measureText("STA setup hold Timing Analysis").width };
+		});
+		assert.ok(Math.abs(weights.bold - weights.regular) > .1, "Production font must render distinct regular and bold instances");
 		const metrics = await page.evaluate(() => ({
 			fonts: performance.getEntriesByType("resource").filter(item => item.name.includes("/assets/font/")).map(item => ({ path: new URL(item.name).pathname, bytes: item.decodedBodySize })),
 			family: getComputedStyle(document.body).fontFamily,
