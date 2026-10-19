@@ -82,6 +82,9 @@ jobs:
       - name: Generate the production search index
         run: pnpm exec pagefind --site dist
 
+      - name: Check published article links, chapter anchors and attachments
+        run: node scripts/check-links.mjs --built=dist
+
       - name: Install Chromium for production checks
         run: pnpm exec playwright-core install --with-deps chromium
 

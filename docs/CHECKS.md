@@ -21,6 +21,9 @@ pnpm check:local
 | `pnpm test:frontend` | 检查本地服务实际输出，需要开发服务已启动 |
 | `pnpm test:production-search` | 只读启动已有 dist，验证真实 Pagefind 全文搜索、正式链接及正文命中导航；不自动构建 |
 | `pnpm check:performance` | 对已有 dist 测量首页、STA、夏令营的桌面冷／热缓存加载并与基线比较；不自动构建 |
+| `pnpm check:links` | 检查已有 dist 中正文链接的目标、章节锚点和附件，站内错误会阻止 CI |
+| `pnpm check:links --base=http://localhost:4321` | 对当前开发服务检查全部文章及旧入口，无需构建 |
+| `node --use-env-proxy scripts/check-links.mjs --external-only --report=.git/external-links.json` | 对源文章中的外链、外部图片及资源卡片生成只读报告，不因外部网络不确定而阻止提交 |
 | `pnpm test:frontend http://localhost:4322` | 检查指定地址的本地服务 |
 | `node scripts/run-browser-checks.mjs http://localhost:4321` | 统一执行评论、阅读、归档、目录、分享、正文搜索、图片与打印的浏览器检查 |
 | `node scripts/check-image-integrity.mjs http://localhost:4321` | 全量核对文章与旧入口的源图哈希、srcset、打印图片、实际浏览器解码及 RSS／Atom 图片身份 |
@@ -43,7 +46,7 @@ pnpm check:local
 
 以下问题仅提供整理建议，默认退出码仍为 0：旧图片目录、封面不在文章同级、缺少简介、标题跳级、更新日期早于发布日期、相对附件链接需要确认发布地址。不会因为旧目录的命名不同就自动搬动资源或判定文章不可用。
 
-远程图片和下载链接不发起网络请求；因此不能证明外部网站可用或网盘分享有效。源文件存在也不等于附件已发布，相对附件会另外提醒。文章正文的中英文空格等编辑风格仍由迁移时审阅，检查器不会批量改写原文。
+`check:content` 不对远程图片和下载链接发起网络请求。外链需显式使用上面的 `--external-only`：先 HEAD，遇到不支持或错误状态用 GET 复核，仅读取响应头并取消正文；HTTP 404／410 标为疑似失效，401／403／429 为访问受限，超时、DNS 和服务端错误为待复核，不自动删除或替换文章链接。HTTP 200 只代表地址可访问，不能证明网盘文件或登录后内容有效。源文件存在也不等于附件已发布，相对附件会另外提醒。文章正文的中英文空格等编辑风格仍由迁移时审阅，检查器不会批量改写原文。
 
 ## 实际页面与订阅检查
 
