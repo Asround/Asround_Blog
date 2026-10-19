@@ -4,6 +4,7 @@ export interface Props {
 	speed?: number;
 	deleteSpeed?: number;
 	pauseTime?: number;
+	randomStart?: boolean;
 	class?: string;
 }
 
@@ -12,12 +13,13 @@ const {
 	speed = 100,
 	deleteSpeed = 50,
 	pauseTime = 2000,
+	randomStart = false,
 	class: className = "",
 } = Astro.props;
 const textData = Array.isArray(text) ? JSON.stringify(text) : text;
 ---
 
-<span class={`typewriter ${className}`} data-text={textData} data-speed={speed} data-delete-speed={deleteSpeed} data-pause-time={pauseTime}></span>
+<span class={`typewriter ${className}`} data-text={textData} data-speed={speed} data-delete-speed={deleteSpeed} data-pause-time={pauseTime} data-random-start={randomStart ? "true" : undefined}></span>
 
 <script>
 import { runOnce } from "../utils/page-view";
@@ -48,6 +50,10 @@ class TypewriterEffect {
         this.speed = parseInt(element.dataset.speed || '100');
         this.deleteSpeed = parseInt(element.dataset.deleteSpeed || '50');
         this.pauseTime = parseInt(element.dataset.pauseTime || '2000');
+
+        if (element.dataset.randomStart === 'true' && this.texts.length > 1) {
+            this.currentTextIndex = Math.floor(Math.random() * this.texts.length);
+        }
         
         // 如果有多条文本且未启用打字机效果，随机显示一条
         if (this.texts.length > 1 && !this.isTypewriterEnabled()) {
