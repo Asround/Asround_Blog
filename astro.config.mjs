@@ -112,6 +112,8 @@ export default defineConfig({
 		sitemap(),
 	],
 	markdown: {
+		// Preserve authored ASCII quotes; automatic smart quotes misclassify Chinese-adjacent openings.
+		smartypants: false,
 		remarkPlugins: [
 			remarkMath,
 			remarkContent,

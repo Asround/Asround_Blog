@@ -178,6 +178,8 @@ Remove-Item -LiteralPath @(
 - 修改前记录新旧路径、文件哈希和引用位置；修改后逐项核对身份、顺序与数量，保留标题和宽度，防止同名覆盖、大小写错误及误改示例代码。固定公开图片地址改名需有兼容方案。
 - 对全部文章入口检查源图哈希、阅读 srcset、打印资源和浏览器解码；两个订阅源逐篇比对原文件转换得到的图片哈希。不能仅靠抽查、HTTP 200 或数量相等判断成功。使用 `node scripts/check-image-integrity.mjs http://localhost:4321`；CI 构建后使用 `--built=dist` 检查实际产物。批量重命名后先停开发服务、执行 `astro sync --force` 再重启，清除旧资源映射。
 
+2026-10-19 交互复核：关闭 Markdown 的 SmartyPants 自动标点转换，保留作者输入的英文半角引号；顶栏搜索仅通过点击或 Enter／Space 展开，移出鼠标不折叠，Escape 关闭并返回焦点。文章右侧增加打印入口，与文末按钮及 Ctrl+P 共用等待资源、失败提示和状态恢复流程，图标不因打印状态更新被替换。自动回归分别由 `test:article-tools --only=loading`、`test:reading --only=keyboard` 和 `test:article-tools --only=print` 覆盖。
+
 ## RSS 使用说明
 
 RSS 是供阅读器获取文章更新的订阅文件。项目已有 `@astrojs/rss` 依赖及 `rss.xml.ts` 生成端点，`/rss/` 是介绍与复制订阅地址的页面，真正的订阅源是 `/rss.xml`；另提供 `/atom.xml`。

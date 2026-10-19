@@ -18,6 +18,7 @@ const bottomSpace = musicPlayerConfig.enable ? 104 : 24;
 let isArticle = $state(initialArticle);
 let hasComments = $state(false);
 let hasShare = $state(false);
+let hasPrint = $state(false);
 let ready = $state(false);
 let fontSize = $state(reading.defaultFontSize);
 let isDark = $state(false);
@@ -45,6 +46,7 @@ function toggleTheme(event: MouseEvent) {
 }
 function refreshShare() {
 	hasShare = !!document.querySelector("#share-component [data-share-article][data-share-ready]");
+	hasPrint = !!document.querySelector("#share-component [data-print-article]");
 }
 function shareArticle(event: MouseEvent) {
 	fontOpen = false;
@@ -229,6 +231,11 @@ onMount(() => {
         {#if hasShare}
             <button id="reader-share-button" class="tool-button" title="分享文章" aria-label="分享文章" aria-haspopup="dialog" aria-controls="article-share-dialog" onclick={shareArticle}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" /></svg>
+            </button>
+        {/if}
+        {#if hasPrint}
+            <button id="reader-print-button" class="tool-button" data-print-article title="打印 / PDF" aria-label="打印文章 / PDF" onclick={() => { fontOpen = false; }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 14h12v7H6zM18 12h.01" /></svg>
             </button>
         {/if}
         {#if hasComments}

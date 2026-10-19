@@ -185,6 +185,14 @@ try {
 		assert.equal(await page.locator(".skip-to-content").evaluate(el => el === document.activeElement), true);
 		await page.keyboard.press("Enter");
 		await page.waitForFunction(() => document.activeElement?.id === "swup-container");
+		await page.locator("#search-toggle").hover();
+		await page.waitForTimeout(400);
+		assert.equal(await page.locator("#search-toggle").getAttribute("aria-expanded"), "false", "Hover never opens desktop search");
+		await page.locator("#search-toggle").click();
+		await page.waitForFunction(() => document.activeElement?.id === "search-input-desktop");
+		await page.mouse.move(0, 0);
+		assert.equal(await page.locator("#search-toggle").getAttribute("aria-expanded"), "true", "Moving away keeps the clicked search field open");
+		await page.keyboard.press("Escape");
 		for (const key of ["Enter", "Space"]) {
 			await page.locator("#search-toggle").focus();
 			await page.keyboard.press(key);

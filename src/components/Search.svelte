@@ -36,8 +36,6 @@ let pagefindLoaded = $state(false);
 let initialized = $state(false);
 let isDesktopSearchExpanded = $state(false);
 let debounceTimer: NodeJS.Timeout;
-let windowJustFocused = false;
-let focusTimer: NodeJS.Timeout;
 let blurTimer: NodeJS.Timeout;
 
 function parseExcerpt(value: string): HTMLElement {
@@ -98,20 +96,11 @@ const togglePanel = () => {
 	}
 };
 
-const openDesktopSearch = async (fromHover = false) => {
-	// 如果窗口刚获得焦点，不自动展开搜索框
-	if (fromHover && windowJustFocused) {
-		return;
-	}
+const openDesktopSearch = async () => {
+	clearTimeout(blurTimer);
 	isDesktopSearchExpanded = true;
 	await tick();
 	if (isDesktopSearchExpanded) document.getElementById("search-input-desktop")?.focus();
-};
-
-const collapseDesktopSearch = () => {
-	if (!keywordDesktop) {
-		isDesktopSearchExpanded = false;
-	}
 };
 
 const handleBlur = (event: FocusEvent) => {
@@ -242,16 +231,6 @@ onMount(() => {
 		initializeTimer = setTimeout(initializeSearch, 2000);
 	}
 
-	// 监听窗口焦点事件，防止切换窗口时自动展开搜索框
-	const handleFocus = () => {
-		windowJustFocused = true;
-		clearTimeout(focusTimer);
-		focusTimer = setTimeout(() => {
-			windowJustFocused = false;
-		}, 500); // 500ms 后才允许 mouseenter 触发展开
-	};
-
-	window.addEventListener("focus", handleFocus);
 	const handleEscape = (event: KeyboardEvent) => {
 		if (event.key !== "Escape" || !document.getElementById("search-container")?.contains(document.activeElement)) return;
 		event.preventDefault();
@@ -265,7 +244,6 @@ onMount(() => {
 	return () => {
 		document.removeEventListener("keydown", handleEscape, true);
 		panelObserver.disconnect();
-		window.removeEventListener("focus", handleFocus);
 		document.removeEventListener("pagefindready", handleReady);
 		document.removeEventListener("pagefindloaderror", handleLoadError);
 		clearTimeout(initializeTimer);
@@ -309,7 +287,6 @@ onDestroy(() => {
 		navbar?.classList.remove("is-searching");
 	}
 	clearTimeout(debounceTimer);
-	clearTimeout(focusTimer);
 	clearTimeout(blurTimer);
 	searchVersion++;
 });
@@ -324,8 +301,6 @@ onDestroy(() => {
             {isDesktopSearchExpanded ? 'w-48' : 'w-11'}"
         role="group"
         aria-label="文章搜索"
-        onmouseenter={() => {if (!isDesktopSearchExpanded) openDesktopSearch(true)}}
-        onmouseleave={collapseDesktopSearch}
     >
         <button id="search-toggle" type="button" aria-label="搜索文章" aria-expanded={isDesktopSearchExpanded}
             aria-controls="search-panel" onclick={() => openDesktopSearch()}

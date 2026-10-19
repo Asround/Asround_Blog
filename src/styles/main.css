@@ -58,6 +58,13 @@ mark.article-search-match { background: #facc1540; color: inherit; border-radius
 mark.article-search-current { background: #facc15; color: #171717; outline: 2px solid #ca8a04; }
 @media print { .article-search-navigation { display: none !important; } mark.article-search-match { background: transparent !important; color: inherit !important; outline: none !important; } }
 #swup-container { scroll-margin-top: 6rem; }
+.article-print-notice {
+  position: fixed; z-index: 65; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: calc(100vw - 2rem); padding: .75rem 1rem;
+  border: 1px solid var(--line-divider); border-radius: .75rem;
+  background: var(--card-bg); color: var(--content-meta); box-shadow: 0 3px 16px #0002;
+}
+@media print { .article-print-notice { display: none !important; } }
 
 #banner-wrapper.banner-paused .parallax use { animation-play-state: paused !important; }
 

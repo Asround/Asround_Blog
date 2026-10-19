@@ -32,7 +32,17 @@ runOnce("article-print", () => {
 		if (!article || busy) return;
 		busy = true;
 		notice?.remove(); notice = undefined;
-		if (button) { button.disabled = true; button.textContent = "准备打印…"; }
+		const label = button && !button.children.length ? button : null;
+		const previousText = label?.textContent;
+		const previousTitle = button?.getAttribute("title");
+		const previousAriaLabel = button?.getAttribute("aria-label");
+		if (button) {
+			button.disabled = true;
+			button.setAttribute("aria-busy", "true");
+			button.setAttribute("aria-label", "准备打印…");
+			button.title = "准备打印…";
+			if (label) label.textContent = "准备打印…";
+		}
 		let timer = 0;
 		try {
 			prepare();
@@ -45,14 +55,22 @@ runOnce("article-print", () => {
 		} catch {
 			if (article.isConnected) {
 				notice = document.createElement("p"); notice.setAttribute("role", "status"); notice.dataset.pagefindIgnore = "";
+				notice.className = "article-print-notice";
 				notice.textContent = "部分图片尚未就绪，请稍后重试打印。";
-				(button || document.querySelector("[data-print-article]"))?.after(notice);
+				document.body.append(notice);
 			}
 		} finally {
 			clearTimeout(timer);
 			restore();
 			busy = false;
-			if (button?.isConnected) { button.disabled = false; button.textContent = "打印 / PDF"; }
+			if (button?.isConnected) {
+				button.disabled = false;
+				button.removeAttribute("aria-busy");
+				for (const [key, value] of [["title", previousTitle], ["aria-label", previousAriaLabel]] as const) {
+					if (value == null) button.removeAttribute(key); else button.setAttribute(key, value);
+				}
+				if (label) label.textContent = previousText || "打印 / PDF";
+			}
 		}
 	};
 	document.addEventListener("click", event => {

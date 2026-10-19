@@ -181,6 +181,12 @@ try {
 			assert.ok((await page.evaluate(() => window.testPrintSources)).every(Boolean));
 			assert.deepEqual(await page.locator(".markdown-content img").evaluateAll(images => images.map(img => [img.getAttribute("src"), img.getAttribute("srcset")])), screenSources, "Restore responsive reading sources after print");
 			assert.equal(await page.locator("[data-test-print]").getAttribute("open"), null, "Restore screen disclosure state after printing");
+			await page.evaluate(() => { window.testPrinted = false; });
+			await page.locator("#reader-print-button").click();
+			await page.waitForFunction(() => window.testPrinted && !document.querySelector('#reader-print-button[aria-busy]'));
+			assert.equal(await page.locator("#reader-print-button svg").count(), 1, "Toolbar printing preserves its icon after completion");
+			assert.equal(await page.locator("#reader-print-button").getAttribute("title"), "打印 / PDF");
+			assert.deepEqual(await page.locator(".markdown-content img").evaluateAll(images => images.map(img => [img.getAttribute("src"), img.getAttribute("srcset")])), screenSources, "Toolbar uses the same restorable print pipeline");
 			await page.locator("[data-test-print]").evaluate(el => el.remove());
 			await page.emulateMedia({ media: "print" });
 			assert.equal(await page.locator(".print-duplicate-title").first().isVisible(), false);
@@ -216,8 +222,9 @@ try {
 		const originalSource = await first.getAttribute("src");
 		await page.route(printSrc, route => route.abort());
 		await page.evaluate(() => { window.testPrinted = false; window.print = () => { window.testPrinted = true; }; });
-		await page.getByRole("button", { name: "打印 / PDF", exact: true }).click();
+		await page.locator("#reader-print-button").click();
 		await page.getByRole("status").filter({ hasText: "部分图片尚未就绪" }).waitFor();
+		assert.equal(await page.locator("#reader-print-button svg").count(), 1, "Toolbar keeps its icon after an image failure");
 		assert.equal(await page.evaluate(() => window.testPrinted), false, "Failed print images do not silently create an incomplete PDF");
 		assert.equal(await first.getAttribute("src"), originalSource);
 		await page.unroute(printSrc);
@@ -331,6 +338,8 @@ try {
 		assert.equal(await page.locator('#sidebar img[alt="Profile Image of the Author"]').first().getAttribute("width"), "256");
 		console.log("Loading metrics", JSON.stringify(metrics));
 		const html = parse(await (await fetch(`${base}/STA/`)).text());
+		const bodyText = html.querySelector("#post-container .markdown-content").text;
+		assert.ok(bodyText.includes('"关于"') && bodyText.includes('"CDC"'), "Chinese-adjacent ASCII quotes stay straight on both sides");
 		const src = html.querySelector(".markdown-content img").getAttribute("src");
 		let release;
 		const gate = new Promise(resolve => { release = resolve; });
