@@ -18,7 +18,7 @@ jobs:
   check:
     name: Content, tests and Astro check
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -41,35 +41,15 @@ jobs:
         env:
           ENABLE_CONTENT_SYNC: false
 
-      - name: Install Chromium for comment regression tests
+      - name: Install Chromium for browser regression tests
         run: pnpm exec playwright-core install --with-deps chromium
 
-      - name: Check comment lifecycle and failure recovery in Chromium
-        timeout-minutes: 5
+      - name: Check comments, reading, search, sharing, chapters, images and print
+        timeout-minutes: 15
         env:
           ENABLE_CONTENT_SYNC: false
           PLAYWRIGHT_CHANNEL: chromium
-        run: |
-          node node_modules/astro/astro.js dev --host 127.0.0.1 --port 4321 > "$RUNNER_TEMP/comments-dev.log" 2>&1 &
-          comments_server_pid=$!
-          trap 'kill "$comments_server_pid" 2>/dev/null || true' EXIT
-          comments_server_ready=false
-          for attempt in $(seq 1 60); do
-            if curl --silent --fail --max-time 2 http://127.0.0.1:4321/src/components/comment/Giscus.svelte > /dev/null; then
-              comments_server_ready=true
-              break
-            fi
-            if ! kill -0 "$comments_server_pid" 2>/dev/null; then break; fi
-            sleep 1
-          done
-          if [ "$comments_server_ready" != true ]; then
-            cat "$RUNNER_TEMP/comments-dev.log"
-            exit 1
-          fi
-          if ! pnpm test:comments:browser http://127.0.0.1:4321; then
-            cat "$RUNNER_TEMP/comments-dev.log"
-            exit 1
-          fi
+        run: node scripts/run-browser-checks.mjs
 
   build:
     name: Astro Build
