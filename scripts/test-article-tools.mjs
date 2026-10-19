@@ -8,10 +8,14 @@ import { rm } from "node:fs/promises";
 const args = process.argv.slice(2);
 const base = args.find(arg => !arg.startsWith("--")) || "http://localhost:4321";
 const only = args.find(arg => arg.startsWith("--only="))?.slice(7);
-assert.ok(!only || ["loading", "modal", "chapters", "print", "images"].includes(only));
+assert.ok(!only || ["loading", "modal", "chapters", "print", "images", "search"].includes(only));
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ colorScheme: null, viewport: { width: 1440, height: 1000 } });
 await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.testCopied = value; } } }); });
+// Astro's development toolbar is absent in production and can cover bottom controls.
+await context.addInitScript(() => document.addEventListener("DOMContentLoaded", () => {
+	const style = document.createElement("style"); style.textContent = "astro-dev-toolbar { display: none !important; }"; document.head.append(style);
+}));
 await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com|giscus\.app)\//,
 	route => route.fulfill({ contentType: "application/javascript", body: "" }));
 const errors = [];
@@ -20,6 +24,42 @@ const page = await context.newPage();
 const printFiles = [];
 async function test(name, callback) { if (only && only !== name) return; await callback(); console.log(`PASS ${name}`); }
 try {
+	await test("search", async () => {
+		await page.goto(`${base}/STA/?highlight=setup&highlightCase=1`);
+		const panel = page.getByRole("region", { name: "正文搜索定位" });
+		await panel.waitFor();
+		const count = await page.locator("mark.article-search-match").count();
+		assert.ok(count > 2);
+		assert.equal(await page.locator(".katex mark").count(), 0);
+		assert.ok((await page.locator("mark.article-search-match").allTextContents()).every(text => text === "setup"));
+		await panel.getByRole("button", { name: "下一个命中" }).click();
+		assert.equal(await panel.getByRole("status").textContent(), `2 / ${count}`);
+		await panel.getByRole("button", { name: "上一个命中" }).click();
+		assert.equal(await panel.getByRole("status").textContent(), `1 / ${count}`);
+		await panel.getByRole("button", { name: "关闭正文搜索高亮" }).click();
+		assert.equal(await page.locator("mark.article-search-match").count(), 0);
+		assert.equal(new URL(page.url()).searchParams.has("highlight"), false);
+		await page.goto(`${base}/archive/?q=STA&matchCase=true`);
+		const result = page.locator('.archive-post[href*="/STA/"]').first();
+		await page.waitForFunction(() => document.querySelector('.archive-post[href*="highlight="]'));
+		const target = new URL(await result.getAttribute("href"), base);
+		assert.equal(target.searchParams.get("highlight"), "STA");
+		assert.equal(target.searchParams.get("highlightCase"), "1");
+		await result.click();
+		await panel.waitFor();
+		await page.waitForFunction(() => window.swup);
+		await page.evaluate(() => window.swup.navigate("/archive/"));
+		await panel.waitFor({ state: "detached" });
+		await page.getByRole("button", { name: "搜索文章", exact: true }).click();
+		await page.locator("#search-input-desktop").fill("STA");
+		const topResult = page.locator('#search-panel a[href*="/STA/"]').first();
+		await topResult.waitFor();
+		assert.equal(new URL(await topResult.getAttribute("href"), base).searchParams.get("highlight"), "STA");
+		await page.goto(`${base}/STA/?highlight=${encodeURIComponent('<img src=x onerror=alert(1)>')}`);
+		await panel.waitFor();
+		assert.equal(await page.locator('.markdown-content img[src="x"]').count(), 0);
+		assert.ok((await panel.getByRole("status").textContent()).includes("正文无匹配"));
+	});
 	await test("images", async () => {
 		const html = parse(await (await fetch(`${base}/STA/`)).text());
 		const src = html.querySelector(".markdown-content img").getAttribute("src");

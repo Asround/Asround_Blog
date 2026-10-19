@@ -4,7 +4,7 @@ import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { frontendConfig } from "../config";
 import { getCategoryLabel } from "../utils/category-utils";
-import { escapeSearchHtml, highlightSearchText, matchesSearchText, matchingSearchExcerpt } from "../utils/search-utils";
+import { escapeSearchHtml, highlightSearchText, matchesSearchText, matchingSearchExcerpt, searchResultUrl } from "../utils/search-utils";
 
 export let tags: string[] = [];
 export let categories: string[] = [];
@@ -198,7 +198,7 @@ onMount(() => {
 
             {#each group.posts as post}
                 <a
-                        href={post.url || `/posts/${post.id}/`}
+                        href={frontendConfig.search.highlightMatches ? searchResultUrl(post.url || `/posts/${post.id}/`, keyword, caseSensitive) : post.url || `/posts/${post.id}/`}
                         aria-label={post.data.title}
                         class="archive-post group btn-plain !block h-10 w-full rounded-lg hover:text-[initial]"
                         class:search-result={!!keyword.trim()}

@@ -10,6 +10,7 @@ import {
 	highlightSearchText,
 	matchesSearchText,
 	matchingSearchExcerpt,
+	searchResultUrl,
 	type SearchArticle,
 } from "@utils/search-utils";
 import { onMount, onDestroy, tick } from "svelte";
@@ -22,6 +23,7 @@ let keywordDesktop = $state("");
 let keywordMobile = $state("");
 let activeDesktopSearch = $state(true);
 type DisplayResult = SearchResult & {
+	highlightUrl: string;
 	titleHtml: string;
 	excerptHtml: string;
 	matchedTags: { text: string; html: string }[];
@@ -75,6 +77,7 @@ function prepareResult(item: SearchResult, keyword: string, matchCase: boolean):
 	}
 	return {
 		...item,
+		highlightUrl: frontendConfig.search.highlightMatches ? searchResultUrl(item.url, keyword, matchCase) : item.url,
 		titleHtml: frontendConfig.search.highlightMatches
 			? highlightSearchText(item.meta.title, keyword, matchCase) : escapeHtml(item.meta.title),
 		excerptHtml,
@@ -149,7 +152,8 @@ const closeSearchPanel = (): void => {
 	searchVersion++;
 };
 
-const handleResultClick = (event: Event, url: string): void => {
+const handleResultClick = (event: MouseEvent, url: string): void => {
+	if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 	event.preventDefault();
 	closeSearchPanel();
 	navigateToPage(url);
@@ -383,8 +387,8 @@ onDestroy(() => {
         {/if}
     </div>
     {#each result as item}
-        <a href={item.url}
-           onclick={(e) => handleResultClick(e, item.url)}
+        <a href={item.highlightUrl}
+           onclick={(e) => handleResultClick(e, item.highlightUrl)}
            onblur={handleBlur}
            class="transition first-of-type:mt-2 lg:first-of-type:mt-0 group block
        rounded-xl text-lg px-3 py-2 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]">

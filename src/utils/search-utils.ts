@@ -42,11 +42,20 @@ export function matchesSearchText(text: string, keyword: string, matchCase = fal
 		haystack.includes(matchCase ? term : term.toLocaleLowerCase()));
 }
 
-function searchPattern(keyword: string, matchCase: boolean): RegExp | undefined {
+export function searchPattern(keyword: string, matchCase: boolean): RegExp | undefined {
 	const terms = [...new Set(searchTerms(keyword))].sort((a, b) => b.length - a.length);
 	if (!terms.length) return undefined;
 	return new RegExp(terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"),
 		matchCase ? "gu" : "giu");
+}
+
+export function searchResultUrl(value: string, keyword: string, matchCase = false): string {
+	if (!keyword.trim()) return value;
+	const target = new URL(value, "https://search.local");
+	target.searchParams.set("highlight", keyword.trim().slice(0, 300));
+	if (matchCase) target.searchParams.set("highlightCase", "1");
+	else target.searchParams.delete("highlightCase");
+	return /^https?:/i.test(value) ? target.href : target.pathname + target.search + target.hash;
 }
 
 // Escape every segment before introducing our own mark elements; queries are literal text.
