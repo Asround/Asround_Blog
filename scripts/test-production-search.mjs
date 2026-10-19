@@ -21,7 +21,7 @@ async function check(base) {
 	page.on("response", response => { if (response.url().includes("/pagefind/") && !response.ok()) failedSearch.push(response.url()); });
 	try {
 		await page.goto(`${base}/STA/`);
-		await page.waitForFunction(() => typeof window.pagefind?.search === "function");
+		await page.waitForFunction(() => typeof window.pagefind?.search === "function" && !!window.swup);
 		const indexed = await page.evaluate(async () => {
 			const found = await window.pagefind.search("STA");
 			return Promise.all(found.results.map(result => result.data()));
@@ -44,8 +44,10 @@ async function check(base) {
 		await bodyResult.waitFor();
 		assert.equal(new URL(await bodyResult.getAttribute("href"), base).pathname, "/STA/");
 		assert.ok(await bodyResult.locator("mark").count() > 0, "Real result excerpt highlights the body query");
+		// A11y restores focus at visit:end, after page:view has already installed the marks.
+		await page.evaluate(() => { window.productionVisitFinished=false;window.swup.hooks.on("visit:end",()=>{window.productionVisitFinished=true;},{once:true,priority:1000}); });
 		await bodyResult.click();
-		await page.waitForFunction(() => new URL(location.href).searchParams.get("highlight") === "雷打不动" && !!document.querySelector("mark.article-search-current"));
+		await page.waitForFunction(() => window.productionVisitFinished && new URL(location.href).searchParams.get("highlight") === "雷打不动" && !!document.querySelector("mark.article-search-current"));
 		assert.equal(await page.locator("mark.article-search-current").textContent(), "雷打不动");
 		await page.getByRole("button", { name: "关闭正文搜索高亮", exact: true }).click();
 		assert.equal(new URL(page.url()).searchParams.has("highlight"), false);
@@ -61,8 +63,9 @@ async function check(base) {
 		await page.waitForFunction(count => document.querySelectorAll('#search-panel a[href*="highlightCase=1"]').length === count, strict.length);
 		const strictLinks = await page.locator("#search-panel a").evaluateAll(links => links.map(link => link.href));
 		assert.deepEqual(strictLinks.map(url => new URL(url).pathname).sort(), strict.map(result => new URL(result.url, base).pathname).sort());
+		await page.evaluate(() => { window.productionVisitFinished=false;window.swup.hooks.on("visit:end",()=>{window.productionVisitFinished=true;},{once:true,priority:1000}); });
 		await page.locator('#search-panel a[href^="/STA/"]').click();
-		await page.waitForFunction(() => !!document.querySelector("mark.article-search-match"));
+		await page.waitForFunction(() => window.productionVisitFinished && !!document.querySelector("mark.article-search-match"));
 		assert.ok((await page.locator("mark.article-search-match").allTextContents()).every(text => text === "STA"));
 		const before = await page.locator("mark.article-search-current").evaluate(el => [...document.querySelectorAll("mark.article-search-match")].indexOf(el));
 		await page.getByRole("button", { name: "下一个命中", exact: true }).click();
