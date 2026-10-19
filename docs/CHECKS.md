@@ -20,6 +20,7 @@ pnpm check:local
 | `pnpm test` | 内容、订阅、评论、字体、搜索链接、正文图片策略和海报换行的离线测试，不要求开发服务 |
 | `pnpm test:frontend` | 检查本地服务实际输出，需要开发服务已启动 |
 | `pnpm test:production-search` | 只读启动已有 dist，验证真实 Pagefind 全文搜索、正式链接及正文命中导航；不自动构建 |
+| `pnpm check:performance` | 对已有 dist 测量首页、STA、夏令营的桌面冷／热缓存加载并与基线比较；不自动构建 |
 | `pnpm test:frontend http://localhost:4322` | 检查指定地址的本地服务 |
 | `node scripts/run-browser-checks.mjs http://localhost:4321` | 统一执行评论、阅读、归档、目录、分享、正文搜索、图片与打印的浏览器检查 |
 | `node scripts/check-image-integrity.mjs http://localhost:4321` | 全量核对文章与旧入口的源图哈希、srcset、打印图片、实际浏览器解码及 RSS／Atom 图片身份 |

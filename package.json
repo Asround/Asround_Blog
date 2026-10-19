@@ -23,6 +23,7 @@
 		"test:comments:soak": "node scripts/test-comments-site.mjs --soak=20",
 		"test:frontend": "node scripts/test-frontend.mjs",
 		"test:production-search": "node scripts/test-production-search.mjs",
+		"check:performance": "node scripts/check-performance.mjs",
 		"test:reading": "node scripts/test-reading-experience.mjs",
 		"test:article-tools": "node scripts/test-article-tools.mjs",
 		"prepare:webfonts": "node scripts/prepare-webfonts.mjs",

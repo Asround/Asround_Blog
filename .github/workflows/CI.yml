@@ -90,3 +90,17 @@ jobs:
         env:
           PLAYWRIGHT_CHANNEL: chromium
         run: node scripts/test-production-search.mjs
+
+      - name: Measure desktop production performance
+        timeout-minutes: 8
+        env:
+          PLAYWRIGHT_CHANNEL: chromium
+        run: node scripts/check-performance.mjs --no-budget --report=.git/performance-report.json
+
+      - name: Save desktop performance measurements
+        uses: actions/upload-artifact@v6
+        with:
+          name: desktop-performance
+          path: .git/performance-report.json
+          include-hidden-files: true
+          retention-days: 14

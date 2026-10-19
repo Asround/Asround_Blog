@@ -16,7 +16,8 @@ export async function withBuiltSite(task, directory = "dist") {
 			if (file !== root && !file.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
 			if ((await stat(file)).isDirectory()) file = path.join(file, "index.html");
 			const bytes = await readFile(file);
-			response.writeHead(200, { "content-type": types[path.extname(file)] || "application/octet-stream", "content-length": bytes.length, "cache-control": "no-cache" });
+			const cache = /^\/(?:_astro|assets|pagefind)\//.test(pathname) ? "public, max-age=3600" : "no-cache";
+			response.writeHead(200, { "content-type": types[path.extname(file)] || "application/octet-stream", "content-length": bytes.length, "cache-control": cache });
 			response.end(request.method === "HEAD" ? undefined : bytes);
 		} catch (error) { response.writeHead(["ENOENT", "ENOTDIR"].includes(error.code) ? 404 : 400).end(); }
 	});
