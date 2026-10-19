@@ -18,14 +18,30 @@ test("生产字体处理保留 TikTok Sans 的全部可变轴和原始 TTF，与
 	const input = "public/assets/font/TikTokSans-VariableFont_opsz,slnt,wdth,wght.ttf";
 	const { source, ttf, compressed } = await convert(input, "ABC123");
 	assert.ok(isVariableFont(source));
-	assert.deepEqual(ttf, source);
+	assert.ok(ttf.equals(source), "Keep the original variable TTF unchanged");
 	const original = sfntTables(source);
 	const output = sfntTables(Buffer.from(woff2.decode(compressed)));
+	const development = await readFile(input.replace(/\.ttf$/, ".woff2"));
+	const developmentTables = sfntTables(Buffer.from(woff2.decode(development)));
 	for (const table of ["fvar", "gvar", "HVAR", "MVAR", "avar", "STAT", "GPOS", "GSUB"]) {
 		assert.ok(original.has(table), `Source includes ${table}`);
-		assert.deepEqual(output.get(table), original.get(table), `Preserve ${table} exactly`);
+		assert.ok(output.get(table)?.equals(original.get(table)), `Production preserves ${table} exactly`);
+		assert.ok(developmentTables.get(table)?.equals(original.get(table)), `Development preserves ${table} exactly`);
 	}
-	assert.deepEqual(compressed, await readFile(input.replace(/\.ttf$/, ".woff2")));
+	// Native and JavaScript WOFF2 encoders may produce different compressed bytes.
+	// Compare decoded outlines and metrics, without constructing huge Buffer diffs.
+	const fonts = [compressed, development].map(buffer => Font.create(buffer, { type: "woff2" }).get());
+	const sourceFont = Font.create(source, { type: "ttf" }).get();
+	for (const [index, font] of fonts.entries()) {
+		const label = index === 0 ? "Production" : "Development";
+		assert.deepEqual(font.cmap, sourceFont.cmap, `${label} preserves character mappings`);
+		assert.equal(font.glyf.length, sourceFont.glyf.length, `${label} preserves all glyphs`);
+		for (let glyph = 0; glyph < sourceFont.glyf.length; glyph++) {
+			for (const field of ["contours", "glyfs", "advanceWidth", "leftSideBearing"]) {
+				assert.deepEqual(font.glyf[glyph][field], sourceFont.glyf[glyph][field], `${label} glyph ${glyph} preserves ${field}`);
+			}
+		}
+	}
 });
 
 test("中文静态字体仍可子集化，并保留所需字形和字体名称", async () => {
