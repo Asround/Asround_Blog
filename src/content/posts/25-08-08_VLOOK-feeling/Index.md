@@ -80,16 +80,16 @@ permalink: "VLOOK-feeling"
 > 截至本文上传时.
 
 1. 图片logo侧对齐(左对齐/右对齐)排版时, 环绕文字排版效果在不同缩放效果时不固定, 如下图:
-   ![PixPin_2025-08-08_18-46-57](VLOOK.assets/PixPin_2025-08-08_18-46-57.png)
+   ![VLOOK 图文环绕排版示例一](VLOOK.assets/vlook-image-text-wrap-01.png)
 
-   ![PixPin_2025-08-08_18-47-24](VLOOK.assets/PixPin_2025-08-08_18-47-24.png)
+   ![VLOOK 图文环绕排版示例二](VLOOK.assets/vlook-image-text-wrap-02.png)
 
    - 也就是说, 无法精准控制字数来达到任何情况下都做到统一的排版样式.
    - 这点在上文提到的github 上开源的 [Latex 样式主题](https://github.com/Keldos-Li/typora-latex-theme) 中, 有很好的解决, 因为它始终将页面按照一个A4的宽度进行渲染, 当缩小到能看到页面侧边缘时, 导出的效果就是和你能看到的一样.
 
 2. 图片按钮并不能自动识别为`#icon`版式.
 
-   - 如图:![PixPin_2025-08-08_18-59-11](VLOOK.assets/PixPin_2025-08-08_18-59-11.png)
+   - 如图:![VLOOK 图片按钮图标排版](VLOOK.assets/vlook-image-button-icon-layout.png)
    - 个人推测可能是图片格式的问题(?), 因为官方文档建议使用.svg格式图片, 但手头没有, 就使用png格式试了一下.
 
 3. 打开markdown文档时Typora无响应.

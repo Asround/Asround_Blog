@@ -35,13 +35,13 @@ permalink: "calibre_index"
 以笔者最近下载的一篇小说<月光照不到>为例.
 
 1. 点击添加书籍, 将书籍添加到 calibre 内.
-![PixPin_2025-07-12_09-49-45](calibre_index.assets/PixPin_2025-07-12_09-49-45.png)
+![calibre 添加书籍](calibre_index.assets/calibre-add-book.png)
 
 2. 选中该书籍, 并点击"转换书籍"(上图"添加书籍"的右侧第二个), 并按下图进行填写:(填写的内容见图后)
 
-![PixPin_2025-07-12_09-51-40](calibre_index.assets/PixPin_2025-07-12_09-51-40.png)
+![calibre 转换设置第一步](calibre_index.assets/calibre-conversion-settings-01.png)
 
-![PixPin_2025-07-12_09-52-35](calibre_index.assets/PixPin_2025-07-12_09-52-35.png)
+![calibre 转换设置第二步](calibre_index.assets/calibre-conversion-settings-02.png)
 
 填写的表达式为:
 
@@ -57,7 +57,7 @@ permalink: "calibre_index"
 
 ​	按照刚才的操作, 转换后打开图书, 可发现:
 
-![PixPin_2025-07-12_09-53-47](calibre_index.assets/PixPin_2025-07-12_09-53-47.png)
+![calibre 生成的可索引目录](calibre_index.assets/calibre-generated-toc.png)
 
 ​	成功添加了可索引目录.
 

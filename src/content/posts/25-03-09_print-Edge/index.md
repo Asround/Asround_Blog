@@ -41,19 +41,19 @@ permalink: "print-Edge"
 
 **1. 打开网站(此处便不给出了), 界面如下**:
 
-![网站原始界面](index.assets/image-1.webp)
+![网站原始界面](index.assets/website-before-cleanup.webp)
 
 - 我们这里先做一点准备工作, **加载全部页面(加载全了才能打印嘛, 不然是空白的哦!)**
   - 点击阅读全文
   - **慢慢**下拉加载每一个页面(**一定要加载完, 不然会有空白页!**)
 
-![alt text](index.assets/image-3.webp)
+![网页转 PDF 操作截图：加载完整页面](index.assets/load-all-document-pages.webp)
 
 加载完后,我们就要将网页内容进行保存了.
 
 右键空白处, 可以看到"打印"选项:
 
-![alt text](index.assets/image-2.webp)
+![网页转 PDF 操作截图：右键打印菜单](index.assets/browser-context-print-menu.webp)
 
 但此时如果我们直接打印的话, 会保留"上传用户", "相关文档"等不需要的内容.(如果你不介意的话那也行)
 
@@ -67,17 +67,17 @@ permalink: "print-Edge"
 
 右键空白处, 点击红色框中的"检查"
 
-![alt text](index.assets/image-4.webp)
+![网页转 PDF 操作截图：打开开发者工具](index.assets/open-developer-tools.webp)
 
 在右边会出现一些代码, 如下图:
 
-![如图所示, 注意绿色框部分](index.assets/image-5.webp)
+![如图所示, 注意绿色框部分](index.assets/inspect-unwanted-page-elements.webp)
 
 简单来说, 右边绿色框中的代码决定了左边绿色框中的内容呈现.
 
 我们只需要删除这部分代码(键盘Del/Delet 键), 那么对应左侧绿色框中内容就消失了, 如下图:
 
-![和上一张图找不同](index.assets/image-6.webp)
+![和上一张图找不同](index.assets/remove-unwanted-page-elements.webp)
 
 那么我们只需要一一删除直至满意即可.
 
@@ -87,7 +87,7 @@ permalink: "print-Edge"
 
 我自己删除之后得到了以下界面:
 
-![是不是很干净呢?](index.assets/image-7.webp)
+![是不是很干净呢?](index.assets/clean-document-view.webp)
 
 注意: 网页下拉, 底部也有很多东西要删除哦
 
@@ -104,11 +104,11 @@ permalink: "print-Edge"
 
 以下演示第一种(和前文保持一致):
 
-![点击打印后的页面](index.assets/image-8.webp)
+![点击打印后的页面](index.assets/browser-print-dialog.webp)
 
 没有加载出来无所谓, 直接点击打印即可.
 
-![直接保存即可, 注意记住路径](index.assets/image-9.webp)
+![直接保存即可, 注意记住路径](index.assets/save-document-as-pdf.webp)
 
 由于文档较长, 要过一定时间才会保存下来, 需要耐心等待.(保存好后应该会自动打开文档)
 
@@ -118,7 +118,7 @@ permalink: "print-Edge"
 
 我的文档保存出来是这个样子的:
 
-![难绷的文件情况](index.assets/image-10.webp)
+![难绷的文件情况](index.assets/saved-pdf-file.webp)
 
 页面没有缺失, 就是多了很多空白页(也不是全空白, 有一条线).
 
@@ -190,7 +190,7 @@ extract_pages(pdf_path, x, y)
 
 查看创建的pdf文档, 就大功告成啦!
 
-![没有一页是空的! 页码不缺!](index.assets/image-11.webp)
+![没有一页是空的! 页码不缺!](index.assets/complete-pdf-pages.webp)
 
 ## 总结
 

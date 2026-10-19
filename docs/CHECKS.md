@@ -17,11 +17,14 @@ pnpm check:local
 | `pnpm check:content` | 检查全部文章，包括草稿，不联网 |
 | `pnpm check:content --json` | 输出结构化结果，方便后续迁移工具使用 |
 | `pnpm check:content --strict` | 将整理建议也视为失败，适合有意清理旧格式时使用 |
-| `pnpm test` | 运行内容检查器与订阅生成逻辑的离线测试，不要求开发服务 |
+| `pnpm test` | 内容、订阅、评论、字体、搜索链接、正文图片策略和海报换行的离线测试，不要求开发服务 |
 | `pnpm test:frontend` | 检查本地服务实际输出，需要开发服务已启动 |
 | `pnpm test:frontend http://localhost:4322` | 检查指定地址的本地服务 |
+| `node scripts/run-browser-checks.mjs http://localhost:4321` | 统一执行评论、阅读、归档、目录、分享、正文搜索、图片与打印的浏览器检查 |
+| `node scripts/check-image-integrity.mjs http://localhost:4321` | 全量核对文章与旧入口的源图哈希、srcset、打印图片、实际浏览器解码及 RSS／Atom 图片身份 |
+| `node scripts/check-image-integrity.mjs --built=dist` | 检查已有构建产物的本地图片，无需浏览器或联网；CI 在 Astro 构建后自动运行 |
 
-未将检查强制接入 prebuild 或发布流程，保留原有构建方式。
+上述检查不执行网站构建。GitHub CI 已接入离线检查、统一浏览器回归及构建产物图片验证；真实评论授权和邮件通知仍由真实服务验收。
 
 ## 内容检查范围
 

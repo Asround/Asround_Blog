@@ -229,18 +229,18 @@ CMOS逻辑门, 动态逻辑电路都有考察, 方块电阻和存储器相关的
 
 1. 五管 OTA 也考了, 但考的更简单, 学明白这个应该随便拿满分
 2. 就是学长分享的原题, 下面这个图请务必仔细再仔细地看懂! 这个图并不难
-   ![image-20261010231756573](index.assets/image-20261010231756573.png)
+   ![五管 OTA 考试原题](index.assets/five-transistor-ota-exam-question.png)
    笔者做了批注的图:
-   ![image-20261010231821853](index.assets/image-20261010231821853.png)
+   ![五管 OTA 试题批注](index.assets/five-transistor-ota-annotated.png)
 3. 注意, 23级没有考"闩锁效应", 而是考的"天线效应", 这个在读者的上课笔记中有. 上课时老师只提了一句这个是重点, 然后最终就考了.
    > 致敬传奇效应 "闩锁效应", 这三门课每门课都在讲, 都要听麻了
    1. 据笔者所知有些同学只会写闩锁效应, 但仍然最后总评高分.
    2. 具体解答直接搜索网络, 或者看笔者笔记即可
 4. 第四题, 图是和22级学长分享的一样的, 但是问题换了: 请问为什么这个结构叫"对称式跨导放大器"
    1. 这个也是老师上课的时候专门强调并解释了, 笔者笔记中也也有记载. 再次强调, 上课老师强调的内容很可能出现在考题中.
-      ![image-20261010232246237](index.assets/image-20261010232246237.png)
+      ![对称式跨导放大器试题](index.assets/symmetric-transconductance-amplifier.png)
 5. 基本可以说就是完完全全的原题, 这里使用学长的原图了:
-   ![参考解析图示](index.assets/image4-20250618204951-q9fb4ct.png)
+   ![参考解析图示](index.assets/ic-design-exam-reference-solution.png)
 
 ### 微电子器件
 

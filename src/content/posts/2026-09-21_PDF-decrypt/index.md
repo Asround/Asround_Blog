@@ -23,7 +23,7 @@ permalink: "PDF-decrypt"
 
 笔者在准备夏令营和预推免的时候, 由于不少学校要求多个证明材料合并为一个PDF上传, 故有将四六级成绩PDF(在官方下载的源文件)与其他文件合并的需求. 但是, 在使用 Acrobat 的文件合并功能时, 弹窗显示有口令, 不能合并:
 
-![image-20260921171013877](index.assets/image-20260921171013877.png)
+![Acrobat 合并文件时的口令提示](index.assets/acrobat-merge-password-warning.png)
 
 这么做的原因其实很简单, 四六级这种官方文件, 是有加密的, 各种文件操作都受限(修改内容更是被禁止的).
 
@@ -32,10 +32,10 @@ permalink: "PDF-decrypt"
 ## 操作方法
 
 1. 将文件在 Edge 浏览器中打开:
-   ![PixPin_2026-09-21_17-19-43](index.assets/PixPin_2026-09-21_17-19-43.png)
+   ![Edge 打开受保护的 PDF](index.assets/edge-open-protected-pdf.png)
 
 2. 在浏览器中打开后, 使用快捷键: Ctrl + P, 唤出打印界面:
-   ![image-20260921172306070](index.assets/image-20260921172306070.png)
+   ![Edge 打印受保护的 PDF](index.assets/edge-print-protected-pdf.png)
    > 打印机选择"另存为PDF"也可以, 笔者常用 Acrobat, 这里保持默认.
 
 3. 然后使用打印出的文件来合并, 即不会显示有口令限制了.

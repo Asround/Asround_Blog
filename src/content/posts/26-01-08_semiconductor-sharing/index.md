@@ -19,15 +19,15 @@ permalink: "CheatSheet"
 
 - 请到github仓库(后文有链接)下载 pdf 查看以获得更好体验
 
-![第一页](Semiconductor-CheatSheet.assets/image-20260108132258580.png)
+![第一页](Semiconductor-CheatSheet.assets/semiconductor-cheatsheet-page-01.png)
 
-![第二页](https://raw.githubusercontent.com/Asround/Asround.github.io/master/_posts/assets/2026-01-08_SPCS.assets/image-20260108132331510.png)
+![第二页](Semiconductor-CheatSheet.assets/semiconductor-cheatsheet-page-02.png)
 
 ## 说明
 
 ::github{repo="Asround/Semiconductor-physics-CheatSheet"}
 
-![仓库](https://raw.githubusercontent.com/Asround/Asround.github.io/master/_posts/assets/2026-01-08_SPCS.assets/image-20260108132442236.png)
+![仓库](Semiconductor-CheatSheet.assets/semiconductor-cheatsheet-repository.png)
 
 1. 请使用 latexmk 配方
 2. 沿用了英语书写的方式, 但没有过多时间校对每个专业名词的合理性, 请读者注意

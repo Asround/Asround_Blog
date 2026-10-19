@@ -75,3 +75,6 @@ jobs:
         run: pnpm astro build
         env:
           ENABLE_CONTENT_SYNC: false
+
+      - name: Verify every emitted article and feed image
+        run: node scripts/check-image-integrity.mjs --built=dist

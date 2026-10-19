@@ -31,7 +31,7 @@ permalink: "Solid-state-physics"
 
 ## 电子书教材, 勘误和课后习题参考答案
 
-![image-20260209202739507](index.assets/image-20260209202739507.png)
+![固体物理课后习题答案批注](index.assets/solid-state-physics-annotated-solutions.png)
 
 笔者上课时使用的主要是纸质教材, 故教材部分分享中, 只有参考答案有批注.(上图便是)
 
@@ -41,7 +41,7 @@ permalink: "Solid-state-physics"
 
 ## 分类表格整理
 
-![image-20260209203256902](index.assets/image-20260209203256902.png)
+![固体物理分类表格整理](index.assets/solid-state-physics-summary-tables.png)
 
 该文件前半部分是各种笔者想到的表格(书上没有), 后面就顺势汇总了一些其他东西, 包括:
 

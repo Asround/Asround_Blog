@@ -33,7 +33,7 @@ permalink: "IC-Process"
 
 ## 电子书教材(带有详尽笔记)
 
-![image-20260209152455214](index.assets/image-20260209152455214.png)
+![IC 工艺教材与课堂批注](index.assets/ic-process-annotated-textbook.png)
 
 笔记均为笔者在上课期间, 使用笔记本电脑, 通过 Acrobat 软件记录. 推荐读者也使用 Acrobat 阅读.
 
@@ -45,7 +45,7 @@ permalink: "IC-Process"
 
 该内容为课程期末作业, 目的是让同学们边整理边复习(重点还是复习), 并且将一个你认为有价值的内容使用英语展开回答.
 
-![image-20260209160429745](index.assets/image-20260209160429745.png)
+![IC 工艺十个问题课程作业](index.assets/ic-process-coursework-preview.png)
 
 > 笔者希望可以给同学们一些选题启发, 但不希望有任何照抄行为, 这违背了分享的初衷.
 >
@@ -57,7 +57,7 @@ permalink: "IC-Process"
 
 ## 所有对比
 
-![image-20260209160954814](index.assets/image-20260209160954814.png)
+![IC 工艺对比整理](index.assets/ic-process-comparison-tables.png)
 
 任课老师上课反复强调: 凡是涉及到对比的都是重点
 

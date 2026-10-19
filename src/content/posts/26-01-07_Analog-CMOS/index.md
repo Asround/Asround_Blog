@@ -29,7 +29,7 @@ permalink: "Analog-CMOS"
 
 ## 电子书教材
 
-![image-20260209144214528](index.assets/image-20260209144214528.png)
+![模拟 CMOS 教材预览](index.assets/analog-cmos-textbook-preview.png)
 
 只提供了英文版教材, 原因:
 
@@ -50,7 +50,7 @@ permalink: "Analog-CMOS"
 
 ## 期末复习笔记
 
-![image-20260209144325668](index.assets/image-20260209144325668.png)
+![模拟 CMOS 期末复习笔记](index.assets/analog-cmos-review-notes.png)
 
 任课老师在上课期间会反复强调部分知识点, 期末考试之前的一节课也会再次说明, 这个资料的内容即是如此得到的.
 

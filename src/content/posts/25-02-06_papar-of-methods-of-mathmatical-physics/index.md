@@ -52,9 +52,9 @@ permalink: "paper-of-methods-of-mathmatical-physics"
 
 基于模版: [如何用latex出数学卷子?](https://www.zhihu.com/question/402111484) 中最高赞模版, 自己做了部分修改.
 
-![alt text](index.assets/01-.webp)
+![数学物理方法试卷第 1 页](index.assets/exam-paper-page-01.webp)
 
-![alt text](index.assets/02-.webp)
+![数学物理方法试卷第 2 页](index.assets/exam-paper-page-02.webp)
 
 附加题部分, "注意"第二点中, 55分应修改为50分.(文件中也未修改)
 
@@ -64,30 +64,30 @@ permalink: "paper-of-methods-of-mathmatical-physics"
 
 使用了 exam-zh 的试卷模版(从页码可以看出), 取消了边线等内容
 
-![alt text](index.assets/01.webp)
+![数学物理方法答案与解析第 1–2 页](index.assets/solutions-pages-01-02.webp)
 
-![alt text](index.assets/03.webp)
+![数学物理方法答案与解析第 3–4 页](index.assets/solutions-pages-03-04.webp)
 
-![alt text](index.assets/05.webp)
+![数学物理方法答案与解析第 5–6 页](index.assets/solutions-pages-05-06.webp)
 
-![alt text](index.assets/07.webp)
+![数学物理方法答案与解析第 7–8 页](index.assets/solutions-pages-07-08.webp)
 
-![alt text](index.assets/09.webp)
+![数学物理方法答案与解析第 9–10 页](index.assets/solutions-pages-09-10.webp)
 
-![alt text](index.assets/11.webp)
+![数学物理方法答案与解析第 11–12 页](index.assets/solutions-pages-11-12.webp)
 
-![alt text](index.assets/13.webp)
+![数学物理方法答案与解析第 13–14 页](index.assets/solutions-pages-13-14.webp)
 
-![alt text](index.assets/15.webp)
+![数学物理方法答案与解析第 15–16 页](index.assets/solutions-pages-15-16.webp)
 
-![alt text](index.assets/17.webp)
+![数学物理方法答案与解析第 17–18 页](index.assets/solutions-pages-17-18.webp)
 
-![alt text](index.assets/19.webp)
+![数学物理方法答案与解析第 19–20 页](index.assets/solutions-pages-19-20.webp)
 
-![alt text](index.assets/21-22.webp)
+![数学物理方法答案与解析第 21–22 页](index.assets/solutions-pages-21-22.webp)
 
 补充: 第 10 题答图, 最开始制作解析时没有放进去, 这里单独补充一下.
-![alt text](index.assets/10题答图.webp)
+![第 10 题补充解答图](index.assets/10题答图.webp)
 
 拓展延伸部分链接: [n倍角公式的推导「全网最详细版」](https://zhuanlan.zhihu.com/p/9209749788) (在pdf中ctrl+左键也可以跳转)
 

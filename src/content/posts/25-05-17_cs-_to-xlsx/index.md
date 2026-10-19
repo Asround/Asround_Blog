@@ -25,7 +25,7 @@ permalink: "csv_to_xlsx"
 
 <font size=3>**第一步, 将需要转换的.csv放在一个文件夹中**</font>
 
-![PixPin_2025-02-11_22-26-46](csv_to_xlsx.assets/PixPin_2025-02-11_22-26-46.png)
+![待转换的 CSV 文件夹](csv_to_xlsx.assets/csv-source-folder.png)
 
 - 注意:
   1. 不要存放除 .csv文件以外其他类型的文件 (并未测试是否会导致问题)
@@ -35,17 +35,17 @@ permalink: "csv_to_xlsx"
 
 <font size=3>**第二步, 在任意位置新建任意Excel工作簿, 并打开"开发工具"--"Visual Basic"**</font>
 
-![PixPin_2025-02-11_22-07-57](csv_to_xlsx.assets/PixPin_2025-02-11_22-07-57.png)
+![Excel 打开 Visual Basic](csv_to_xlsx.assets/excel-open-visual-basic.png)
 
 - 注意, 如果<u>没有找到"开发工具"</u>, 请点击“文件” 、点击“选项”、点击“自定义功能区”，勾选右侧“开发工具”前的小方框, 然后确定即可.
 
-  ![PixPin_2025-02-11_22-09-38](csv_to_xlsx.assets/PixPin_2025-02-11_22-09-38.png)
+  ![Excel 启用开发工具选项卡](csv_to_xlsx.assets/excel-enable-developer-tab.png)
 
 <font size=3>**第三步, 点击左侧栏中sheet1(sheet1), 并在右侧空白区域粘贴代码**</font>
 
 <font size=3 color=red>**(粘贴后请勿马上运行, 还要进行修改!)**</font>
 
-![PixPin_2025-02-11_22-13-52](csv_to_xlsx.assets/PixPin_2025-02-11_22-13-52.png)
+![Excel VBA 批量转换脚本](csv_to_xlsx.assets/excel-vba-conversion-script.png)
 
 - 代码如下:
 
@@ -83,7 +83,7 @@ End Sub
 
     - 以刚才的图片为例, 是E:\拓展项目\大创\python\curve_fitting\datas_learn\csv2
 
-      ![PixPin_2025-02-11_22-32-46](csv_to_xlsx.assets/PixPin_2025-02-11_22-32-46.png)
+      ![VBA 设置 CSV 来源文件夹](csv_to_xlsx.assets/vba-set-source-folder-path.png)
 	
 	  - 所以第 7 行代码应该修改为: 
 	
@@ -103,7 +103,7 @@ End Sub
 
 <font size=3>**第四步, 点击"运行", 耐心等待转换完成即可**</font>
 
-![PixPin_2025-02-11_22-40-20](csv_to_xlsx.assets/PixPin_2025-02-11_22-40-20.png)
+![Excel 运行 CSV 批量转换](csv_to_xlsx.assets/excel-run-csv-conversion.png)
 
 - 运行后, 会有Excel工作簿闪出闪退, 这是正常现象, 表明代码正在运行. 
 - 当闪烁现象结束后, 表明转换完成. 
