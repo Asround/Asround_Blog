@@ -743,15 +743,16 @@ function disableAnimation() {
 		const carouselItems = document.querySelectorAll(".carousel-item");
 		// 根据屏幕尺寸过滤有效的轮播项
 		const isMobile = window.innerWidth < 768; // md breakpoint
-		const validItems = Array.from(carouselItems).filter((item) => {
-			if (isMobile) {
-				// 移动端：只显示有mobile图片的项目
-				return item.querySelector(".block.md\\:hidden");
-			} else {
-				// 桌面端/平板端：只显示有desktop图片的项目
-				return item.querySelector(".hidden.md\\:block");
+		const validItems = Array.from(carouselItems).filter(item => item.hasAttribute(isMobile ? "data-banner-mobile" : "data-banner-desktop"));
+		const loadSlide = async (item: Element) => {
+			for (const source of item.querySelectorAll<HTMLSourceElement>("source[data-banner-srcset]")) {
+				source.srcset = source.dataset.bannerSrcset!;
+				source.removeAttribute("data-banner-srcset");
 			}
-		});
+			const image = item.querySelector<HTMLImageElement>("img");
+			if (image?.dataset.bannerSrc) { image.src = image.dataset.bannerSrc; image.removeAttribute("data-banner-src"); }
+			if (image) await image.decode();
+		};
 
 		if (validItems.length > 1 && siteConfig.banner.carousel?.enable) {
 			let currentIndex = 0;
@@ -770,7 +771,11 @@ function disableAnimation() {
 			let isSwiping = false;
 
 			// 切换图片的函数 - 基于有效项目
-			function switchToSlide(index: number) {
+			let slideRequest = 0;
+			async function switchToSlide(index: number) {
+				const request = ++slideRequest;
+				try { await loadSlide(validItems[index]); } catch { return; }
+				if (request !== slideRequest) return;
 				// 隐藏当前图片
 				const currentItem = validItems[currentIndex];
 				currentItem.classList.remove("opacity-100", "scale-100");
@@ -793,6 +798,7 @@ function disableAnimation() {
 
 			// 显示第一张有效图片
 			if (validItems.length > 0) {
+				void loadSlide(validItems[0]).catch(() => {});
 				validItems[0].classList.add("opacity-100", "scale-100");
 				validItems[0].classList.remove("opacity-0", "scale-110");
 			}

@@ -46,8 +46,11 @@ try {
 	});
 	await test("carousel", async () => {
 		const carouselPage = await context.newPage();
+		const bannerRequests = [];
+		carouselPage.on("request", request => { if (request.resourceType() === "image" && /\/assets\/(?:desktop|mobile)-banner\//.test(request.url())) bannerRequests.push(request.url()); });
 		try {
 			await carouselPage.clock.install();
+			await carouselPage.emulateMedia({ reducedMotion: "reduce" });
 			await carouselPage.addInitScript(() => {
 				const intervals = new Set();
 				const set = window.setInterval.bind(window), clear = window.clearInterval.bind(window);
@@ -57,10 +60,16 @@ try {
 			});
 			await carouselPage.goto(`${base}/`);
 			await carouselPage.mouse.move(1400, 950);
-			await carouselPage.waitForFunction(() => window.swup && document.querySelector("#banner-carousel[data-carousel-initialized]") && !document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
+			await carouselPage.waitForFunction(() => window.swup && document.querySelector("#banner-carousel[data-carousel-initialized]"));
 			const slide = () => carouselPage.locator("#banner-carousel .carousel-item").evaluateAll(items => items.findIndex(item => item.classList.contains("opacity-100")));
 			let before = await slide();
+			await carouselPage.locator("#banner-carousel .carousel-item.opacity-100 img").evaluate(image=>image.decode());
+			assert.equal(bannerRequests.length,1,"Load only the first banner before carousel activity");
+			assert.ok(bannerRequests[0].includes("/desktop-banner/"),"Desktop never fetches the mobile banner");
+			await carouselPage.emulateMedia({ reducedMotion: "no-preference" });
+			await carouselPage.waitForFunction(() => !document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
 			await carouselPage.clock.fastForward(3500);
+			await carouselPage.waitForFunction(index => [...document.querySelectorAll("#banner-carousel .carousel-item")].findIndex(item=>item.classList.contains("opacity-100")) !== index, before);
 			assert.notEqual(await slide(), before, "Visible carousel advances");
 			await carouselPage.evaluate(() => scrollTo({ top: 1600, behavior: "instant" }));
 			await carouselPage.waitForFunction(() => document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
@@ -76,6 +85,7 @@ try {
 			assert.equal(await slide(), before, "Background visibility event stops carousel");
 			await carouselPage.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event("visibilitychange")); });
 			await carouselPage.clock.fastForward(3500);
+			await carouselPage.waitForFunction(index => [...document.querySelectorAll("#banner-carousel .carousel-item")].findIndex(item=>item.classList.contains("opacity-100")) !== index, before);
 			assert.notEqual(await slide(), before, "Visibility restores carousel");
 			await carouselPage.emulateMedia({ reducedMotion: "reduce" });
 			await carouselPage.waitForFunction(() => document.querySelector("#banner-wrapper").classList.contains("banner-paused"));
@@ -91,6 +101,21 @@ try {
 			assert.equal(await carouselPage.evaluate(() => window.testBanner === document.getElementById("banner-carousel")), true);
 			assert.ok(await carouselPage.evaluate(() => window.testCarouselIntervals() <= 1), "No duplicate carousel intervals on navigation");
 		} finally { await carouselPage.close(); }
+		const mobilePage = await context.newPage();
+		const mobileRequests = [];
+		mobilePage.on("request",request=>{if (request.resourceType() === "image" && /\/assets\/(?:desktop|mobile)-banner\//.test(request.url())) mobileRequests.push(request.url());});
+		try {
+			await mobilePage.setViewportSize({width:500,height:900});
+			await mobilePage.emulateMedia({reducedMotion:"reduce"});
+			await mobilePage.goto(`${base}/`);
+			await mobilePage.locator("#banner-carousel .carousel-item.opacity-100 img").evaluate(image=>image.decode());
+			assert.equal(mobileRequests.length,1);
+			assert.ok(mobileRequests[0].includes("/mobile-banner/"),"Mobile selects its original banner without loading desktop images");
+			await mobilePage.evaluate(()=>{localStorage.setItem("wallpaperMode","fullscreen");window.dispatchEvent(new CustomEvent("wallpaper-mode-change",{detail:{mode:"fullscreen"}}));});
+			await mobilePage.locator('[data-fullscreen-wallpaper] .block.md\\:hidden img').first().evaluate(image=>image.decode());
+			assert.ok(mobileRequests.every(url=>url.includes("/mobile-banner/")),"Optional fullscreen mode loads only the active platform");
+			await mobilePage.evaluate(()=>{localStorage.removeItem("wallpaperMode");window.dispatchEvent(new CustomEvent("wallpaper-mode-change",{detail:{mode:"banner"}}));});
+		} finally { await mobilePage.close(); }
 	});
 	await test("series", async () => {
 		const { readingSeries } = await importTS(await readFile("src/data/reading-series.ts", "utf8"));

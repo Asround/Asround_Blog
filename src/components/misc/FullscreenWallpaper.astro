@@ -107,7 +107,7 @@ const renderGroups = [
 			<div class={`${group.containerClass} w-full h-full relative`} style="transform: translateZ(0);">
 				{group.images.map((src, index) => (
 					<img
-						src={src}
+						data-wallpaper-src={src}
 						alt={`${group.key} wallpaper ${index + 1}`}
 						class={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${positionClass}`}
 						data-carousel-item={index}
@@ -191,6 +191,18 @@ const renderGroups = [
 				window.__wallpaper_cleanup();
 				window.__wallpaper_cleanup = null;
 			}
+			// A hidden optional wallpaper must not fetch either platform's images.
+			const loadVisibleSources = () => {
+				if ((localStorage.getItem('wallpaperMode') || 'banner') !== 'fullscreen') return;
+				const selector = innerWidth < 768 ? '.block.md\\:hidden' : '.hidden.md\\:block';
+				for (const image of container.querySelectorAll(selector + ' img[data-wallpaper-src]')) {
+					image.src = image.dataset.wallpaperSrc;
+					image.removeAttribute('data-wallpaper-src');
+				}
+			};
+			loadVisibleSources();
+			window.addEventListener('wallpaper-mode-change', loadVisibleSources);
+			window.addEventListener('resize', loadVisibleSources);
 
 			const STORAGE_KEY = 'mizuki_wallpaper_index';
 			let savedIndex = parseInt(sessionStorage.getItem(STORAGE_KEY) || '0');
@@ -275,6 +287,8 @@ const renderGroups = [
 
 			window.__wallpaper_cleanup = () => {
 				stop();
+				window.removeEventListener('wallpaper-mode-change', loadVisibleSources);
+				window.removeEventListener('resize', loadVisibleSources);
 				document.removeEventListener('visibilitychange', handleVisibilityChange);
 			};
 		}

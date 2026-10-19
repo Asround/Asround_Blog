@@ -1,0 +1,29 @@
+---
+import path from "node:path";
+import { getImage } from "astro:assets";
+import { publicImageSize } from "../../utils/image-metadata";
+import { url } from "../../utils/url-utils";
+interface Props { desktop: string; mobile: string; index: number; deferred: boolean; position?: string; }
+const { desktop, mobile, index, deferred, position = "center" } = Astro.props;
+const files = import.meta.glob<ImageMetadata>("../../**", { import: "default" });
+async function resolve(source: string) {
+    if (!source) return undefined;
+    if (source.startsWith("/")) return { src: url(source), ...await publicImageSize(source) };
+    if (/^(?:https?:|data:)/.test(source)) return { src: source, width: 1600, height: 900 };
+    const key = path.posix.normalize("../../" + source);
+    const image = files[key] && await files[key]();
+    if (!image) throw new Error(`Banner image not found: ${source}`);
+    const output = await getImage({ src: image, width: Math.min(1600, image.width) });
+    return { src: output.src, width: output.attributes.width, height: output.attributes.height };
+}
+const large = await resolve(desktop), small = await resolve(mobile);
+const fallback = large || small;
+---
+{fallback && <div class="overflow-hidden relative h-full w-full">
+    <div class="transition absolute inset-0 dark:bg-black/10 bg-opacity-50 pointer-events-none"></div>
+    <picture>
+        {small && <source media="(max-width: 767px)" srcset={deferred ? undefined : small.src} data-banner-srcset={deferred ? small.src : undefined} width={small.width} height={small.height} />}
+        {large && <source media="(min-width: 768px)" srcset={deferred ? undefined : large.src} data-banner-srcset={deferred ? large.src : undefined} width={large.width} height={large.height} />}
+        <img src={deferred ? undefined : fallback.src} data-banner-src={deferred ? fallback.src : undefined} alt={`Banner image ${index + 1}`} width={fallback.width} height={fallback.height} class="w-full h-full object-cover transition-transform duration-500 ease-out" style={`object-position: ${position}`} loading="eager" decoding="async" fetchpriority={deferred ? "low" : "high"} />
+    </picture>
+</div>}
