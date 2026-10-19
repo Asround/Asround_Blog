@@ -5,6 +5,7 @@ import { onMount } from "svelte";
 import I18nKey from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
 import { copyText } from "../../utils/clipboard";
+import { wrapCanvasText as getLines, limitCanvasLines } from "../../utils/poster-text";
 
 export let title: string;
 export let author: string;
@@ -61,27 +62,6 @@ async function loadImage(src: string): Promise<HTMLImageElement | null> {
 
 		img.src = src;
 	});
-}
-
-function getLines(
-	ctx: CanvasRenderingContext2D,
-	text: string,
-	maxWidth: number,
-): string[] {
-	const lines: string[] = [];
-	let currentLine = "";
-
-	for (const char of text) {
-		if (ctx.measureText(currentLine + char).width < maxWidth) {
-			currentLine += char;
-		} else {
-			lines.push(currentLine);
-			currentLine = char;
-		}
-	}
-
-	if (currentLine) lines.push(currentLine);
-	return lines;
 }
 
 function drawRoundedRect(
@@ -156,7 +136,7 @@ async function generatePoster() {
 		const footerHeight = qrSize + qrCaptionGap + 14 * SCALE;
 
 		ctx.font = `700 ${titleFontSize}px ${FONT_FAMILY}`;
-		const titleLines = getLines(ctx, title, CONTENT_WIDTH);
+		const titleLines = limitCanvasLines(ctx, getLines(ctx, title, CONTENT_WIDTH), CONTENT_WIDTH, 12);
 		const titleLineHeight = 30 * SCALE;
 		const titleHeight = titleLines.length * titleLineHeight;
 		const titleSpacing = 16 * SCALE - (titleLineHeight - titleFontSize);
@@ -164,7 +144,7 @@ async function generatePoster() {
 		let descHeight = 0;
 		if (description) {
 			ctx.font = `${descFontSize}px ${FONT_FAMILY}`;
-			const descLines = getLines(ctx, description, CONTENT_WIDTH - 16 * SCALE);
+			const descLines = limitCanvasLines(ctx, getLines(ctx, description, CONTENT_WIDTH - 16 * SCALE), CONTENT_WIDTH - 16 * SCALE, 6);
 			descHeight = Math.min(descLines.length, 6) * (25 * SCALE);
 		}
 
@@ -265,7 +245,7 @@ async function generatePoster() {
 
 			ctx.font = `${descFontSize}px ${FONT_FAMILY}`;
 			ctx.fillStyle = "#4b5563";
-			const descLines = getLines(ctx, description, CONTENT_WIDTH - 16 * SCALE);
+			const descLines = limitCanvasLines(ctx, getLines(ctx, description, CONTENT_WIDTH - 16 * SCALE), CONTENT_WIDTH - 16 * SCALE, 6);
 			for (const line of descLines.slice(0, 6)) {
 				ctx.fillText(line, PADDING + 16 * SCALE, drawY);
 				drawY += 25 * SCALE;
@@ -334,7 +314,9 @@ async function generatePoster() {
 
 		ctx.fillStyle = "#1f2937";
 		ctx.font = `700 ${22 * SCALE}px ${FONT_FAMILY}`;
-		ctx.fillText(author, textX, footerY + 38 * SCALE);
+		const authorWidth = qrX - textX - 16 * SCALE;
+		const authorLines = limitCanvasLines(ctx, getLines(ctx, author, authorWidth), authorWidth, 2);
+		for (const [index, line] of authorLines.entries()) ctx.fillText(line, textX, footerY + (38 + 26 * index) * SCALE);
 
 		// Caption centered below the QR code.
 		ctx.fillStyle = "#9ca3af";

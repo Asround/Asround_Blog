@@ -8,7 +8,7 @@ import { rm, stat } from "node:fs/promises";
 const args = process.argv.slice(2);
 const base = args.find(arg => !arg.startsWith("--")) || "http://localhost:4321";
 const only = args.find(arg => arg.startsWith("--only="))?.slice(7);
-assert.ok(!only || ["loading", "modal", "chapters", "print", "images", "search", "responsive"].includes(only));
+assert.ok(!only || ["loading", "modal", "chapters", "print", "images", "search", "responsive", "poster"].includes(only));
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ colorScheme: null, viewport: { width: 1440, height: 1000 } });
 await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.testCopied = value; } } }); });
@@ -28,6 +28,37 @@ function imageRequest(src) {
 	return url => url.href === target.href || (target.pathname === "/_image/" && url.pathname === target.pathname && url.searchParams.get("href") === target.searchParams.get("href"));
 }
 try {
+	await test("poster", async () => {
+		const component = "/src/components/misc/SharePoster.svelte";
+		const source = await (await fetch(new URL(component, base))).text();
+		const runtime = source.match(/from "([^"]*\/svelte\.js[^\"]*)"/)?.[1];
+		assert.ok(runtime);
+		await page.addInitScript(() => {
+			window.posterDraws = [];
+			const original = CanvasRenderingContext2D.prototype.fillText;
+			CanvasRenderingContext2D.prototype.fillText = function(text, x, y, ...rest) {
+				const width = this.measureText(text).width;
+				const left = this.textAlign === "center" ? x - width / 2 : x;
+				window.posterDraws.push({ text, left, right: left + width, y, canvasWidth: this.canvas.width, canvasHeight: this.canvas.height });
+				return original.call(this, text, x, y, ...rest);
+			};
+		});
+		await page.route(new URL("/__poster-test__*", base).href, route => {
+			const long = new URL(route.request().url()).searchParams.has("long");
+			const props = { title: long ? "LongWord".repeat(400) : "数字电路中时序分析的 setup 和 hold 分析", author: long ? "VeryLongAuthor".repeat(30) : "Asround", description: "中文说明与 English words ".repeat(20), pubDate: "2026-10-02", url: "https://asround-blog.pages.dev/STA/", avatar: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="grey"/></svg>' };
+			return route.fulfill({ contentType: "text/html; charset=utf-8", body: `<html><body><main></main><script type="module">import {mount} from ${JSON.stringify(runtime)};import Poster from ${JSON.stringify(component)};mount(Poster,{target:document.querySelector('main'),props:${JSON.stringify(props)}});</script></body></html>` });
+		});
+		for (const suffix of ["", "?long=1"]) {
+			await page.goto(`${base}/__poster-test__${suffix}`);
+			await page.getByRole("button", { name: "分享文章", exact: true }).click();
+			await page.locator('dialog img[alt="Poster"]').waitFor();
+			const draws = await page.evaluate(() => window.posterDraws);
+			assert.ok(draws.length > 10);
+			assert.ok(draws.every(draw => draw.left >= 0 && draw.right <= draw.canvasWidth && draw.y < draw.canvasHeight), "Every canvas text run remains inside the poster");
+			if (!suffix) assert.ok(draws.some(draw => draw.text.includes("hold")), "English hold stays a whole word");
+			else assert.ok(draws.some(draw => draw.text.endsWith("…")), "Oversized text is visibly truncated");
+		}
+	});
 	await test("responsive", async () => {
 		for (const slug of ["STA", "Summer-camp"]) {
 			await page.goto(`${base}/${slug}/`);
@@ -233,7 +264,10 @@ try {
 			await page.keyboard.press("Escape");
 			await dialog.waitFor({ state: "detached" });
 			assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
-			await trigger.click();
+			// A lazy comment iframe can resize the document under a pointer at the footer.
+			// Activate this keyboard check by Enter; real pointer activation is tested below on the fixed toolbar.
+			await trigger.focus(); await page.keyboard.press("Enter");
+			await dialog.waitFor();
 			await dialog.getByRole("button", { name: "复制链接", exact: true }).click();
 			assert.equal(await page.evaluate(() => window.testCopied), "https://asround-blog.pages.dev/STA/");
 			await page.evaluate(() => {
