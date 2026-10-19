@@ -15,7 +15,7 @@
 		"check:local": "pnpm check:content && pnpm check:comments && pnpm test && pnpm check",
 		"test:content": "node --test scripts/test-content.mjs",
 		"test:feed": "node --test scripts/test-feed.mjs",
-		"test": "node --test scripts/test-content.mjs scripts/test-feed.mjs scripts/test-comments.mjs scripts/test-font-processing.mjs scripts/test-search.mjs",
+		"test": "node --test scripts/test-content.mjs scripts/test-feed.mjs scripts/test-comments.mjs scripts/test-font-processing.mjs scripts/test-search.mjs scripts/test-article-images.mjs",
 		"test:fonts": "node --test scripts/test-font-processing.mjs",
 		"test:comments:browser": "node scripts/test-comments-browser.mjs",
 		"test:comments:theme": "node scripts/test-comments-theme.mjs",

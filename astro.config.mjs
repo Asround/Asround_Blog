@@ -27,6 +27,7 @@ import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkMermaid } from "./src/plugins/remark-mermaid.js";
 import { remarkContent } from "./src/plugins/remark-content.mjs";
 import { rehypeImageWidth } from "./src/plugins/rehype-image-width.mjs";
+import { rehypeArticleImages } from "./src/plugins/rehype-article-images.mjs";
 
 // https://astro.build/config
 export default defineConfig({
@@ -35,6 +36,7 @@ export default defineConfig({
 	trailingSlash: "always",
 
 	output: "static",
+	image: { service: { entrypoint: "./src/utils/article-image-service.mjs" } },
 
 	integrations: [
 		tailwind({
@@ -124,6 +126,7 @@ export default defineConfig({
 			rehypeWrapTable,
 			rehypeMermaid,
 			rehypeImageWidth,
+			rehypeArticleImages,
 			[
 				rehypeComponents,
 				{

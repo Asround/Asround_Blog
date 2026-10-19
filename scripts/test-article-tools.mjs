@@ -8,7 +8,7 @@ import { rm } from "node:fs/promises";
 const args = process.argv.slice(2);
 const base = args.find(arg => !arg.startsWith("--")) || "http://localhost:4321";
 const only = args.find(arg => arg.startsWith("--only="))?.slice(7);
-assert.ok(!only || ["loading", "modal", "chapters", "print", "images", "search"].includes(only));
+assert.ok(!only || ["loading", "modal", "chapters", "print", "images", "search", "responsive"].includes(only));
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ colorScheme: null, viewport: { width: 1440, height: 1000 } });
 await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.testCopied = value; } } }); });
@@ -23,7 +23,29 @@ context.on("page", page => page.on("pageerror", error => errors.push(error.messa
 const page = await context.newPage();
 const printFiles = [];
 async function test(name, callback) { if (only && only !== name) return; await callback(); console.log(`PASS ${name}`); }
+function imageRequest(src) {
+	const target = new URL(src, base);
+	return url => url.href === target.href || (target.pathname === "/_image/" && url.pathname === target.pathname && url.searchParams.get("href") === target.searchParams.get("href"));
+}
 try {
+	await test("responsive", async () => {
+		for (const slug of ["STA", "Summer-camp"]) {
+			await page.goto(`${base}/${slug}/`);
+			const image = page.locator(".markdown-content img[data-article-image]").first();
+			await image.scrollIntoViewIfNeeded(); await image.evaluate(img => img.decode());
+			const data = await image.evaluate(img => ({ src: img.currentSrc, original: img.dataset.originalSrc, full: img.dataset.src, widths: img.srcset.match(/\d+w/g), size: img.naturalWidth }));
+			assert.equal(data.full, data.original);
+			assert.ok(data.original && data.widths.length >= 2);
+			assert.ok(data.size <= 2560);
+			const original = await fetch(new URL(data.original, base));
+			assert.ok(original.ok && original.headers.get("content-type").startsWith("image/")); await original.body.cancel();
+			await image.click();
+			const enlarged = page.locator(".fancybox__slide.is-selected .f-panzoom__viewport img.f-panzoom__content").first();
+			await enlarged.waitFor();
+			assert.equal(await enlarged.getAttribute("src"), data.original);
+			await page.keyboard.press("Escape");
+		}
+	});
 	await test("search", async () => {
 		await page.goto(`${base}/STA/?highlight=setup&highlightCase=1`);
 		const panel = page.getByRole("region", { name: "正文搜索定位" });
@@ -66,13 +88,13 @@ try {
 		let broken = true;
 		const imagePage = await context.newPage();
 		try {
-			await imagePage.route(new URL(src, base).href, route => broken ? route.abort() : route.continue());
+			await imagePage.route(imageRequest(src), route => broken ? route.abort() : route.continue());
 			await imagePage.goto(`${base}/STA/`);
 			const image = imagePage.locator(".markdown-content img").first();
 			await image.scrollIntoViewIfNeeded();
 			const panel = imagePage.locator(".image-recovery-panel").first();
 			await panel.getByRole("button", { name: "重试", exact: true }).waitFor();
-			assert.equal(await panel.getByRole("link", { name: "查看原图" }).getAttribute("href"), new URL(src, base).href);
+			assert.equal(await panel.getByRole("link", { name: "查看原图" }).getAttribute("href"), new URL(await image.getAttribute("data-original-src") || src, base).href);
 			assert.equal(await panel.evaluate(el => Boolean(el.closest("a"))), false, "Recovery controls never nest inside links");
 			broken = false;
 			await panel.getByRole("button", { name: "重试", exact: true }).click();
@@ -254,7 +276,7 @@ try {
 		const gate = new Promise(resolve => { release = resolve; });
 		const delayedPage = await context.newPage();
 		try {
-			await delayedPage.route(new URL(src, base).href, async route => { await gate; await route.continue(); });
+			await delayedPage.route(imageRequest(src), async route => { await gate; await route.continue(); });
 			await delayedPage.goto(`${base}/STA/`, { waitUntil: "domcontentloaded" });
 			await delayedPage.evaluate(() => document.fonts.ready);
 			const image = delayedPage.locator(".markdown-content img").first();
