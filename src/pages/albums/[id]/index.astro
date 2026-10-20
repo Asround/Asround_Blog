@@ -6,6 +6,7 @@ import MainGridLayout from "../../../layouts/MainGridLayout.astro";
 // import type { GetStaticPaths } from "astro";
 import type { AlbumGroup, Photo } from "../../../types/album";
 import { scanAlbums } from "../../../utils/album-scanner";
+import { hasMixedPhotoRatios } from "../../../utils/album-layout";
 
 // 检查相册页面是否启用
 if (!siteConfig.featurePages.albums) {
@@ -29,6 +30,10 @@ const { album } = Astro.props;
 if (!album) {
 	return Astro.redirect("/404/");
 }
+
+const photoLayout = album.layout === "masonry"
+	? (hasMixedPhotoRatios(album.photos) ? "masonry" : "balanced")
+	: "grid";
 ---
 
 <MainGridLayout title={album.title} description={album.description || album.title}>
@@ -88,23 +93,27 @@ if (!album) {
 
       <!-- 照片网格 -->
       <div 
-        class={`photo-gallery ${album.layout === 'masonry' ? 'masonry-layout' : 'grid-layout'}`}
-        data-layout={album.layout || 'grid'}
+        class={`photo-gallery ${photoLayout}-layout`}
+        data-layout={photoLayout}
         data-columns={album.columns || 3}
       >
         {album.photos.map((photo: Photo, _index: number) => (
           <figure class="photo-item group relative overflow-hidden rounded-lg">
             <a 
-              href="javascript:void(0)"
+              href={photo.src}
+              data-no-swup
               data-src={photo.src}
               data-fancybox={`album-${album.id}`}
-              class="block"
+              class="photo-link block"
             >
               <img 
                 src={photo.src}
                 alt={photo.alt}
-                class="photo-image w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                width={photo.width}
+                height={photo.height}
+                class="photo-image cursor-pointer"
                 loading="lazy"
+                decoding="async"
                 onload="this.removeAttribute('loading')"
               />
             </a>
@@ -116,29 +125,11 @@ if (!album) {
 
 </MainGridLayout>
 
-<script>
-  // 确保Fancybox正确处理相册图片
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('=== 相册页面加载完成 ===');
-    
-    // 检查页面中的图片元素
-    const albumImages = document.querySelectorAll('.moment-images img, .photo-gallery img');
-    console.log('相册图片数量:', albumImages.length);
-    
-    // 预加载图片以确保正确显示
-    albumImages.forEach((img) => {
-      if (img instanceof HTMLImageElement) {
-        const preloadImg = new Image();
-        preloadImg.src = img.src;
-      }
-    });
-  });
-</script>
-
 <style>
   .grid-layout {
     display: grid;
     gap: 1rem;
+    align-items: start;
   }
   
   .grid-layout[data-columns="2"] {
@@ -154,76 +145,83 @@ if (!album) {
   }
   
   .masonry-layout {
-    display: grid;
-    gap: 1rem;
+    column-count: 3;
+    column-gap: 1rem;
   }
 
   .masonry-layout[data-columns="2"] {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-count: 2;
   }
 
   .masonry-layout[data-columns="3"] {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    column-count: 3;
   }
 
   .masonry-layout[data-columns="4"] {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    column-count: 4;
   }
 
   .masonry-layout .photo-item {
-    grid-column: span 2;
+    break-inside: avoid;
+    margin-bottom: 1rem;
   }
 
-  .masonry-layout[data-columns="2"] .photo-item:nth-last-child(1):nth-child(2n + 1) {
-    grid-column: 2 / span 2;
+  /* 等比例相册保持按行阅读，末行不足一整行时整体居中。 */
+  .balanced-layout {
+    --album-columns: 3;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1rem;
   }
 
-  .masonry-layout[data-columns="3"] .photo-item:nth-last-child(1):nth-child(3n + 1) {
-    grid-column: 3 / span 2;
+  .balanced-layout[data-columns="2"] {
+    --album-columns: 2;
   }
 
-  .masonry-layout[data-columns="3"] .photo-item:nth-last-child(2):nth-child(3n + 1) {
-    grid-column: 2 / span 2;
+  .balanced-layout[data-columns="4"] {
+    --album-columns: 4;
   }
 
-  .masonry-layout[data-columns="4"] .photo-item:nth-last-child(1):nth-child(4n + 1) {
-    grid-column: 4 / span 2;
+  .balanced-layout .photo-item {
+    flex: 0 0 calc((100% - (var(--album-columns) - 1) * 1rem) / var(--album-columns));
+    transition: none;
   }
 
-  .masonry-layout[data-columns="4"] .photo-item:nth-last-child(2):nth-child(4n + 1) {
-    grid-column: 3 / span 2;
+  .photo-item {
+    margin-top: 0;
+    min-width: 0;
   }
 
-  .masonry-layout[data-columns="4"] .photo-item:nth-last-child(3):nth-child(4n + 1) {
-    grid-column: 2 / span 2;
-  }
-  
-  .grid-layout .photo-container {
-    aspect-ratio: 1;
+  .photo-link:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -3px;
   }
 
   @media (max-width: 768px) {
+    .balanced-layout[data-columns] {
+      --album-columns: 2;
+    }
+
     .masonry-layout[data-columns] {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .masonry-layout[data-columns] .photo-item {
-      grid-column: span 2;
-    }
-
-    .masonry-layout[data-columns] .photo-item:nth-last-child(1):nth-child(2n + 1) {
-      grid-column: 2 / span 2;
+      column-count: 2;
     }
   }
 
   @media (max-width: 480px) {
-    .masonry-layout[data-columns] {
-      grid-template-columns: 1fr;
+    .balanced-layout[data-columns] {
+      --album-columns: 1;
     }
 
-    .masonry-layout[data-columns] .photo-item,
-    .masonry-layout[data-columns] .photo-item:nth-last-child(n) {
-      grid-column: 1 / -1 !important;
+    .masonry-layout[data-columns] {
+      column-count: 1;
+    }
+  }
+
+  @media print {
+    .masonry-layout[data-columns] {
+      column-count: 2;
     }
   }
   

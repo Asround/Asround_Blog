@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import sharp from "sharp";
 import type { AlbumGroup, Photo } from "../types/album";
 
 export async function scanAlbums(): Promise<AlbumGroup[]> {
@@ -76,7 +77,7 @@ async function processAlbumFolder(
 		}
 
 		cover = `/images/albums/${folderName}/${coverFile}`;
-		photos = scanPhotos(folderPath, folderName, coverFile);
+		photos = await scanPhotos(folderPath, folderName, coverFile);
 	}
 
 	// 检查是否隐藏相册
@@ -100,12 +101,11 @@ async function processAlbumFolder(
 	};
 }
 
-function scanPhotos(
+async function scanPhotos(
 	folderPath: string,
 	albumId: string,
 	coverFile: string,
-): Photo[] {
-	const photos: Photo[] = [];
+): Promise<Photo[]> {
 	const files = fs.readdirSync(folderPath);
 
 	// 过滤出图片文件
@@ -130,24 +130,34 @@ function scanPhotos(
 	});
 
 	// 处理每张照片
-	imageFiles.forEach((file, index) => {
+	return Promise.all(imageFiles.map(async (file, index) => {
 		const filePath = path.join(folderPath, file);
 		const stats = fs.statSync(filePath);
 
 		// 解析文件名中的标签
 		const { baseName, tags } = parseFileName(file);
 
-		photos.push({
+		const photo: Photo = {
 			id: `${albumId}-photo-${index}`,
 			src: `/images/albums/${albumId}/${file}`,
 			alt: baseName,
 			title: baseName,
 			tags: tags,
 			date: stats.mtime.toISOString().split("T")[0],
-		});
-	});
-
-	return photos;
+		};
+		try {
+			const metadata = await sharp(filePath).metadata();
+			// 使用浏览器按 EXIF 方向显示后的尺寸，避免竖拍照片预留错误比例。
+			const { width, height } = metadata.autoOrient;
+			if (width && height) {
+				photo.width = width;
+				photo.height = height;
+			}
+		} catch (error) {
+			console.warn(`无法读取相册照片尺寸 ${filePath}:`, error);
+		}
+		return photo;
+	}));
 }
 
 function processExternalPhotos(

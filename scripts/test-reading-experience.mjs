@@ -20,6 +20,142 @@ async function test(name, callback) {
 	console.log(`PASS ${name}`);
 }
 try {
+	await test("albums", async () => {
+		const albumPage = await context.newPage();
+		let releasePhotos;
+		const photosReady = new Promise(resolve => { releasePhotos = resolve; });
+		await albumPage.route("**/images/albums/SCU-Album/*.webp", async route => { await photosReady; await route.continue(); });
+		const frames = () => albumPage.locator(".photo-gallery").evaluate(gallery => {
+			const box = gallery.getBoundingClientRect();
+			return [...gallery.querySelectorAll("figure")].map(figure => {
+				const rect = figure.getBoundingClientRect();
+				return { x: rect.x - box.x, y: rect.y - box.y, width: rect.width, height: rect.height };
+			});
+		});
+		try {
+			await albumPage.emulateMedia({ reducedMotion: "reduce" });
+			await albumPage.goto(`${base}/albums/SCU-Album/`, { waitUntil: "domcontentloaded" });
+			await albumPage.waitForFunction(() => window.swup);
+			await albumPage.evaluate(() => document.fonts.ready);
+			await albumPage.locator(".photo-gallery").evaluate(gallery => Promise.all(gallery.getAnimations().map(animation => animation.finished)));
+			const placeholders = await frames();
+			assert.ok(placeholders.length > 1 && placeholders.every(frame => frame.height > 0), "Reserve photo space before any photo downloads");
+			releasePhotos();
+			await albumPage.locator(".photo-gallery img").evaluateAll(images => Promise.all(images.map(image => image.decode())));
+			const decoded = await frames();
+			placeholders.forEach((frame, index) => {
+				for (const dimension of ["x", "y", "width", "height"]) assert.ok(Math.abs(frame[dimension] - decoded[index][dimension]) < 1, "Photo loading preserves the reserved layout");
+			});
+			for (const width of [1440, 960, 720, 390]) {
+				await albumPage.setViewportSize({ width, height: 1000 });
+				await albumPage.waitForFunction(columns => Number(getComputedStyle(document.querySelector(".photo-gallery")).columnCount) === columns, width <= 480 ? 1 : width <= 768 ? 2 : 3);
+				const layout = await albumPage.locator(".photo-gallery").evaluate(gallery => {
+					const box = gallery.getBoundingClientRect(), style = getComputedStyle(gallery);
+					return { columns: Number(style.columnCount), width: box.width, gap: parseFloat(style.columnGap), overflow: document.documentElement.scrollWidth > innerWidth,
+						photos: [...gallery.querySelectorAll("img")].map(image => {
+							const rect = image.getBoundingClientRect(), figure = image.closest("figure"), frame = figure.getBoundingClientRect();
+							return { x: frame.x - box.x, y: frame.y - box.y, width: rect.width, height: rect.height, frameHeight: frame.height, pieces: figure.getClientRects().length,
+								ratio: image.naturalWidth / image.naturalHeight, widthAttribute: Number(image.getAttribute("width")), heightAttribute: Number(image.getAttribute("height")), naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight };
+						}) };
+				});
+				assert.equal(layout.columns, width <= 480 ? 1 : width <= 768 ? 2 : 3);
+				assert.equal(layout.overflow, false);
+				for (const photo of layout.photos) {
+					assert.equal(photo.widthAttribute, photo.naturalWidth);
+					assert.equal(photo.heightAttribute, photo.naturalHeight);
+					assert.equal(photo.pieces, 1, "A portrait is never split across columns");
+					assert.ok(Math.abs(photo.height - photo.width / photo.ratio) < 1, "Preserve the full original aspect ratio");
+					assert.ok(Math.abs(photo.frameHeight - photo.height) < 1, "No grid row stretches a landscape frame");
+					assert.ok(photo.x >= -1 && photo.x + photo.width <= layout.width + 1);
+				}
+				const ordered = [...layout.photos].sort((a, b) => a.x - b.x || a.y - b.y);
+				for (let i = 1; i < ordered.length; i++) if (Math.abs(ordered[i].x - ordered[i - 1].x) < 1) {
+					assert.ok(Math.abs(ordered[i].y - ordered[i - 1].y - ordered[i - 1].height - layout.gap) < 1, "Photos in each column have a single consistent gap");
+				}
+			}
+			await albumPage.setViewportSize({ width: 1440, height: 1000 });
+			await albumPage.waitForFunction(() => Number(getComputedStyle(document.querySelector(".photo-gallery")).columnCount) === 3);
+			for (const columns of [2, 4, 3]) {
+				await albumPage.locator(".photo-gallery").evaluate((gallery, columns) => { gallery.dataset.columns = String(columns); }, columns);
+				await albumPage.waitForFunction(columns => Number(getComputedStyle(document.querySelector(".photo-gallery")).columnCount) === columns, columns);
+				assert.equal(await albumPage.locator(".photo-gallery").evaluate(gallery => Number(getComputedStyle(gallery).columnCount)), columns);
+			}
+			await albumPage.emulateMedia({ media: "print" });
+			await albumPage.waitForFunction(() => Number(getComputedStyle(document.querySelector(".photo-gallery")).columnCount) === 2);
+			assert.equal(await albumPage.locator(".photo-gallery").evaluate(gallery => Number(getComputedStyle(gallery).columnCount)), 2, "Preserve the two-column print layout");
+			await albumPage.emulateMedia({ media: "screen" });
+			await albumPage.waitForFunction(() => Number(getComputedStyle(document.querySelector(".photo-gallery")).columnCount) === 3);
+			const links = albumPage.locator(".photo-gallery a[data-fancybox]");
+			for (let index = 0; index < await links.count(); index++) {
+				const link = links.nth(index), original = await link.getAttribute("href");
+				assert.equal(await link.getAttribute("data-src"), original);
+				await link.click();
+				const enlarged = albumPage.locator(".fancybox__slide.is-selected .f-panzoom__viewport img.f-panzoom__content").first();
+				await enlarged.waitFor();
+				assert.equal(await enlarged.getAttribute("src"), original, "Each photo opens its own original");
+				await albumPage.keyboard.press("Escape");
+				await albumPage.locator(".fancybox__container").waitFor({ state: "hidden" });
+			}
+			await albumPage.evaluate(() => new Promise(resolve => {
+				swup.hooks.on("visit:end", () => resolve(), { once: true, priority: 1000 });
+				swup.navigate("/albums/");
+			}));
+			await albumPage.evaluate(() => history.back());
+			await albumPage.waitForURL(`${base}/albums/SCU-Album/`);
+			await links.first().click();
+			await albumPage.locator(".fancybox__container").waitFor();
+			assert.equal(await links.count(), placeholders.length, "Back navigation preserves all photos and lightbox binding");
+		} finally { releasePhotos(); await albumPage.close(); }
+		for (const id of ["GameGallery_DeathStranding2", "GameGallery_StellarBlade"]) {
+			const source = parse(await (await fetch(`${base}/albums/${id}/`)).text());
+			const images = source.querySelectorAll(".photo-gallery img");
+			assert.ok(source.querySelector('.balanced-layout[data-layout="balanced"]'), "Same-ratio albums retain row order and centered final rows");
+			const dimensions = new Map(images.map(image => [image.getAttribute("src"), { width: image.getAttribute("width"), height: image.getAttribute("height") }]));
+			const uniformPage = await context.newPage();
+			// Only layout is under test here; use the real emitted dimensions without downloading large game screenshots.
+			await uniformPage.route(`**/images/albums/${id}/*`, route => {
+				const size = dimensions.get(decodeURI(new URL(route.request().url()).pathname)) || { width: 800, height: 600 };
+				return route.fulfill({ contentType: "image/svg+xml", body: `<svg xmlns="http://www.w3.org/2000/svg" width="${size.width}" height="${size.height}"></svg>` });
+			});
+			const checkRows = async columns => {
+				const rows = await uniformPage.locator(".photo-gallery").evaluate(gallery => {
+					const box = gallery.getBoundingClientRect();
+					return { width: box.width, frames: [...gallery.querySelectorAll("figure")].map(figure => {
+						const rect = figure.getBoundingClientRect();
+						return { x: rect.x - box.x, y: rect.y - box.y, width: rect.width, height: rect.height };
+					}) };
+				});
+				assert.equal(rows.frames.length, images.length);
+				for (let start = 0; start < rows.frames.length; start += columns) {
+					const row = rows.frames.slice(start, start + columns);
+					for (let i = 0; i < row.length; i++) {
+						assert.ok(Math.abs(row[i].y - row[0].y) < 1, "Uniform photos stay in their original left-to-right row order");
+						assert.ok(Math.abs(row[i].width - rows.frames[0].width) < 1, "An incomplete final row keeps the same photo width");
+						assert.ok(row[i].height > 0 && row[i].x >= -1 && row[i].x + row[i].width <= rows.width + 1);
+						if (i) assert.ok(row[i].x > row[i - 1].x);
+					}
+					assert.ok(Math.abs((row[0].x + row.at(-1).x + row.at(-1).width) / 2 - rows.width / 2) < 1, "Every row, including an incomplete final row, is centered");
+				}
+			};
+			try {
+				await uniformPage.goto(`${base}/albums/${id}/`);
+				await uniformPage.evaluate(() => document.fonts.ready);
+				await uniformPage.locator(".photo-gallery").evaluate(gallery => Promise.all(gallery.getAnimations().map(animation => animation.finished)));
+				for (const width of [1440, 960, 720, 390]) {
+					await uniformPage.setViewportSize({ width, height: 1000 });
+					const columns = width <= 480 ? 1 : width <= 768 ? 2 : 3;
+					await uniformPage.waitForFunction(columns => Number(getComputedStyle(document.querySelector(".photo-gallery")).getPropertyValue("--album-columns")) === columns, columns);
+					await checkRows(columns);
+				}
+				await uniformPage.setViewportSize({ width: 1440, height: 1000 });
+				await uniformPage.waitForFunction(() => innerWidth === 1440 && Number(getComputedStyle(document.querySelector(".photo-gallery")).getPropertyValue("--album-columns")) === 3);
+				for (const columns of [2, 4, 3]) {
+					await uniformPage.locator(".photo-gallery").evaluate((gallery, columns) => { gallery.dataset.columns = String(columns); }, columns);
+					await checkRows(columns);
+				}
+			} finally { await uniformPage.close(); }
+		}
+	});
 	await test("edges", async () => {
 		const { devicesData } = await importTS(await readFile("src/data/devices.ts", "utf8"));
 		const initial = parse(await (await fetch(`${base}/devices/`)).text());

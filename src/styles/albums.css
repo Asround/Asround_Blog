@@ -32,10 +32,11 @@
 }
 
 .photo-image {
+  display: block;
   transition: transform 0.3s ease;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
 }
 
 .photo-overlay {
@@ -106,10 +107,6 @@
     grid-template-columns: 1fr;
   }
 
-  .masonry-layout {
-    columns: 1;
-  }
-
   .photo-gallery[data-columns="3"],
   .photo-gallery[data-columns="4"] {
     grid-template-columns: repeat(2, 1fr);
@@ -136,9 +133,6 @@
     grid-template-columns: 1fr !important;
   }
 
-  .masonry-layout {
-    columns: 1;
-  }
 }
 
 /* 加载动画 */
