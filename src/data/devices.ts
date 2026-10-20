@@ -20,16 +20,16 @@ export const devicesData: DeviceCategory = {
 		{
 			name: "整机",
 			image: "/images/device/PC.jpg", // 路径: public/images/device/laptop.png
-			specs: "Ultra 265K / RTX 5070 Ti / 32GB DDR5",
-			description: "自己DIY的第一个机器. 好看, 好强.",
+			specs: "Core Ultra 7 270K Plus / RTX 5070 Ti / 32GB DDR5",
+			description: "自己 DIY 的机器. 好看, 好强.",
 			link: "",
 		},
 		{
-			name: "CPU: Ultra 265K",
+			name: "CPU: Intel Ultra 7 270K Plus",
 			image: "/images/device/cpu.png",
-			specs: "Arrow Lake / TSMC N3B",
+			specs: "24 核 24 线程 / 最高 5.5 GHz",
 			description: "强劲单核 + 多核, 生产力不二之选.",
-			link: "https://www.intel.cn/content/www/cn/zh/products/sku/241063/intel-core-ultra-7-processor-265k-30m-cache-up-to-5-50-ghz/specifications.html",
+			link: "https://www.intel.cn/content/www/cn/zh/products/sku/245692/intel-core-ultra-7-processor-270k-plus-36m-cache-up-to-5-50-ghz/specifications.html",
 		},
 		{
 			name: "GPU: 七彩虹 RTX 5070 Ti 战斧豪华版",
@@ -56,7 +56,7 @@ export const devicesData: DeviceCategory = {
 			name: "散热: 酷冷至尊 Hyper 612 Apex",
 			image: "/images/device/cooling.png",
 			specs: "最强单塔 / 省心风冷",
-			description: "压个 265K 不是轻轻松松?",
+			description: "好看好装.",
 			link: "https://www.coolermaster.com.cn/product_detail/350.html",
 		},
 		{
