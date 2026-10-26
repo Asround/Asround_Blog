@@ -8,6 +8,10 @@ declare global {
 	}
 
 	interface Window {
+		asroundStorage: Record<"local" | "session", {
+			getItem(key: string): string | null;
+			setItem(key: string, value: string): void;
+		}>;
 		// Define swup type directly since @swup/astro doesn't export AstroIntegration
 		swup: any;
 		closeAnnouncement: () => void;

@@ -74,7 +74,7 @@ function changeTocMode(mode: "panel" | "float") {
 	fontOpen = false;
 	tocOpen = mode === "panel" ? true : null;
 	try {
-		localStorage.setItem("reader-toc-mode", mode);
+		window.asroundStorage.local.setItem("reader-toc-mode", mode);
 	} catch {}
 	updatePosition();
 	document.dispatchEvent(new CustomEvent("reader:toc-mode"));

@@ -27,11 +27,22 @@ pnpm check:local
 | `pnpm check:links --base=http://localhost:4321` | 对当前开发服务检查全部文章及旧入口，无需构建 |
 | `node --use-env-proxy scripts/check-links.mjs --external-only --report=.git/external-links.json` | 对源文章中的外链、外部图片及资源卡片生成只读报告，不因外部网络不确定而阻止提交 |
 | `pnpm test:frontend http://localhost:4322` | 检查指定地址的本地服务 |
-| `node scripts/run-browser-checks.mjs http://localhost:4321` | 统一执行评论、阅读、归档、目录、分享、正文搜索、图片与打印的浏览器检查 |
+| `node scripts/run-browser-checks.mjs http://localhost:4321` | 统一执行评论、阅读、归档、目录、分享、搜索、图片、打印及下述故障恢复检查 |
 | `node scripts/check-image-integrity.mjs http://localhost:4321` | 全量核对文章与旧入口的源图哈希、srcset、打印图片、实际浏览器解码及 RSS／Atom 图片身份 |
 | `node scripts/check-image-integrity.mjs --built=dist` | 检查已有构建产物的本地图片，无需浏览器或联网；CI 在 Astro 构建后自动运行 |
 
 上述检查不执行网站构建。GitHub CI 已接入离线检查、统一浏览器回归及构建产物图片验证；真实评论授权和邮件通知仍由真实服务验收。
+
+## 运行环境与故障回归
+
+2026-10-26：为修复已知依赖漏洞，升级至 Astro 7.4.2；Node 最低要求为 22.23.4，`.node-version` 固定已验证的 24.20.0，供 CI 和 Cloudflare Pages 使用。保留原有 unified Markdown 插件、HTML 压缩行为及 Tailwind 3；样式通过 PostCSS 和 `src/styles/tailwind.css` 加载，未修改 Astro 源码。字体、图标和滚动条等外观依赖保留原版本。`package.json` 中的安全 overrides 随上游修复复查，移除时重新运行依赖审计和字体处理测试。
+
+以下检查已接入统一浏览器入口：
+
+- `node scripts/test-failure-recovery.mjs http://localhost:4321`：模拟存储被禁用或写满、剪贴板权限拒绝、音频全部失效，检查设置保持、复制、代码折叠和有限重试。
+- `pnpm test:navigation:memory http://localhost:4321`：连续切页 32 次，检查旧文档、节点、监听器和定时器不持续增长，音乐实例和播放不中断。响应式横幅的临时解析文档通过 Swup 结束钩子释放，不能只删除图片节点而保留其旧媒体查询所属文档。
+
+故障测试屏蔽开发工具栏和外部统计请求，模拟的评论与音乐故障不代表真实服务可用性；Meting 仍需按项目约定单独实测。本轮对比了升级前后 18 篇文章的正文、标题锚点、图片元数据和正式链接，确认一致；字体测试继续核对真实字形和可变轴。
 
 相册比例排版可单独运行 `node scripts/test-reading-experience.mjs http://localhost:4321 --only=albums`。检查照片下载前后的尺寸预留、横竖幅原始比例、瀑布流间距、桌面与缩放对应的窄视口、逐张原图放大及导航返回；同时检查死亡搁浅、剑星等比例相册的按行顺序及 2～4 列下的末行居中。等比例相册的排版检查使用与实际照片同尺寸的内存 SVG，避免下载大量游戏截图；SCU 的放大检查使用真实原图。此项随统一浏览器回归进入 CI，比例识别的舍入误差和无尺寸回退由 `pnpm test` 覆盖。
 

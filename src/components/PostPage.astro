@@ -48,7 +48,7 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 			if (!postListContainer) return;
 
 			// 读取偏好
-			const savedLayout = localStorage.getItem("postListLayout");
+			const savedLayout = window.asroundStorage.local.getItem("postListLayout");
 			const defaultLayout =
 				postListContainer.getAttribute("data-default-layout") || "list";
 			const currentLayout = savedLayout || defaultLayout;
@@ -130,7 +130,7 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 		clearTimeout(resizeTimeout);
 		resizeTimeout = window.setTimeout(() => {
 			if (window.innerWidth >= 769) {
-				const savedLayout = localStorage.getItem("postListLayout");
+				const savedLayout = window.asroundStorage.local.getItem("postListLayout");
 				const defaultLayout =
 					document
 						.getElementById("post-list-container")

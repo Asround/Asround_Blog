@@ -19,7 +19,7 @@ await context.route(audioUrl, (route) => route.fulfill({ contentType: "audio/wav
 await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com|giscus\.app)\//, (route) => route.fulfill({ contentType: "application/javascript", body: "" }));
 // Astro's development toolbar re-registers its own audit buttons on navigation.
 // It is absent from published builds and must not distort application counters.
-await context.route("**/node_modules/astro/dist/runtime/client/dev-toolbar/entrypoint.js", (route) => route.fulfill({ contentType: "application/javascript", body: "" }));
+await context.route(/\/(?:node_modules\/astro\/dist|@id\/astro)\/runtime\/client\/dev-toolbar\/entrypoint\.js(?:\?|$)/, (route) => route.fulfill({ contentType: "application/javascript", body: "" }));
 await context.addInitScript(() => {
 	const intervals = new Set();
 	const set = window.setInterval.bind(window), clear = window.clearInterval.bind(window);

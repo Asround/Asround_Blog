@@ -146,6 +146,7 @@ onMount(() => {
 	const cleanText = (element: Element) =>
 		(element.textContent ?? "").replace(/#+\s*$/, "").trim();
 	const generate = () => {
+		if (!root?.isConnected) return;
 		const container = document.getElementById("post-container");
 		const content = container?.querySelector(".custom-md");
 		let headings = Array.from(
@@ -218,6 +219,7 @@ onMount(() => {
 		frame = requestAnimationFrame(generate);
 	};
 	const init = () => {
+		if (!root?.isConnected) return;
 		observer?.disconnect();
 		resizeObserver?.disconnect();
 		generate();

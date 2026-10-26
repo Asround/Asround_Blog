@@ -1,10 +1,15 @@
 import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
+import { createRequire } from "node:module";
+import { dirname, resolve } from "node:path";
 
 const base = process.argv[2] || "http://127.0.0.1:4321";
 const managed = !process.argv[2];
 let log = "";
-const server = managed ? spawn(process.execPath, ["node_modules/astro/astro.js", "dev", "--host", "127.0.0.1", "--port", "4321"], {
+const require = createRequire(import.meta.url);
+const astroPackage = require.resolve("astro/package.json");
+const astroBin = resolve(dirname(astroPackage), require(astroPackage).bin.astro);
+const server = managed ? spawn(process.execPath, [astroBin, "dev", "--host", "127.0.0.1", "--port", "4321"], {
 	env: { ...process.env, ENABLE_CONTENT_SYNC: "false" }, stdio: ["ignore", "pipe", "pipe"],
 }) : null;
 for (const stream of [server?.stdout, server?.stderr]) stream?.on("data", chunk => { log = (log + chunk).slice(-20000); });
@@ -25,7 +30,7 @@ try {
 		await delay(1000);
 	}
 	if (!ready) throw new Error("Preview server did not become ready");
-	for (const script of ["scripts/test-comments-browser.mjs", "scripts/test-reading-experience.mjs", "scripts/test-article-tools.mjs"]) await run(script);
+	for (const script of ["scripts/test-comments-browser.mjs", "scripts/test-reading-experience.mjs", "scripts/test-article-tools.mjs", "scripts/test-failure-recovery.mjs", "scripts/test-navigation-memory.mjs"]) await run(script);
 } catch (error) {
 	console.error(log);
 	console.error(error.message);

@@ -18,7 +18,7 @@ export function normalizeReadingFontSize(value: number): number {
 
 export function getReadingFontSize(): number {
 	try {
-		const stored = localStorage.getItem("reading-font-size");
+		const stored = window.asroundStorage.local.getItem("reading-font-size");
 		return normalizeReadingFontSize(
 			stored === null ? frontendConfig.reading.defaultFontSize : Number(stored),
 		);
@@ -31,7 +31,7 @@ export function setReadingFontSize(value: number): void {
 	const size = normalizeReadingFontSize(value);
 	document.documentElement.style.setProperty("--reading-font-size", `${size}px`);
 	try {
-		localStorage.setItem("reading-font-size", String(size));
+		window.asroundStorage.local.setItem("reading-font-size", String(size));
 	} catch {
 		// 禁用本地存储时仍允许调整当前页面。
 	}
@@ -48,12 +48,13 @@ export function getDefaultHue(): number {
 }
 
 export function getHue(): number {
-	const stored = localStorage.getItem("hue");
-	return stored ? Number.parseInt(stored) : getDefaultHue();
+	const stored = window.asroundStorage.local.getItem("hue");
+	const hue = stored === null ? NaN : Number(stored);
+	return Number.isFinite(hue) && hue >= 0 && hue <= 360 ? hue : getDefaultHue();
 }
 
 export function setHue(hue: number): void {
-	localStorage.setItem("hue", String(hue));
+	window.asroundStorage.local.setItem("hue", String(hue));
 	const r = document.querySelector(":root") as HTMLElement;
 	if (!r) {
 		return;
@@ -116,7 +117,7 @@ export function setTheme(theme: LIGHT_DARK_MODE, event?: MouseEvent): void {
 	root.classList.remove("theme-circle-transition");
 	requestedTheme = theme;
 	try {
-		localStorage.setItem("theme", theme);
+		window.asroundStorage.local.setItem("theme", theme);
 	} catch {}
 	const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 	const canAnimate = frontendConfig.themeTransitionEffect === "circle" &&
@@ -191,18 +192,17 @@ export function setTheme(theme: LIGHT_DARK_MODE, event?: MouseEvent): void {
 }
 
 export function getStoredTheme(): LIGHT_DARK_MODE {
-	return (localStorage.getItem("theme") as LIGHT_DARK_MODE) || DEFAULT_THEME;
+	const theme = window.asroundStorage.local.getItem("theme");
+	return theme === "dark" || theme === "light" ? theme : DEFAULT_THEME;
 }
 
 export function getStoredWallpaperMode(): WALLPAPER_MODE {
-	return (
-		(localStorage.getItem("wallpaperMode") as WALLPAPER_MODE) ||
-		siteConfig.wallpaperMode.defaultMode
-	);
+	const mode = window.asroundStorage.local.getItem("wallpaperMode");
+	return mode === "banner" || mode === "fullscreen" || mode === "none" ? mode : siteConfig.wallpaperMode.defaultMode;
 }
 
 export function setWallpaperMode(mode: WALLPAPER_MODE): void {
-	localStorage.setItem("wallpaperMode", mode);
+	window.asroundStorage.local.setItem("wallpaperMode", mode);
 	// 触发自定义事件通知其他组件壁纸模式已改变
 	window.dispatchEvent(new CustomEvent("wallpaper-mode-change", { detail: { mode } }));
 }

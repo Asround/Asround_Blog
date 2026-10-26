@@ -1,7 +1,7 @@
 export async function copyText(value: string): Promise<void> {
 	if (navigator.clipboard?.writeText) {
-		await navigator.clipboard.writeText(value);
-		return;
+		try { await navigator.clipboard.writeText(value); return; }
+		catch { /* Browser permissions can reject the async API; try the selection fallback. */ }
 	}
 	const previous = document.activeElement as HTMLElement | null;
 	const input = document.createElement("textarea");

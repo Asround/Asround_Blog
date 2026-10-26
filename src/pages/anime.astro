@@ -594,7 +594,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 				);
 				if (!animeListContainer) return false;
 				const currentLayout =
-					localStorage.getItem("postListLayout") || "list";
+					window.asroundStorage.local.getItem("postListLayout") || "list";
 				updateAnimeListLayout(currentLayout, false);
 				requestAnimationFrame(() => {
 					animeListContainer.classList.remove("opacity-0");
@@ -620,7 +620,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 						);
 						if (animeListContainer) {
 							const currentLayout =
-								localStorage.getItem("postListLayout") ||
+								window.asroundStorage.local.getItem("postListLayout") ||
 								"list";
 							updateAnimeListLayout(currentLayout, false);
 							animeListContainer.classList.remove("opacity-0");

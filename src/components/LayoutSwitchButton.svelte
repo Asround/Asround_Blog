@@ -37,12 +37,12 @@ function dispatchLayoutChange(layout: LayoutMode) {
 // localStorage 用于兼容其他组件（如 PostPage.astro）
 // TODO: 使用 sessionStorage 存储状态，关闭标签页即销毁。不应把缓存数据存在访客本地电脑上
 function updateStorage(layout: LayoutMode) {
-    sessionStorage.setItem("postListLayout", layout);
-    localStorage.setItem("postListLayout", layout);
+    window.asroundStorage.session.setItem("postListLayout", layout);
+    window.asroundStorage.local.setItem("postListLayout", layout);
 }
 
 function getSavedSessionLayout(): LayoutMode | null {
-    return sessionStorage.getItem("postListLayout") as LayoutMode;
+    return window.asroundStorage.session.getItem("postListLayout") as LayoutMode;
 }
 
 function switchLayout() {
@@ -73,8 +73,8 @@ onMount(() => {
     if (sessionLayout === "list" || sessionLayout === "grid") {
         userPreference = sessionLayout;
         
-        if (localStorage.getItem("postListLayout") !== sessionLayout) {
-            localStorage.setItem("postListLayout", sessionLayout);
+        if (window.asroundStorage.local.getItem("postListLayout") !== sessionLayout) {
+            window.asroundStorage.local.setItem("postListLayout", sessionLayout);
         }
     } else {
         userPreference = defaultLayout;

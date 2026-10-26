@@ -8,7 +8,7 @@
 function initPageLayout(pageType) {
 	// 获取布局配置
 	const defaultPostListLayout =
-		localStorage.getItem("postListLayout") || "list";
+		window.asroundStorage.local.getItem("postListLayout") || "list";
 
 	// 如果默认布局是网格模式，则隐藏右侧边栏
 	if (defaultPostListLayout === "grid") {
@@ -42,7 +42,7 @@ function initPageLayout(pageType) {
 	document.addEventListener("astro:page-load", () => {
 		setTimeout(() => {
 			const currentLayout =
-				localStorage.getItem("postListLayout") || "list";
+				window.asroundStorage.local.getItem("postListLayout") || "list";
 			if (currentLayout === "grid") {
 				hideRightSidebar();
 			} else {
@@ -55,7 +55,7 @@ function initPageLayout(pageType) {
 	document.addEventListener("swup:contentReplaced", () => {
 		setTimeout(() => {
 			const currentLayout =
-				localStorage.getItem("postListLayout") || "list";
+				window.asroundStorage.local.getItem("postListLayout") || "list";
 			if (currentLayout === "grid") {
 				hideRightSidebar();
 			} else {

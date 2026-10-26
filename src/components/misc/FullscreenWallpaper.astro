@@ -95,7 +95,7 @@ const renderGroups = [
 	<script is:inline>
 	// 立即执行脚本：防止闪烁
 	(function() {
-		const mode = localStorage.getItem('wallpaperMode') || 'banner';
+		const mode = window.asroundStorage.local.getItem('wallpaperMode') || 'banner';
 		if (mode !== 'fullscreen') {
 			document.currentScript.parentElement.style.display = 'none';
 		}
@@ -126,14 +126,14 @@ const renderGroups = [
 						if (images.length === 0) return null;
 						if (images.length === 1) return images[0];
 						
-						const lastIndex = sessionStorage.getItem(storageKey);
+						const lastIndex = window.asroundStorage.session.getItem(storageKey);
 						let newIndex;
 						
 						do {
 							newIndex = Math.floor(Math.random() * images.length);
 						} while (newIndex === parseInt(lastIndex || '-1'));
 						
-						sessionStorage.setItem(storageKey, newIndex.toString());
+						window.asroundStorage.session.setItem(storageKey, newIndex.toString());
 						return images[newIndex];
 					};
 					
@@ -193,7 +193,7 @@ const renderGroups = [
 			}
 			// A hidden optional wallpaper must not fetch either platform's images.
 			const loadVisibleSources = () => {
-				if ((localStorage.getItem('wallpaperMode') || 'banner') !== 'fullscreen') return;
+				if ((window.asroundStorage.local.getItem('wallpaperMode') || 'banner') !== 'fullscreen') return;
 				const selector = innerWidth < 768 ? '.block.md\\:hidden' : '.hidden.md\\:block';
 				for (const image of container.querySelectorAll(selector + ' img[data-wallpaper-src]')) {
 					image.src = image.dataset.wallpaperSrc;
@@ -205,7 +205,7 @@ const renderGroups = [
 			window.addEventListener('resize', loadVisibleSources);
 
 			const STORAGE_KEY = 'mizuki_wallpaper_index';
-			let savedIndex = parseInt(sessionStorage.getItem(STORAGE_KEY) || '0');
+			let savedIndex = parseInt(window.asroundStorage.session.getItem(STORAGE_KEY) || '0');
 
 			const groups = [
 				container.querySelectorAll('.hidden.md\\:block [data-carousel-item]'),
@@ -241,7 +241,7 @@ const renderGroups = [
 				
 				stateItem.currentIndex = nextIndex;
 
-				sessionStorage.setItem(STORAGE_KEY, nextIndex.toString());
+				window.asroundStorage.session.setItem(STORAGE_KEY, nextIndex.toString());
 			}
 
 			function start() {

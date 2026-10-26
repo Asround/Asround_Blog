@@ -69,7 +69,7 @@ runOnce("announcement", () => {
                 (widget as HTMLElement).style.display = 'none';
             });
             // 保存关闭状态到localStorage
-            localStorage.setItem('announcementClosed', 'true');
+            window.asroundStorage.local.setItem('announcementClosed', 'true');
         }
     }
 
@@ -77,7 +77,7 @@ runOnce("announcement", () => {
     document.addEventListener('DOMContentLoaded', function() {
         const widgetLayouts = document.querySelectorAll('widget-layout[data-id="announcement"]');
 
-        if (widgetLayouts.length > 0 && localStorage.getItem('announcementClosed') === 'true') {
+        if (widgetLayouts.length > 0 && window.asroundStorage.local.getItem('announcementClosed') === 'true') {
             widgetLayouts.forEach((widget) => {
                 (widget as HTMLElement).style.display = 'none';
             });

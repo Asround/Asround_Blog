@@ -111,8 +111,8 @@ function loadVolumeSettings() {
 	try {
 		if (typeof localStorage !== 'undefined') {
 			const savedVolume = localStorage.getItem(STORAGE_KEY_VOLUME);
-			if (savedVolume !== null && !isNaN(parseFloat(savedVolume))) {
-				volume = parseFloat(savedVolume);
+			if (savedVolume !== null && Number.isFinite(Number(savedVolume))) {
+				volume = Math.max(0, Math.min(1, Number(savedVolume)));
 			}
 		}
 	} catch (e) {
@@ -140,10 +140,12 @@ async function fetchMetingPlaylist() {
 		.replace(":auth", "")
 		.replace(":r", Date.now().toString());
 	try {
-		const res = await fetch(apiUrl);
+		const res = await fetch(apiUrl, { signal: AbortSignal.any([playlistRequest.signal, AbortSignal.timeout(15000)]) });
 		if (!res.ok) throw new Error("meting api error");
 		const list = await res.json();
-		playlist = list.map((song: any) => {
+		if (!mounted) return;
+		if (!Array.isArray(list) || !list.length) throw new Error("Empty meting playlist");
+		playlist = list.filter(song => song && typeof song.url === "string" && /^https?:\/\//i.test(song.url)).map((song: any) => {
 			let title = song.name ?? song.title ?? i18n(Key.unknownSong);
 		let artist = song.artist ?? song.author ?? i18n(Key.unknownArtist);
 			let dur = song.duration ?? 0;
@@ -158,11 +160,13 @@ async function fetchMetingPlaylist() {
 				duration: dur,
 			};
 		});
+		if (!playlist.length) throw new Error("No playable meting songs");
 		if (playlist.length > 0) {
 			loadSong(playlist[0]);
 		}
 		isLoading = false;
 	} catch (e) {
+		if (!mounted) return;
 		showErrorMessage(i18n(Key.musicPlayerErrorPlaylist));
 		isLoading = false;
 	}
@@ -233,9 +237,15 @@ function nextSong(autoPlay: boolean = true) {
 
 // 记录切歌时的播放意图，用于解决加载失败时的状态传递问题
 let willAutoPlay = false;
+const playlistRequest = new AbortController();
+let recoveryTimer: ReturnType<typeof setTimeout> | undefined;
+let errorTimer: ReturnType<typeof setTimeout> | undefined;
+let consecutiveFailures = 0;
 
 function playSong(index: number, autoPlay = true) {
 	if (index < 0 || index >= playlist.length) return;
+	clearTimeout(recoveryTimer);
+	consecutiveFailures = 0;
 	
     willAutoPlay = autoPlay;
 	currentIndex = index;
@@ -264,6 +274,8 @@ function loadSong(song: typeof currentSong) {
 let autoplayFailed = false;
 
 function handleLoadSuccess() {
+	clearTimeout(recoveryTimer);
+	consecutiveFailures = 0;
 	isLoading = false;
 	if (audio?.duration && audio.duration > 1) {
 		duration = Math.floor(audio.duration);
@@ -295,14 +307,25 @@ function handleUserInteraction() {
 }
 
 function handleLoadError(_event: Event) {
-	if (!currentSong.url) return;
+	if (!mounted || !currentSong.url) return;
+	clearTimeout(recoveryTimer);
 	isLoading = false;
 	showErrorMessage(i18n(Key.musicPlayerErrorSong));
 	
     const shouldContinue = isPlaying || willAutoPlay;
-	if (playlist.length > 1) {
-		setTimeout(() => nextSong(shouldContinue), 1000);
+	consecutiveFailures++;
+	if (playlist.length > 1 && consecutiveFailures < playlist.length) {
+		recoveryTimer = setTimeout(() => {
+			if (!mounted) return;
+			willAutoPlay = shouldContinue;
+			currentIndex = (currentIndex + 1) % playlist.length;
+			loadSong(playlist[currentIndex]);
+		}, 1000);
 	} else {
+		willAutoPlay = false;
+		isPlaying = false;
+		autoplayFailed = false;
+		audio?.pause();
 		showErrorMessage(i18n(Key.musicPlayerErrorEmpty));
 	}
 }
@@ -324,9 +347,10 @@ function handleAudioEnded() {
 }
 
 function showErrorMessage(message: string) {
+	clearTimeout(errorTimer);
 	errorMessage = message;
 	showError = true;
-	setTimeout(() => {
+	errorTimer = setTimeout(() => {
 		showError = false;
 	}, 3000);
 }
@@ -335,9 +359,10 @@ function hideError() {
 }
 
 function setProgress(event: MouseEvent) {
-	if (!audio || !progressBar) return;
+	if (!audio || !progressBar || !Number.isFinite(duration) || duration <= 0) return;
 	const rect = progressBar.getBoundingClientRect();
-	const percent = (event.clientX - rect.left) / rect.width;
+	if (!rect.width) return;
+	const percent = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
 	const newTime = percent * duration;
 	audio.currentTime = newTime;
 	currentTime = newTime;
@@ -436,6 +461,10 @@ onMount(() => {
 
 onDestroy(() => {
     mounted = false;
+	playlistRequest.abort();
+	clearTimeout(recoveryTimer);
+	clearTimeout(errorTimer);
+	if (rafId) cancelAnimationFrame(rafId);
     if (audio) {
         audio.pause();
         audio.removeAttribute("src");

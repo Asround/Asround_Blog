@@ -253,7 +253,7 @@ const transparentClass = shouldEnableTransparency
 
 	// 立即执行，在页面渲染前应用壁纸模式和布局模式，避免闪烁
 	(function() {
-		const wallpaperMode = localStorage.getItem('wallpaperMode') || defaultWallpaperMode;
+		const wallpaperMode = window.asroundStorage.local.getItem('wallpaperMode') || defaultWallpaperMode;
 		const body = document.body;
 		
 		// 定义 banner 高度常量（与 constants.ts 保持一致）
@@ -295,7 +295,7 @@ const transparentClass = shouldEnableTransparency
 			// 立即应用布局模式，避免闪烁
 			const mainGrid = document.getElementById('main-grid');
 			if (mainGrid) {
-				const savedLayout = localStorage.getItem('postListLayout');
+				const savedLayout = window.asroundStorage.local.getItem('postListLayout');
 				const currentLayout = savedLayout || defaultPostListLayout;
 				mainGrid.setAttribute('data-layout-mode', currentLayout);
 				
@@ -333,7 +333,7 @@ const transparentClass = shouldEnableTransparency
 	window.__asroundLayoutSyncInstalled = true;
 	
 	// 根据壁纸模式动态设置 banner 和全屏壁纸的显示
-	// const wallpaperMode = localStorage.getItem('wallpaperMode') || defaultWallpaperMode;
+	// const wallpaperMode = window.asroundStorage.local.getItem('wallpaperMode') || defaultWallpaperMode;
 	
 	// 在 DOM 加载后执行
 	if (document.readyState === 'loading') {
@@ -343,7 +343,7 @@ const transparentClass = shouldEnableTransparency
 	}
 	
 	function applyWallpaperMode() {
-		var wallpaperMode = localStorage.getItem('wallpaperMode') || defaultWallpaperMode;
+		var wallpaperMode = window.asroundStorage.local.getItem('wallpaperMode') || defaultWallpaperMode;
 		var bannerWrapper = document.getElementById('banner-wrapper');
 		var fullscreenWallpaper = document.querySelector('[data-fullscreen-wallpaper]');
 		var navbar = document.getElementById('navbar');
@@ -479,7 +479,7 @@ const transparentClass = shouldEnableTransparency
 			// @ts-ignore
 			window.swup.hooks.on('animation:out:start', function() {
 				// 保存当前布局状态，以便在新页面中立即应用
-				const savedLayout = localStorage.getItem('postListLayout');
+				const savedLayout = window.asroundStorage.local.getItem('postListLayout');
 				if (savedLayout) {
 					// @ts-ignore
 					window.__pendingLayoutMode = savedLayout;
@@ -492,7 +492,7 @@ const transparentClass = shouldEnableTransparency
 				const mainGrid = document.getElementById('main-grid');
 				if (mainGrid) {
 					// @ts-ignore
-					const currentLayout = window.__pendingLayoutMode || localStorage.getItem('postListLayout') || defaultPostListLayout;
+					const currentLayout = window.__pendingLayoutMode || window.asroundStorage.local.getItem('postListLayout') || defaultPostListLayout;
 					mainGrid.setAttribute('data-layout-mode', currentLayout);
 					
 					const rightSidebar = document.querySelector('.right-sidebar-container');
@@ -553,7 +553,7 @@ const transparentClass = shouldEnableTransparency
 		requestAnimationFrame(function() {
 			const mainGrid = document.getElementById('main-grid');
 			if (mainGrid) {
-				const savedLayout = localStorage.getItem('postListLayout');
+				const savedLayout = window.asroundStorage.local.getItem('postListLayout');
 				const currentLayout = savedLayout || defaultPostListLayout;
 				mainGrid.setAttribute('data-layout-mode', currentLayout);
 				
@@ -576,7 +576,7 @@ const transparentClass = shouldEnableTransparency
 		document.addEventListener('DOMContentLoaded', function() {
 			const mainGrid = document.getElementById('main-grid');
 			if (mainGrid) {
-				const savedLayout = localStorage.getItem('postListLayout');
+				const savedLayout = window.asroundStorage.local.getItem('postListLayout');
 				const currentLayout = savedLayout || defaultPostListLayout;
 				mainGrid.setAttribute('data-layout-mode', currentLayout);
 				
@@ -610,7 +610,7 @@ const transparentClass = shouldEnableTransparency
 <div id="banner-wrapper" class={`absolute z-10 w-full transition duration-700 overflow-hidden ${mobileNonHomeBannerClass}`} style={`top: -${BANNER_HEIGHT_EXTEND}vh`}>
 
     {siteConfig.banner.carousel?.enable && ((bannerImages.desktop && Array.isArray(bannerImages.desktop) && bannerImages.desktop.length > 1) || (bannerImages.mobile && Array.isArray(bannerImages.mobile) && bannerImages.mobile.length > 1)) ? (
-        <!-- Carousel mode for multiple images -->
+        /* Carousel mode for multiple images */
         <div id="banner-carousel" class="relative h-full w-full">
             <ul class="carousel-list h-full w-full">
                 {Math.max(
@@ -641,7 +641,7 @@ const transparentClass = shouldEnableTransparency
             </ul>
         </div>
     ) : (
-        <!-- Single image mode -->
+        /* Single image mode */
         <div id="banner-single-container" class="relative h-full w-full">
             <script is:inline define:vars={{ desktopImages: bannerImages.desktop, mobileImages: bannerImages.mobile, position: siteConfig.banner.position }}>
                 (function() {
@@ -650,14 +650,14 @@ const transparentClass = shouldEnableTransparency
                             if (images.length === 0) return null;
                             if (images.length === 1) return images[0];
                             
-                            const lastIndex = sessionStorage.getItem(storageKey);
+                            const lastIndex = window.asroundStorage.session.getItem(storageKey);
                             let newIndex;
                             
                             do {
                                 newIndex = Math.floor(Math.random() * images.length);
                             } while (newIndex === parseInt(lastIndex || '-1'));
                             
-                            sessionStorage.setItem(storageKey, newIndex.toString());
+                            window.asroundStorage.session.setItem(storageKey, newIndex.toString());
                             return images[newIndex];
                         }
                         return images || null;
@@ -1725,3 +1725,4 @@ body.wallpaper-transparent #toc-inner-wrapper:has(table-of-contents[data-loaded=
         max-height: 40px !important;
     }
 }
+</style>

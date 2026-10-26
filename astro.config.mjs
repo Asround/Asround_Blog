@@ -1,6 +1,6 @@
 import sitemap from "@astrojs/sitemap";
 import svelte, { vitePreprocess } from "@astrojs/svelte";
-import tailwind from "@astrojs/tailwind";
+import { unified } from "@astrojs/markdown-remark";
 import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
 import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
 import swup from "@swup/astro";
@@ -37,12 +37,11 @@ export default defineConfig({
 	trailingSlash: "always",
 
 	output: "static",
+	// Keep authored inline spacing and the existing remark/rehype rendering pipeline.
+	compressHTML: true,
 	image: { service: { entrypoint: "./src/utils/article-image-service.mjs" } },
 
 	integrations: [
-		tailwind({
-			nesting: true,
-		}),
 		swup({
 			theme: false,
 			animationClass: "transition-swup-",
@@ -112,59 +111,61 @@ export default defineConfig({
 		sitemap(),
 	],
 	markdown: {
-		// Preserve authored ASCII quotes; automatic smart quotes misclassify Chinese-adjacent openings.
-		smartypants: false,
-		remarkPlugins: [
-			remarkMath,
-			remarkContent,
-			remarkGithubAdmonitionsToDirectives,
-			remarkDirective,
-			remarkSectionize,
-			parseDirectiveNode,
-			remarkMermaid,
-		],
-		rehypePlugins: [
-			rehypeKatex,
-			rehypeSlug,
-			rehypeWrapTable,
-			rehypeMermaid,
-			rehypeImageWidth,
-			rehypeArticleImages,
-			rehypePrintTitle,
-			[
-				rehypeComponents,
-				{
-					components: {
-						github: GithubCardComponent,
-						baidu: BaiduCardComponent,
-						note: (x, y) => AdmonitionComponent(x, y, "note"),
-						tip: (x, y) => AdmonitionComponent(x, y, "tip"),
-						important: (x, y) =>
-							AdmonitionComponent(x, y, "important"),
-						caution: (x, y) => AdmonitionComponent(x, y, "caution"),
-						warning: (x, y) => AdmonitionComponent(x, y, "warning"),
-					},
-				},
+		processor: unified({
+			// Preserve authored ASCII quotes; automatic smart quotes misclassify Chinese-adjacent openings.
+			smartypants: false,
+			remarkPlugins: [
+				remarkMath,
+				remarkContent,
+				remarkGithubAdmonitionsToDirectives,
+				remarkDirective,
+				remarkSectionize,
+				parseDirectiveNode,
+				remarkMermaid,
 			],
-			[
-				rehypeAutolinkHeadings,
-				{
-					behavior: "append",
-					properties: {
-						className: ["anchor"],
-					},
-					content: {
-						type: "element",
-						tagName: "span",
-						properties: {
-							className: ["anchor-icon"],
-							"data-pagefind-ignore": true,
+			rehypePlugins: [
+				rehypeKatex,
+				rehypeSlug,
+				rehypeWrapTable,
+				rehypeMermaid,
+				rehypeImageWidth,
+				rehypeArticleImages,
+				rehypePrintTitle,
+				[
+					rehypeComponents,
+					{
+						components: {
+							github: GithubCardComponent,
+							baidu: BaiduCardComponent,
+							note: (x, y) => AdmonitionComponent(x, y, "note"),
+							tip: (x, y) => AdmonitionComponent(x, y, "tip"),
+							important: (x, y) =>
+								AdmonitionComponent(x, y, "important"),
+							caution: (x, y) => AdmonitionComponent(x, y, "caution"),
+							warning: (x, y) => AdmonitionComponent(x, y, "warning"),
 						},
-						children: [{ type: "text", value: "#" }],
 					},
-				},
+				],
+				[
+					rehypeAutolinkHeadings,
+					{
+						behavior: "append",
+						properties: {
+							className: ["anchor"],
+						},
+						content: {
+							type: "element",
+							tagName: "span",
+							properties: {
+								className: ["anchor-icon"],
+								"data-pagefind-ignore": true,
+							},
+							children: [{ type: "text", value: "#" }],
+						},
+					},
+				],
 			],
-		],
+		}),
 	},
 	vite: {
 		server: {
