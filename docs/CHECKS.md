@@ -40,6 +40,8 @@ pnpm check:local
 
 统一入口还运行现有的 `test-comments-site.mjs`、`test-comments-theme.mjs` 和 `test-frontend.mjs`，覆盖文章评论入口、快速主题切换、逐帧配色、全部公开文章与旧入口及 RSS／Atom 输出。20 分钟评论巡检继续按需运行，不放入每次提交。
 
+评论整站测试先执行一次初始重载，再以当前文档为基准检查 GTM／Clarity 实际执行一次，并用 `performance.timeOrigin` 确认后续 Swup 导航没有整页重载。不能累加整个浏览器上下文的网络请求次数来判定重复初始化，避免开发服务启动重载或预取造成误报；初始重载和导航后的断言均保存截图。
+
 补充的行为检查：
 
 - `test-reading-experience.mjs --only=toc`：真实滚动到 STA 的不同深层分支，检查当前分支展开、旧分支收起、高亮、进度推进，以及全部展开后再恢复自动跟随。

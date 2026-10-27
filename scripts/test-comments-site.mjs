@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { parse } from "node-html-parser";
 import { chromium } from "playwright-core";
+import { browserEvidence } from "./browser-test-utils.mjs";
 
 const arguments_ = process.argv.slice(2);
 const base = arguments_.find((argument) => !argument.startsWith("--")) || "http://localhost:4321";
@@ -10,18 +11,15 @@ assert.ok(Number.isFinite(soakMinutes) && soakMinutes >= 0 && soakMinutes <= 60,
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ colorScheme: null, viewport: { width: 1440, height: 1000 } });
 const errors = [];
-let gtmLoads = 0;
-let clarityLoads = 0;
+const evidence = browserEvidence(context, "comments-site");
 const css = await readFile(new URL("../public/giscus.css", import.meta.url), "utf8");
 context.on("page", (page) => page.on("pageerror", (error) => errors.push(error.stack || error.message)));
 await context.route("https://asround-blog.pages.dev/giscus.css", (route) => route.fulfill({ contentType: "text/css", headers: { "access-control-allow-origin": "*" }, body: css }));
 await context.route("https://www.googletagmanager.com/**", (route) => {
-	gtmLoads++;
-	return route.fulfill({ contentType: "application/javascript", body: "window.testGtmReady=true;" });
+	return route.fulfill({ contentType: "application/javascript", body: "window.testGtmLoads=(window.testGtmLoads||0)+1;window.testGtmReady=true;" });
 });
 await context.route("https://www.clarity.ms/**", (route) => {
-	clarityLoads++;
-	return route.fulfill({ contentType: "application/javascript", body: "if(window.testClarityReady)throw Error('Clarity loaded twice');window.testClarityReady=true;window.clarity=function(){};" });
+	return route.fulfill({ contentType: "application/javascript", body: "window.testClarityLoads=(window.testClarityLoads||0)+1;window.testClarityReady=true;window.clarity=function(){};" });
 });
 await context.route("https://giscus.app/**", (route) => {
 	if (new URL(route.request().url()).pathname.endsWith(".css")) return route.fulfill({ contentType: "text/css", headers: { "access-control-allow-origin": "*" }, body: "" });
@@ -65,6 +63,18 @@ try {
 	const page = await context.newPage();
 	await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded" });
 	await page.waitForFunction(() => window.swup && window.testClarityReady && window.testGtmReady);
+	// Vite may reload the initial document while discovering cold dependencies.
+	// Exercise that case deliberately, then guard executions in the final document.
+	await page.reload({ waitUntil: "domcontentloaded" });
+	await page.waitForFunction(() => window.swup && window.testClarityReady && window.testGtmReady);
+	const documentStartedAt = await page.evaluate(() => performance.timeOrigin);
+	const assertAnalyticsOnce = async () => {
+		const state = await page.evaluate(() => ({ startedAt: performance.timeOrigin, gtm: window.testGtmLoads, clarity: window.testClarityLoads }));
+		assert.equal(state.startedAt, documentStartedAt, "站内切页保持同一个文档，不能以整页重载掩盖重复初始化");
+		assert.equal(state.gtm, 1, "当前文档只初始化一次 GTM");
+		assert.equal(state.clarity, 1, "当前文档只初始化一次 Clarity");
+	};
+	await evidence.step(page, "initial-reload", assertAnalyticsOnce);
 	assert.equal(await page.locator("#reader-comment-link").count(), 0);
 	for (const pathname of ["/archive/", "/about/"]) {
 		await navigate(page, pathname);
@@ -98,8 +108,7 @@ try {
 	await nextFrame.locator("textarea").waitFor();
 	assert.equal(new URL(nextFrame.url()).searchParams.get("term"), "/Summer-camp/");
 	assert.equal(await page.locator("giscus-widget").count(), 1);
-	assert.equal(gtmLoads, 1, "站内切页不重复加载 GTM");
-	assert.equal(clarityLoads, 1, "站内切页不重复加载 Clarity");
+	await evidence.step(page, "navigation-initialization", assertAnalyticsOnce);
 	console.log("PASS 首页/归档/关于页隐藏入口、文章锚点与键盘跳转、100px 输入框、写法提示、切页清理、统计脚本只加载一次");
 
 	for (const width of [1920, 1440, 1024, 900, 640]) {
@@ -157,8 +166,7 @@ try {
 				counters.push({ cycle, messageCount, ...memory });
 				console.log(`PASS sustained cycle ${cycle}: one widget, ${messageCount} message listeners; DOM ${memory.nodes}, listeners ${memory.jsEventListeners}`);
 			}
-			assert.equal(gtmLoads, 1);
-			assert.equal(clarityLoads, 1);
+			await assertAnalyticsOnce();
 			assert.deepEqual(errors, []);
 			cycle++;
 			// Allow delayed callbacks, idle tasks and frame cleanup to settle between visits.
