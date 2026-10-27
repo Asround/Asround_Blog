@@ -4,13 +4,17 @@ import { parse } from "node-html-parser";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { rm, stat } from "node:fs/promises";
+import { browserEvidence, isolateExternalServices } from "./browser-test-utils.mjs";
+import { auditProject } from "./check-content.mjs";
+import { setTimeout as delay } from "node:timers/promises";
 
 const args = process.argv.slice(2);
 const base = args.find(arg => !arg.startsWith("--")) || "http://localhost:4321";
 const only = args.find(arg => arg.startsWith("--only="))?.slice(7);
-assert.ok(!only || ["loading", "modal", "chapters", "print", "images", "search", "responsive", "poster"].includes(only));
+assert.ok(!only || ["loading", "modal", "chapters", "print", "images", "search", "responsive", "poster", "fonts", "clipboard"].includes(only));
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ colorScheme: null, viewport: { width: 1440, height: 1000 } });
+const evidence = browserEvidence(context, "tools");
 await context.addInitScript(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.testCopied = value; } } }); });
 // Astro's development toolbar is absent in production and can cover bottom controls.
 await context.addInitScript(() => document.addEventListener("DOMContentLoaded", () => {
@@ -28,6 +32,71 @@ function imageRequest(src) {
 	return url => url.href === target.href || (target.pathname === "/_image/" && url.pathname === target.pathname && url.searchParams.get("href") === target.searchParams.get("href"));
 }
 try {
+	await test("fonts", async () => {
+		await evidence.step(page, "rendered-fonts", async () => {
+			await page.goto(`${base}/STA/`);
+			await page.evaluate(async () => {
+				const paragraph = document.querySelector(".markdown-content p");
+				for (const [id, text] of [["latin", "Asround AZaz019 '\"!?.,()"], ["chinese", "中文测试，。！？"]]) {
+					const span = document.createElement("span"); span.id = `test-font-${id}`; span.textContent = text; paragraph.append(span);
+				}
+				await document.fonts.ready;
+			});
+			await page.locator("#test-font-latin").scrollIntoViewIfNeeded();
+			const session = await context.newCDPSession(page);
+			try {
+				await session.send("DOM.enable"); await session.send("CSS.enable");
+				const { root } = await session.send("DOM.getDocument");
+				for (const [id, family] of [["latin", /TikTok Sans/i], ["chinese", /FZHei|方正黑体|FangZheng/i]]) {
+					const { nodeId } = await session.send("DOM.querySelector", { nodeId: root.nodeId, selector: `#test-font-${id}` });
+					const { fonts } = await session.send("CSS.getPlatformFontsForNode", { nodeId });
+					assert.ok(fonts.length && fonts.every(font => font.isCustomFont && font.glyphCount > 0 && family.test(font.familyName)), `${id}: actual glyph fonts ${JSON.stringify(fonts)}`);
+				}
+			} finally { await session.detach(); }
+		});
+	});
+	await test("clipboard", async () => {
+		// A separate context has no writeText/execCommand substitutes from other tests.
+		const native = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
+		const proof = browserEvidence(native, "clipboard");
+		await isolateExternalServices(native);
+		await native.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(base).origin });
+		const nativePage = await native.newPage();
+		const copied = async (button, expected) => {
+			await nativePage.evaluate(() => navigator.clipboard.writeText("prove-it sentinel"));
+			assert.equal(await nativePage.evaluate(() => navigator.clipboard.readText()), "prove-it sentinel");
+			await button.click();
+			const expectedText = expected.trim().replace(/\r\n/g, "\n"), deadline = Date.now() + 5000;
+			let actual;
+			do {
+				actual = (await nativePage.evaluate(() => navigator.clipboard.readText())).trim().replace(/\r\n/g, "\n");
+				if (actual === expectedText) break;
+				await delay(50);
+			} while (Date.now() < deadline);
+			assert.equal(actual, expectedText, "The system clipboard must contain the copied text");
+		};
+		try {
+			for (const type of ["rss", "atom"]) await proof.step(nativePage, `${type}-native-copy`, async () => {
+				await nativePage.goto(`${base}/${type}/`);
+				const button = nativePage.locator(`#copy-${type}-btn`);
+				await copied(button, await button.getAttribute("data-url"));
+			});
+			await proof.step(nativePage, "code-native-copy", async () => {
+				const { articles } = await auditProject();
+				const article = articles.find(post => post.paths.includes("/calibre_index/"));
+				const expected = article.tree.children.find(node => node.type === "code").value;
+				await nativePage.goto(`${base}/calibre_index/`);
+				const block = nativePage.locator(".expressive-code").first();
+				await copied(block.locator(".copy-btn"), expected);
+			});
+			await proof.step(nativePage, "article-native-copy", async () => {
+				await nativePage.goto(`${base}/STA/`);
+				await nativePage.locator("#reader-share-button").click();
+				await copied(nativePage.getByRole("dialog").getByRole("button", { name: "复制链接", exact: true }), "https://asround-blog.pages.dev/STA/");
+			});
+			proof.assertNoErrors();
+		} finally { await native.close(); }
+	});
 	await test("poster", async () => {
 		const component = "/src/components/misc/SharePoster.svelte";
 		const source = await (await fetch(new URL(component, base))).text();

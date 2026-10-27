@@ -3,14 +3,16 @@ import { chromium } from "playwright-core";
 import { readFile } from "node:fs/promises";
 import { parse } from "node-html-parser";
 import { auditProject, importTS } from "./check-content.mjs";
+import { browserEvidence, isolateExternalServices } from "./browser-test-utils.mjs";
 
 const args = process.argv.slice(2);
 const base = args.find(arg => !arg.startsWith("--")) || "http://localhost:4321";
 const only = args.find(arg => arg.startsWith("--only="))?.slice(7);
+assert.ok(!only || ["toc", "archive-combinations", "albums", "edges", "carousel", "series", "resume", "archive", "keyboard"].includes(only));
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
-await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com|giscus\.app)\//,
-	route => route.fulfill({ contentType: "application/javascript", body: "" }));
+const evidence = browserEvidence(context, "reading");
+await isolateExternalServices(context);
 const errors = [];
 context.on("page", page => page.on("pageerror", error => errors.push(error.message)));
 const page = await context.newPage();
@@ -20,6 +22,100 @@ async function test(name, callback) {
 	console.log(`PASS ${name}`);
 }
 try {
+	await test("toc", async () => {
+		await page.goto(`${base}/STA/`);
+		const panel = page.locator("#reader-toc-panel");
+		await panel.getByRole("navigation").waitFor();
+		const groups = await page.locator(".markdown-content").evaluate(content => {
+			const headings = [...content.querySelectorAll("h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]")];
+			return headings.filter(el => el.tagName === "H3").map(parent => {
+				const children = [];
+				for (let i = headings.indexOf(parent) + 1; i < headings.length && Number(headings[i].tagName[1]) > 3; i++) children.push(headings[i].id);
+				return { parent: parent.id, children };
+			}).filter(group => group.children.length);
+		});
+		assert.ok(groups.length >= 2, "STA must exercise two independent deep branches");
+		const [first, second] = groups;
+		const link = id => panel.locator(`a[href="#${encodeURIComponent(id)}"]`);
+		const read = async id => {
+			await page.evaluate(id => window.scrollTo({ top: document.getElementById(id).getBoundingClientRect().top + scrollY - 130, behavior: "instant" }), id);
+			await page.waitForFunction(id => [...document.querySelectorAll('#reader-toc-panel a[aria-current="location"]')].some(a => decodeURIComponent(a.hash.slice(1)) === id), id);
+		};
+		await evidence.step(page, "toc-default", async () => {
+			assert.equal(await link(first.children[0]).count(), 0);
+			assert.equal(await link(second.children[0]).count(), 0);
+		});
+		let previous;
+		await evidence.step(page, "toc-first-branch", async () => {
+			await read(first.children[0]);
+			assert.ok(await link(first.children[0]).isVisible());
+			assert.equal(await link(second.children[0]).count(), 0);
+			previous = await panel.locator("progress").evaluate(el => el.value);
+		});
+		await evidence.step(page, "toc-next-branch", async () => {
+			await read(second.children[0]);
+			assert.equal(await link(first.children[0]).count(), 0, "Previous branch closes automatically");
+			assert.ok(await link(second.children[0]).isVisible());
+			assert.ok(await panel.locator("progress").evaluate(el => el.value) > previous);
+		});
+		const expandAll = panel.getByRole("button", { name: "全部展开", exact: true });
+		await evidence.step(page, "toc-expand-all", async () => {
+			await expandAll.click();
+			await read(first.children[0]);
+			for (const group of groups) for (const id of group.children) assert.equal(await link(id).count(), 1);
+			assert.equal(await expandAll.getAttribute("aria-pressed"), "true");
+		});
+		await evidence.step(page, "toc-auto-restored", async () => {
+			await expandAll.click();
+			await read(second.children[0]);
+			assert.equal(await link(first.children[0]).count(), 0);
+			assert.ok(await link(second.children[0]).isVisible());
+			assert.equal(await expandAll.getAttribute("aria-pressed"), "false");
+		});
+	});
+	await test("archive-combinations", async () => {
+		const { articles } = await auditProject();
+		// This suite runs against Astro dev, where the archive also lists drafts.
+		const posts = articles;
+		const allTags = [...new Set(posts.flatMap(post => post.data.tags || []))].sort();
+		const categories = [...new Set(posts.map(post => post.data.category).filter(Boolean))].sort();
+		const category = categories.find(value => posts.some(post => post.data.category === value && post.data.tags?.length) && allTags.some(tag => !posts.some(post => post.data.category === value && post.data.tags?.includes(tag))));
+		assert.ok(category, "Current articles must provide an incompatible category/tag pair");
+		const expected = [...new Set(posts.filter(post => post.data.category === category).flatMap(post => post.data.tags || []))].sort();
+		const incompatible = allTags.find(tag => !expected.includes(tag));
+		await page.goto(`${base}/archive/`);
+		const categorySelect = page.getByLabel("筛选分类"), tagSelect = page.getByLabel("筛选标签");
+		await page.waitForFunction(() => !document.querySelector('#archive-keyword').disabled);
+		const values = selector => selector.locator("option").evaluateAll(options => options.filter(option => option.value && !option.disabled).map(option => option.value).sort());
+		await evidence.step(page, "archive-all-options", async () => {
+			assert.deepEqual(await values(tagSelect), allTags);
+			assert.deepEqual((await values(categorySelect)).filter(value => value !== "__uncategorized"), categories);
+		});
+		await evidence.step(page, "archive-category-tags", async () => {
+			await categorySelect.selectOption(category);
+			assert.deepEqual(await values(tagSelect), expected, "Only this category's real tags are offered");
+			await tagSelect.selectOption(expected[0]);
+			assert.ok(await page.locator("a.archive-post").count() > 0);
+		});
+		await evidence.step(page, "archive-incompatible-preserved", async () => {
+			await page.getByRole("button", { name: "清除筛选" }).click();
+			await tagSelect.selectOption(incompatible);
+			assert.deepEqual((await values(categorySelect)).filter(value => value !== "__uncategorized"), categories);
+			await categorySelect.selectOption(category);
+			await page.getByText("没有找到符合条件的文章。", { exact: true }).waitFor();
+			assert.equal(new URL(page.url()).searchParams.get("tag"), incompatible);
+			assert.equal(await page.locator("a.archive-post").count(), 0);
+			assert.deepEqual(await values(tagSelect), expected);
+		});
+		await evidence.step(page, "archive-reload-and-reset", async () => {
+			await page.reload();
+			await page.getByText("没有找到符合条件的文章。", { exact: true }).waitFor();
+			assert.equal(new URL(page.url()).searchParams.get("tag"), incompatible);
+			await page.getByRole("button", { name: "清除筛选" }).click();
+			assert.deepEqual(await values(tagSelect), allTags);
+			assert.equal(await page.locator("a.archive-post").count(), posts.length);
+		});
+	});
 	await test("albums", async () => {
 		const albumPage = await context.newPage();
 		let releasePhotos;

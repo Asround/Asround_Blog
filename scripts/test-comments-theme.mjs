@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { chromium } from "playwright-core";
 import sharp from "sharp";
 import { readFile } from "node:fs/promises";
+import { browserEvidence } from "./browser-test-utils.mjs";
 
 // Exercise the actual reading-toolbar button and the browser compositor. Merely
 // checking the final DOM color misses a new → old → new flash during capture.
@@ -10,9 +11,11 @@ const width = Number(process.env.COMMENT_TEST_WIDTH) || 1440;
 const cpuRate = Number(process.env.COMMENT_TEST_CPU_RATE) || 1;
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "msedge", headless: true });
 const context = await browser.newContext({ colorScheme: null, viewport: { width, height: 1000 } });
+const evidence = browserEvidence(context, "theme");
 const enhancementCSS = await readFile(new URL("../public/giscus.css", import.meta.url), "utf8");
 await context.route("https://asround-blog.pages.dev/giscus.css", (route) => route.fulfill({ contentType: "text/css", headers: { "access-control-allow-origin": "*" }, body: enhancementCSS }));
-await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com)\//, (route) => route.abort());
+await context.route(/https:\/\/(?:www\.clarity\.ms|www\.googletagmanager\.com)\//, (route) => route.fulfill({ contentType: "application/javascript", body: "" }));
+await context.route(url => url.searchParams.get("type") === "playlist" && url.searchParams.has("server"), route => route.fulfill({ contentType: "application/json", body: "[]" }));
 await context.route("https://giscus.app/**", (route) => new URL(route.request().url()).pathname.endsWith(".css")
 	? route.fulfill({ contentType: "text/css", headers: { "access-control-allow-origin": "*" }, body: "" })
 	: route.fulfill({
@@ -111,5 +114,53 @@ try {
 		assert.ok(sequence.length <= 2, `第 ${cycle + 1} 次切换出现颜色反转：${sequence.map((dark) => dark ? "dark" : "light").join(" → ")}`);
 		assert.equal(sequence.at(-1), cycle % 2 === 1, "最终配色正确");
 		console.log(`PASS compositor ${width}px / CPU ${cpuRate}x cycle ${cycle + 1}: ${sequence.map((dark) => dark ? "dark" : "light").join(" → ")}`);
+	}
+	for (const slug of ["STA", "Summer-camp", "paper-of-methods-of-mathmatical-physics"]) {
+		await evidence.step(page, `${slug}-middle-theme`, async () => {
+			await page.goto(`${base}/${slug}/`);
+			await page.locator(".markdown-content img").first().waitFor();
+			await page.evaluate(async () => {
+				await document.fonts.ready;
+				await Promise.all([...document.querySelectorAll(".markdown-content img")].map(img => { img.loading = "eager"; return img.decode().catch(() => {}); }));
+				const content = document.querySelector(".markdown-content");
+				window.scrollTo({ top: content.getBoundingClientRect().top + scrollY + content.offsetHeight * .55, behavior: "instant" });
+			});
+			await page.waitForFunction(() => !document.getAnimations().some(a => a instanceof CSSAnimation && ["fade-in-up", "fade-in"].includes(a.animationName) && a.playState === "running"));
+			const clip = await page.locator(".markdown-content").evaluate(el => {
+				const rect = el.getBoundingClientRect();
+				return { x: Math.ceil(rect.left + 8), y: 160, width: Math.floor(rect.width - 16), height: 700 };
+			});
+			const initialDark = await page.locator("html").evaluate(el => el.classList.contains("dark"));
+			const before = await page.screenshot({ clip, path: `.git/prove-it-theme-${slug}-before.png` });
+			// Pause the real compositor animation at its midpoint; do not replace the transition.
+			await page.evaluate(() => {
+				window.testOriginalAnimate = Element.prototype.animate;
+				Element.prototype.animate = function (frames, options) {
+					const animation = window.testOriginalAnimate.call(this, frames, options);
+					if (options?.pseudoElement?.startsWith("::view-transition-")) { animation.pause(); animation.currentTime = options.duration / 2; window.testMidpointAnimation = animation; }
+					return animation;
+				};
+			});
+			try {
+				await page.getByRole("button", { name: initialDark ? "切换到浅色模式" : "切换到深色模式", exact: true }).click();
+				await page.waitForFunction(() => window.testMidpointAnimation?.playState === "paused");
+				const middle = await page.screenshot({ clip, path: `.git/prove-it-theme-${slug}-middle.png` });
+				await page.evaluate(() => window.testMidpointAnimation.finish());
+				await page.waitForFunction(() => !document.documentElement.classList.contains("theme-circle-transition"));
+				const after = await page.screenshot({ clip, path: `.git/prove-it-theme-${slug}-after.png` });
+				assert.equal(await page.locator("html").evaluate(el => el.classList.contains("dark")), !initialDark);
+				const frames = await Promise.all([before, middle, after].map(image => sharp(image).removeAlpha().raw().toBuffer()));
+				// A valid circular reveal selects the old or new pixel. Missing long-page
+				// snapshot content creates pixels belonging to neither endpoint.
+				let unexpected = 0;
+				for (let i = 0; i < frames[0].length; i += 3) {
+					const distance = index => Math.max(...[0, 1, 2].map(c => Math.abs(frames[1][i + c] - frames[index][i + c])));
+					if (Math.min(distance(0), distance(2)) > 35) unexpected++;
+				}
+				assert.ok(unexpected / (frames[0].length / 3) < .025, `${slug}: transition lost content or shifted pixels (${unexpected} unexpected pixels)`);
+			} finally {
+				await page.evaluate(() => { Element.prototype.animate = window.testOriginalAnimate; window.testMidpointAnimation?.finish(); });
+			}
+		});
 	}
 } finally { await browser.close(); }

@@ -30,7 +30,7 @@ try {
 		await delay(1000);
 	}
 	if (!ready) throw new Error("Preview server did not become ready");
-	for (const script of ["scripts/test-comments-browser.mjs", "scripts/test-reading-experience.mjs", "scripts/test-article-tools.mjs", "scripts/test-failure-recovery.mjs", "scripts/test-navigation-memory.mjs"]) await run(script);
+	for (const script of ["scripts/test-comments-browser.mjs", "scripts/test-comments-site.mjs", "scripts/test-comments-theme.mjs", "scripts/test-frontend.mjs", "scripts/test-reading-experience.mjs", "scripts/test-article-tools.mjs", "scripts/test-failure-recovery.mjs", "scripts/test-navigation-memory.mjs", "scripts/test-cross-browser.mjs"]) await run(script);
 } catch (error) {
 	console.error(log);
 	console.error(error.message);

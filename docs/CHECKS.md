@@ -28,10 +28,34 @@ pnpm check:local
 | `node --use-env-proxy scripts/check-links.mjs --external-only --report=.git/external-links.json` | 对源文章中的外链、外部图片及资源卡片生成只读报告，不因外部网络不确定而阻止提交 |
 | `pnpm test:frontend http://localhost:4322` | 检查指定地址的本地服务 |
 | `node scripts/run-browser-checks.mjs http://localhost:4321` | 统一执行评论、阅读、归档、目录、分享、搜索、图片、打印及下述故障恢复检查 |
+| `pnpm test:cross-browser http://localhost:4321` | Chromium、Firefox、WebKit 的归档搜索、正文定位、目录、分享键盘操作、主题降级和后退恢复 |
 | `node scripts/check-image-integrity.mjs http://localhost:4321` | 全量核对文章与旧入口的源图哈希、srcset、打印图片、实际浏览器解码及 RSS／Atom 图片身份 |
 | `node scripts/check-image-integrity.mjs --built=dist` | 检查已有构建产物的本地图片，无需浏览器或联网；CI 在 Astro 构建后自动运行 |
 
 上述检查不执行网站构建。GitHub CI 已接入离线检查、统一浏览器回归及构建产物图片验证；真实评论授权和邮件通知仍由真实服务验收。
+
+## 浏览器测试与证据
+
+先安装测试所需的浏览器：`pnpm exec playwright-core install chromium firefox webkit`。本机 Chromium 测试默认使用 Edge；使用下载的 Chromium 时设置 `PLAYWRIGHT_CHANNEL=chromium`。Linux CI 使用 `--with-deps` 安装对应系统依赖。浏览器未安装或启动失败直接报错，不会记为通过。实现依据：[Playwright 浏览器说明](https://playwright.dev/docs/browsers)。
+
+统一入口还运行现有的 `test-comments-site.mjs`、`test-comments-theme.mjs` 和 `test-frontend.mjs`，覆盖文章评论入口、快速主题切换、逐帧配色、全部公开文章与旧入口及 RSS／Atom 输出。20 分钟评论巡检继续按需运行，不放入每次提交。
+
+补充的行为检查：
+
+- `test-reading-experience.mjs --only=toc`：真实滚动到 STA 的不同深层分支，检查当前分支展开、旧分支收起、高亮、进度推进，以及全部展开后再恢复自动跟随。
+- `test-reading-experience.mjs --only=archive-combinations`：对照文章元数据检查分类下的真实标签；先选标签再选不兼容分类时，分类选项、原标签及无结果状态保留；刷新和清除筛选结果正确。
+- `test-comments-theme.mjs`：保留评论逐帧防闪检查；在 STA、夏令营、数理方程长文中部暂停真实圆形转场，对比切换前、中、后的像素，检查内容未消失。该项使用 Chromium 合成器，不可作为跨浏览器动画结论。
+- `test-article-tools.mjs --only=fonts`：通过 Chromium 的实际字形字体信息核对正文英文、数字、半角标点与中文、全角标点的分配，不只检查 CSS 字体名称或下载成功。
+- `test-article-tools.mjs --only=clipboard`：独立浏览器上下文不替换剪贴板 API，实际点击 RSS、Atom、代码及文章分享复制按钮，再读取真实剪贴板；原故障测试继续验证权限拒绝后的降级处理。
+- `test-cross-browser.mjs`：三个引擎执行同一套核心流程；1440、960、720px 是视口检查，不能当作真实浏览器缩放测试。显式移除 View Transition API 验证降级路径，完整圆形动画仍由 Chromium 专项检查。WebKit 测试不等同于真实 Safari／iOS 设备验收。
+
+上述新增流程由 `browser-test-utils.mjs` 收集未处理异常及控制台错误，每步截图和结果写入已有 `.git/prove-it-*` 文件。CI 无论成功失败均上传为 `browser-test-evidence` 附件，保留 7 天；不提交截图。完成审核后删除本轮无用截图和临时实验文件，仅保留本节维护说明。
+
+测试替身只隔离无关服务或制造指定故障，不替换被验证的页面逻辑、字体、剪贴板或转场。通用隔离器使用本地已安装的同一套 Material Symbols 图标数据响应图标 API，避免外部图标服务超时干扰行为检查；这不代表远端图标 API 可用。模拟 giscus 的检查只证明博客侧集成行为，不证明真实登录、评论发布或邮件通知可用；远端配置可单独运行 `pnpm check:comments --remote`。Meting 歌单、CORS、音频和封面仍需按项目约定另行实际请求。
+
+新增断言需进行一次破坏验证：临时禁用待保护的行为，确认测试因对应断言失败，恢复源文件后再通过。不能把浏览器启动或服务连接失败当作成功发现缺陷。开发浏览器套件不代替生产产物检查，生成的 Pagefind、图片和发布后字体仍分别由构建 job 和发布验证负责。
+
+2026-10-27 验证：`pnpm check:local` 的 52 项离线测试通过，Astro 检查 129 个文件无错误或警告；统一浏览器入口前 8 组通过，跨浏览器组在隔离外部图标请求后单独重跑，三个引擎的 18 个步骤全部通过。目录展开、分类标签、字体、真实复制、转场正文可见性、主题降级均完成“破坏后失败、恢复后通过”验证；仅重命名目录内部辅助函数时行为测试仍通过。未保留任何实验性的业务源码改动。
 
 ## 运行环境与故障回归
 

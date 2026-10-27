@@ -27,6 +27,7 @@
 		"check:links": "node scripts/check-links.mjs",
 		"check:migration": "node scripts/check-migration.mjs",
 		"test:reading": "node scripts/test-reading-experience.mjs",
+		"test:cross-browser": "node scripts/test-cross-browser.mjs",
 		"test:article-tools": "node scripts/test-article-tools.mjs",
 		"prepare:webfonts": "node scripts/prepare-webfonts.mjs",
 		"test:navigation:memory": "node scripts/test-navigation-memory.mjs",

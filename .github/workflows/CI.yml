@@ -18,7 +18,7 @@ jobs:
   check:
     name: Content, tests and Astro check
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -41,15 +41,24 @@ jobs:
         env:
           ENABLE_CONTENT_SYNC: false
 
-      - name: Install Chromium for browser regression tests
-        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Install browsers for regression tests
+        run: pnpm exec playwright-core install --with-deps chromium firefox webkit
 
       - name: Check comments, reading, search, sharing, chapters, images and print
-        timeout-minutes: 15
+        timeout-minutes: 25
         env:
           ENABLE_CONTENT_SYNC: false
           PLAYWRIGHT_CHANNEL: chromium
         run: node scripts/run-browser-checks.mjs
+
+      - name: Save browser test evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: browser-test-evidence
+          path: .git/prove-it-*
+          include-hidden-files: true
+          retention-days: 7
 
   build:
     name: Astro Build
